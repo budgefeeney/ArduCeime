@@ -209,33 +209,6 @@ Results are only reported for the case where $K=5$ topics and $T=500$ terms and 
 
 They don't really have a clear answer to the scaling problem.
 
-\subsubsection{The Hyperspace Analogue to Language}
-The Hyperspace Analogue to Language\cite{Lund1996} is, in plain terms, a matrix of how often two words co-occur within a sliding window which is moved one word at a time throughout all words in all documents in a corpus. Word counts are scaled inversely by the number of words between them such that an entry in the matrix is given by 
-
-\begin{equation*}
-HAL_{t,t'} = \sum_{l=0}^L w(l) n(l, t, t')
-\end{equation*}
-Where $t$ and $t'$ are distinct words, $l$ is the window length, $w(l)$ is the window-specific weight and $n(l, t, t')$ is the count of how often words $t$ and $t'$ co-occur with exactly $l$ words in-between.
-
-In general, words with similar meanings should have similar co-occurence vectors, and one can therefore use, for example, multidimensional scaling to establish semantically meaningful clusters of words\cite{Lund1996}.
-
-The HAL as defined above does not however define a probabilistic model. The following probabilistic formulation was provided by \cite{Azzopardi2005}
-
-\begin{equation*}
-p_h(t'|t) = \sum_l p(l) p(t'|t,l)
-\end{equation*}
-where $p(t'|t,l) = \frac{n(l, t, t')}{\sum_u n(l, u, t')}$ and the two choices of $p(l)$ are $\frac{1}{2L}$ or $\frac{L - l + 1}{\sum_m L - m + 1}$. In many cases smoothing techniques are necessary to handle cases where $n(l,t,t') = 0$. These discussed in the following section.
-
-
-\fixme{
-\begin{itemize}
-    \item How does this compare to association rules?
-    \item Tweets are small enough that the entire tweet could be a window
-    \item Single tweets have been assigned single topics in the past.
-    \item How does one \emph{generate} words from HALs?
-\end{itemize}}
-
-
 
 \subsubsection{Admixtures of Language Models}
 In \cite{Wallach2006} an admixture of hierarchical Dirichlet language models (HDLMs)\cite{MacKay1995} was used on a tiny dataset of 150 NIPS abstracts and a subset of 20-newsgroup posts. Unlike the original HDLM paper, they used Minka's update algorithm\cite{Minka2002} for the vocabulary and topic hyperparameters. Topic inference was identical to LDA. Two variants of vocabulary distributions were employed, one which shared the vocabularly hyperprior amongst all topics, and one which had a different hyperprior for each topic which gave better results. Both models provided better perplexity results than LDA.

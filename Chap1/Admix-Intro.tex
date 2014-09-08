@@ -11,6 +11,31 @@ The issue of stop-words is addressed in the vector-space model by employing a te
 
 There has been considerable research into deriving inferential methods by which the problems of polysemy and synonymy can be addressed. Typically these have involved the idea of projecting words into some low-dimensional space, where each dimensions correspond to some semantic meaning, often referred to as ``topics". The earliest approach is latent semantic analysis\footnote{Sometimes the term latent semantic indexing (LSI) is used, due to the original application to document retrieval. Similarly pLSA is sometimes referred to as pLSI} (LSA)\cite{Deerwester1990} which takes a $D\times T$ document-term matrix $W$ using TF-IDF encodings of words, and decomposed it using a singular value decomposition $W = USV\T$. By ranking the singular values, similar to principal components analysis (PCA), one can identify the subspaces which account for most of the variance, which it is assumed correspond to topics.
 
+An alternate approach, the Hyperspace Analogue to Language\cite{Lund1996} represents a corpus by means of a matrix denoting how often two words co-occur within a sliding window which is moved one word at a time throughout all words in the corpus. Word counts are scaled inversely by the number of words between them such that an entry in the matrix is given by 
+
+\begin{equation*}
+HAL_{t,t'} = \sum_{l=0}^L w(l) n(l, t, t')
+\end{equation*}
+Where $t$ and $t'$ are distinct words, $l$ is the window length, $w(l)$ is the window-specific weight and $n(l, t, t')$ is the count of how often words $t$ and $t'$ co-occur with exactly $l$ words in-between.
+
+In general, words with similar meanings should have similar co-occurence vectors, and one can therefore use, for example, multidimensional scaling to establish semantically meaningful clusters of words\cite{Lund1996}.
+
+The HAL as defined above does not however define a probabilistic model. The following probabilistic formulation was provided by \cite{Azzopardi2005}
+
+\begin{equation*}
+p_h(t'|t) = \sum_l p(l) p(t'|t,l)
+\end{equation*}
+where $p(t'|t,l) = \frac{n(l, t, t')}{\sum_u n(l, u, t')}$ and the two choices of $p(l)$ are $\frac{1}{2L}$ or $\frac{L - l + 1}{\sum_m L - m + 1}$. In many cases smoothing techniques such as those used in language modelling are necessary to handle cases where $n(l,t,t') = 0$.
+%
+%\fixme{
+%\begin{itemize}
+%    \item How does this compare to association rules?
+%    \item Tweets are small enough that the entire tweet could be a window
+%    \item Single tweets have been assigned single topics in the past.
+%    \item How does one \emph{generate} words from HALs?
+%\end{itemize}}
+%
+
 
 \begin{figure}
 \centering
@@ -23,12 +48,13 @@ There has been considerable research into deriving inferential methods by which 
     \caption{Plate diagrams for (a) a mixture of multinomials and (b) latent dirichlet allocation}
 \label{fig:plates}
 \end{figure}
-However this does not identify a probabilistic, interpretable model of the text. The simplest possible model is a mixture of multinomials\cite{Nigam2000}:
+
+A more traditional, probabilistic latent-factor model of text is a mixture of multinomials\cite{Nigam2000}:
 
 \begin{align}
 p(W) = p(\vv{\theta}|\vv{\alpha} \prod_d \sum_{z_d} p(z_d|\vv{\theta})\prod_n p(w_{dn} | z_d, \Phi)
 \end{align}
-where $\vv{\theta}$ is the corpus-wide distribution over topics, $z_d$ is teh single topic with which the whole of document $d$ is modelled, and $\Phi$ is the $K \times T$ matrix of $K$ topic-specific $T$-dimensional word-distributions. Finally $\vv{w}_d$ is a list of word-observations of length $n_{d\cdot\cdot}$. In practice the assumption that each document can be described by a single topic is often too restrictive. Further, it precludes better fit by increasing the size of the topic space K as topics defined by fewer training examples will have more elements of vocabulary with zero (or near-zero) probability.
+where $\vv{\theta}$ is the corpus-wide distribution over topics, $z_d$ is the single topic with which the whole of document $d$ is modelled, and $\Phi$ is the $K \times T$ matrix of $K$ topic-specific $T$-dimensional word-distributions. Finally $\vv{w}_d$ is a list of word-observations of length $n_{d\cdot\cdot}$. In practice the assumption that each document can be described by a single topic is often too restrictive. Further, it precludes better fit by increasing the size of the topic space K as topics defined by fewer training examples will have more elements of vocabulary with zero (or near-zero) probability.
 
 Probabilistic latent semantic analysis\cite{Hofmann1999a} addresses this by enabling each word in a document to have its own topic, allowing for many topics per document, and thereby allowing better fit with greater numbers of topics:
 

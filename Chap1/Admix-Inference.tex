@@ -11,7 +11,7 @@ In the following we will use the notiation $n_{dkt}$ to indicate the number of i
 %https://github.com/shravanmn/Yahoo_LDA
 %http://www.slideshare.net/MarkLevy/algorithms-on-hadoop-at-lastfm
 
-The initial implementation of LDA presented in \cite{BleiNgJordan2003} employed a variational inference algorithm, where posterior distributions over the topics $\thd$, the vocabularies $\pk$ and the latent topic assignments $\zdnk$. Moreover, the in the appendix, updates for the hyperparameters over the Dirichlet distributions over topics and vocabularies ($\vv{\alpha}$ and $\vv{\beta}$ respectively) were also described, using an fast update procedure described in \cite{Minka2000}:
+The initial implementation of LDA presented in \cite{BleiNgJordan2003} employed a variational inference algorithm\cite{Bernardo2003}, using Jensen's inequality to approximate the marginal likelihood, and the approximate posterior $p(\Theta,\Phi,Z|W,\vv{\alpha},\vv{\beta}) \approx q(\Theta)q(\Phi)q(Z) $, where $q(\Theta) = \prod_d q(\thd)$, $q(\Phi) = \prod_k q(\pk)$ and $q(Z) = \prod_d \prod_n \prod_k q(\zdnk)$. The hyperparameters over the Dirichlet distributions on topics and vocabularies ($\vv{\alpha}$ and $\vv{\beta}$ respectively), were inferred a fast Newton-Raphson update procedure described in \cite{Minka2000}:
 
 \begin{align}
 \alpha_k = \frac{\alpha_k \left( \left(\sum_d \Psi(n_{dk\cdot} + \alpha_k \right) - D \Psi (\alpha_k)\right)}{\left(\sum_d  \Psi(\sum_k n_{dk\cdot} + \alpha_k \right) - D \Psi (\sum_k \alpha_k)}
@@ -27,9 +27,22 @@ Despite this, many implementors in the literature choose to use fixed, symmetric
 
 In \cite{Wallach2009a}, however, it was shown that while learning the prior over vocabulary has no significant effect on performance, substantial improvements can be gained by learning the prior over topics. Moreover, a useful side-effect of this procedure is that ``stop-words" -- words such as ``the", ``of" and "that" which have no semantic meaning -- are all captured by the most likely topic making interpretation of other topics much easier.
 
-Gibbs sampling has also been used to implement LDA. Arguably the first sampler was in \cite{Pritchard2000}, in a paper which predates LDA by three years, though which was little known outside of the bioinformatics community. This separately evaluated the posteriors over the three parameters, $\thd$, $\zdnk$ and $\pk$. In\cite{Griffiths2004} a Rao-Blackwellised sampler was derived, which collapsed out the topics distributions $\thd$ and the vocabularies $\pk$ leaving sampler operating solely in terms of latent topic assignment $\zdnk$. One would expect this to converge faster than the plain sampler, where convergence would be retarded by the strong dependencies between parameters and latent variables\cite{CasellaRobert1999}, and this was confirmed in an experiment in \cite{Newman2009} which compared the two on the standard NIPS dataset.
+Gibbs sampling has also been used to implement LDA. The approach in  \cite{Pritchard2000} separately sampled from the posteriors over the three parameters, $\thd$, $\zdnk$ and $\pk$. However strong dependencies between parameters and latent variables such as these typically impede convergence\cite{CasellaRobert1999}. Consequently in \cite{Griffiths2004} a Rao-Blackwellised sampler was derived by marginalized out $\thd$ and $\Phi$:
 
-The posterior distribution over $\zdnk$ in the collapsed sampler is given by
+\begin{align}
+p(Z|\vv{\alpha}) & = \int p(Z|\Theta)p(\Theta|\vv{\alpha}) d\Theta \\
+& = \int \prod_d \oneover{B(\vv{\alpha})} \prod_k \theta_{dk}^{n_{dk\cdot} + \alpha_k - 1} d\thd \\
+& = \prod_d \frac{B(\vv{n}^{(d)} + \vv{\alpha})}{B(\vv{\alpha})}
+\end{align}
+where $B(\vv{\alpha}) = \frac{\prod_k \Gamma(\alpha_k)}{\Gamma(\sum_k \alpha_k)}$ is the normalising coefficient of the Dirichlet distribution, and the document-topic count vector $\vv{n}^{(d)} = \{ n_{dk\cdot} \}_{k=1}^K$
+
+The component distributions $\Phi$ can likewise be marginalised out from $p(W|Z,Phi)$ to give a distribution
+
+\begin{align}
+p(W,Z|\vv{\alpha},\vv{\beta}) = \prod_d \frac{B(\vv{n}^{(d)} + \vv{\alpha})}{B(\vv{\alpha})} \prod_k \frac{B(\vv{n}^{(k)} + \vv{\beta})}{B(\vv{\beta})}
+\end{align}
+
+From this we can derive the posterior over topics
 
 \begin{align}
 p(z_dn = k | \vv{z}_{d}^{\setminus dn}, \vv{w}_d)
@@ -38,11 +51,11 @@ p(z_dn = k | \vv{z}_{d}^{\setminus dn}, \vv{w}_d)
 \frac{n_{\cdot kt}^{\setminus dn} + \beta_t}{\sum_v n_{\cdot kv}^{\setminus dn} + \beta_v}
 \end{align}
 
-which takes on the familiar Bayesian form of a product of prior over topics (the first term) and the likelihood given that prior. A more detailed derivation of this is given by \cite{Heinrich2005}
+which takes on the familiar Bayesian form of a product of prior over topics (the first term) and the likelihood given that prior. A more detailed derivation of this is given by \cite{Heinrich2005}. This was compared to the uncollapsed sampler of \cite{Pritchard2000} in and exhibited much faster convergence on the standard NIPS dataset
 
 Symmetric hyper-parameters be inferred by the addition of Metropolis Hastings step in the Gibbs routine, while inferring assymetric hyperparameters requires the addition of hyper-priors as described in \cite{Wallach2009a}. 
 
-One thing to note in LDA is that the hyperparameter values are necessarily coupled. For symmetric hyperparamers, smaller values of $\alpha$ encourage sparser topic assignments, requiring either denser topic-specific vocabularies (affecting $\beta$) or a larger number of topics, to reconstruct the original document.
+One thing to note in LDA is that the hyperparameter values are necessarily coupled. For symmetric hyperparameters, smaller values of $\alpha$ encourage sparser topic assignments, requiring either denser topic-specific vocabularies (affecting $\beta$) or a larger number of topics, to reconstruct the original document.
 
 In \cite{Teh2007} a collapsed variational algorithm for LDA was derived. As with the collapsed sampling algorithm of \cite{Griffiths2004} this marginalized out the topics and vocabularies leading to the following posterior:
 \begin{equation}
@@ -59,7 +72,7 @@ In this update, the random variables over which the expectation is taken are the
 \approx 
 \ln (\ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}} + \alpha_k ) - \frac{\var{n_{dk\cdot}^{\setminus dn}}{\hat{q}}}{2\left( \ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}} + \alpha_k \right)^2}
 \end{align}
-where $\ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}} = \sum_{i \neq n} z_{dik}$ and $\var{n_{dk\cdot}^{\setminus dn}}{\hat{q}} = \sum_{i \neq n} z_{dik}(1 - z_{dik})$. This algorithm is known as LDA/CVB. A simpler variant exists which using a first order Taylor approximation, and so lacks the variance term, which is known as LDA/CVB0. It should be noted however, that collapsed variational LDA, unlike all other methods discussed thus far, requires the storage of all topic-assignments $\zdnk$ in addition to the counts $n_{dk\cdot}$ and $n_{\cdot kt}$ making it the most memory intensive of all the method described thus far.
+where $\ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}} = \sum_{i \neq n} z_{dik}$ and $\var{n_{dk\cdot}^{\setminus dn}}{\hat{q}} = \sum_{i \neq n} z_{dik}(1 - z_{dik})$. This algorithm is known as LDA/CVB. A simpler variant exists which using a zero-th order Taylor approximation, and so lacks the variance term, which is known as LDA/CVB0. It should be noted however, that collapsed variational LDA, unlike all other methods discussed thus far, requires the storage of all topic-assignments $\zdnk$ in addition to the counts $n_{dk\cdot}$ and $n_{\cdot kt}$ making it the most memory intensive of all the methods described thus far.
 
 In \cite{Asuncion2012} all four methods, LDA/VB, LDA/Gibbs, LDA/CVB and LDA/CVB0, and a further inference algorithm based on MAP-estimation were compared against each other on several datasets using a common evaluation metric known as perplexity (see \fixme{ref}). LDA/VB performed worst of all, with LDA/Gibbs and LDA/CVB having comparable performance, and LDA/CVB0 having best performance of all. This is a strange result, as LDA/CVB0 involves an ostensibly \emph{worse} approximation of the expectation over LDA/CVB. 
 
