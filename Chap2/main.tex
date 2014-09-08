@@ -397,9 +397,6 @@ This dataset is not necessarily characteristic of common Twitter use: while earl
 
 The features we extract from these tweets are author ID, month of year, week of year; under the hypothesis that a tweet may reflect either an author's core long-term interests, or else be in relation to an event of global interest at that point in time. Additionally \cite{Preot2012} showed that there may be recurrent trends in hash-tags usage (e.g. related to television shows, Monday morning greetings, etc.) and so we also include overlapping hour of week trigrams in our features. 
 
-{\color{red}
-{\bf Impact of Time of Week Features:}
-This showed no real significant impact over just author+month+week. Perhaps had I used hour of week, with overlapping hour trigrams, I may have captured something, but wouldn't that sort of manual feature-construction suggest the model's not working?}.
 
 Within the text itself, tokens were divided into six categories: addressees, hashtags, URLs, stock-tickers, emoticons (including supplemental unicode characters) and normal words. All with the exception of URLs were lower-cased; normal words were additionally stemmed. We only considered tokens that appeared a minimum of 100 times. This resulted in a total vocabulary size of 79,800 tokens. 
 
@@ -410,9 +407,9 @@ The next dataset we consider is a the familiar NIPS dataset prepared by Sam Rowe
 
 
 \subsubsection{Baseline Model}
-As a baseline model, we use the correlated topic model, implemented using the Bouchard and Bohning bounds. In the case of NIPS, we use this to infer mixture distributions for each individual document in the usual manner. In the case of Tweets we aggregate tweets by author into single ``documents", creating a correlated author-topic model of tweets.
+As a baseline model, we use the correlated topic model, implemented using the Bouchard and Bohning bounds, and LDA, implementing using variational inference as in \cite{BleiNgJordan2003}. In the case of NIPS, we use this to infer mixture distributions for each individual document in the usual manner. In the case of Tweets we aggregate tweets by author into single ``documents", creating author-topic models of tweets.
 
-For CTM, we cross-validate the data, and train a model on the training set. We then partition the words in each document in the test set into estimation words and evaluation words as described perviously. Holding the inferred component-distributions (i.e. vocabularies) fixed, we infer mixture-distributions over each document using the estimation words, then use those distribution with the evaluation words to determine likelihood, and so perplexity, of the test-set.
+For CTM and LDA, we cross-validate the data, and train a model on the training set. We then partition the words in each document in the test set into estimation words and evaluation words as described perviously. Holding the inferred component-distributions (i.e. vocabularies) fixed, we infer mixture-distributions over each document using the estimation words, then use those distribution with the evaluation words to determine likelihood, and so perplexity, of the test-set.
 
 
 \subsection{Results}
@@ -420,6 +417,22 @@ For CTM, we cross-validate the data, and train a model on the training set. We t
 The results of the correlated author-topic model of tweets, for both Bouchard and Bohning bounds, is given in figure \ref{fig:tweets-ctm}. Various counts of topics, $K$,  were used.
 
 The results of the full-covariance model, again for both the Bouchard and Bohning variants, are shown in figure \ref{fig:tweets-stm} where in addition to topic-counts, we also varied the size of the latent feature-space, $P$. For the Bouchard bound the prior covariance was fixed as a diagonal for performance reasons - no such compromise was required in the case of the Bohning algorithm.
+
+\begin{figure}
+\centering
+    \includegraphics[width=0.6\textwidth]{plots/TweetCtmLda.pdf}
+    \caption{Performance of LDA and CTM (implemented with Bohning and Bouchard bounds) on tweets aggregated by author}
+    \label{fig:tweet-ctm-lda}
+\end{figure}
+
+\begin{figure}
+\centering
+    \includegraphics[width=0.8\textwidth]{plots/TweetStmQueryFeatures.pdf}
+    \caption{Performance of the STM models depending on the chosen features, which were author only, author and time features, time features only}
+    \label{fig:tweet-ctm-lda}
+\end{figure}
+
+
 
 %\begin{figure}
 %\centering
