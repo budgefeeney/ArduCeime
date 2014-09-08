@@ -11,13 +11,13 @@ In the following we will use the notiation $n_{dkt}$ to indicate the number of i
 %https://github.com/shravanmn/Yahoo_LDA
 %http://www.slideshare.net/MarkLevy/algorithms-on-hadoop-at-lastfm
 
-The initial implementation of LDA presented in \cite{BleiNgJordan2003} employed a variational inference algorithm\cite{Bernardo2003}, using Jensen's inequality to approximate the marginal likelihood, and the approximate posterior $p(\Theta,\Phi,Z|W,\vv{\alpha},\vv{\beta}) \approx q(\Theta)q(\Phi)q(Z) $, where $q(\Theta) = \prod_d q(\thd)$, $q(\Phi) = \prod_k q(\pk)$ and $q(Z) = \prod_d \prod_n \prod_k q(\zdnk)$. The hyperparameters over the Dirichlet distributions on topics and vocabularies ($\vv{\alpha}$ and $\vv{\beta}$ respectively), were inferred a fast Newton-Raphson update procedure described in \cite{Minka2000}:
+The initial implementation of LDA presented in \cite{BleiNgJordan2003} employed a variational inference algorithm\cite{Bernardo2003}, using Jensen's inequality to approximate the marginal likelihood with a variational approximation of the true posterior $p(\Theta,\Phi,Z|W,\vv{\alpha},\vv{\beta}) \approx q(\Theta)q(\Phi)q(Z) $, where $q(\Theta) = \prod_d q(\thd)$, $q(\Phi) = \prod_k q(\pk)$ and $q(Z) = \prod_d \prod_n \prod_k q(\zdnk)$. The hyperparameters over the Dirichlet distributions on topics and vocabularies ($\vv{\alpha}$ and $\vv{\beta}$ respectively), are inferred using a fast Newton-Raphson update procedure described in \cite{Minka2000}:
 
 \begin{align}
 \alpha_k = \frac{\alpha_k \left( \left(\sum_d \Psi(n_{dk\cdot} + \alpha_k \right) - D \Psi (\alpha_k)\right)}{\left(\sum_d  \Psi(\sum_k n_{dk\cdot} + \alpha_k \right) - D \Psi (\sum_k \alpha_k)}
 \end{align}
 
-where $\Psi(\cdot)$ is the digamma function, and those should be iteratively evaluated till convergence. The update for $\beta_t$ follows similarly.
+where $\Psi(\cdot)$ is the digamma function This should be iteratively evaluated till convergence. The update for $\beta_t$ follows similarly.
 
 Despite this, many implementors in the literature choose to use fixed, symmetric hyper-parameters, typically following advice in \cite{Griffiths2004} to set $\alpha_k = \frac{50}{K}$ and $\beta_t=0.1$. These too can be learnt in a variational framework, by a modification of the above update\cite{Heinrich2005}:
 
@@ -25,10 +25,11 @@ Despite this, many implementors in the literature choose to use fixed, symmetric
 \alpha = \frac{\alpha \left( \left(\sum_d \sum_k \Psi(n_{dk\cdot} + \alpha_k \right) - DK \Psi (\alpha)\right)}{K \left( \left(\sum_d  \Psi(\sum_k n_{dk\cdot} + \alpha \right) - D \Psi (K \alpha)\right)}
 \end{align}
 
-In \cite{Wallach2009a}, however, it was shown that while learning the prior over vocabulary has no significant effect on performance, substantial improvements can be gained by learning the prior over topics. Moreover, a useful side-effect of this procedure is that ``stop-words" -- words such as ``the", ``of" and "that" which have no semantic meaning -- are all captured by the most likely topic making interpretation of other topics much easier.
+In \cite{Wallach2009a}, however, it was shown that while learning the prior over vocabulary has no significant effect on performance, substantial improvements can be gained by learning the prior over topics. Moreover, a useful side-effect of this procedure is that stop-words are all captured by the most likely topic making interpretation of other topics much easier.
 
-Gibbs sampling has also been used to implement LDA. The approach in  \cite{Pritchard2000} separately sampled from the posteriors over the three parameters, $\thd$, $\zdnk$ and $\pk$. However strong dependencies between parameters and latent variables such as these typically impede convergence\cite{CasellaRobert1999}. Consequently in \cite{Griffiths2004} a Rao-Blackwellised sampler was derived by marginalized out $\thd$ and $\Phi$:
+Gibbs sampling has also been used to implement LDA. The approach in  \cite{Pritchard2000} separately sampled from the posteriors over the three parameters, $\thd$, $\zdnk$ and $\pk$. However strong dependencies between parameters such as these typically impede convergence\cite{CasellaRobert1999}. Consequently in \cite{Griffiths2004} a Rao-Blackwellised sampler was derived by marginalized out $\thd$ and $\Phi$:
 
+The process to collapse out $\thd$ is as follows:
 \begin{align}
 p(Z|\vv{\alpha}) & = \int p(Z|\Theta)p(\Theta|\vv{\alpha}) d\Theta \\
 & = \int \prod_d \oneover{B(\vv{\alpha})} \prod_k \theta_{dk}^{n_{dk\cdot} + \alpha_k - 1} d\thd \\
@@ -36,13 +37,13 @@ p(Z|\vv{\alpha}) & = \int p(Z|\Theta)p(\Theta|\vv{\alpha}) d\Theta \\
 \end{align}
 where $B(\vv{\alpha}) = \frac{\prod_k \Gamma(\alpha_k)}{\Gamma(\sum_k \alpha_k)}$ is the normalising coefficient of the Dirichlet distribution, and the document-topic count vector $\vv{n}^{(d)} = \{ n_{dk\cdot} \}_{k=1}^K$
 
-The component distributions $\Phi$ can likewise be marginalised out from $p(W|Z,Phi)$ to give a distribution
+The component distributions $\Phi$ can similarly be marginalised out from $p(W|Z,Phi)$ to give a distribution
 
 \begin{align}
 p(W,Z|\vv{\alpha},\vv{\beta}) = \prod_d \frac{B(\vv{n}^{(d)} + \vv{\alpha})}{B(\vv{\alpha})} \prod_k \frac{B(\vv{n}^{(k)} + \vv{\beta})}{B(\vv{\beta})}
 \end{align}
 
-From this we can derive the posterior over topics
+From this we can derive (see \cite{Heinrich2005} for a fully worked out example) the posterior over topics
 
 \begin{align}
 p(z_dn = k | \vv{z}_{d}^{\setminus dn}, \vv{w}_d)
@@ -51,7 +52,7 @@ p(z_dn = k | \vv{z}_{d}^{\setminus dn}, \vv{w}_d)
 \frac{n_{\cdot kt}^{\setminus dn} + \beta_t}{\sum_v n_{\cdot kv}^{\setminus dn} + \beta_v}
 \end{align}
 
-which takes on the familiar Bayesian form of a product of prior over topics (the first term) and the likelihood given that prior. A more detailed derivation of this is given by \cite{Heinrich2005}. This was compared to the uncollapsed sampler of \cite{Pritchard2000} in and exhibited much faster convergence on the standard NIPS dataset
+which takes on the familiar Bayesian form of a product of prior over topics (the first term) and the likelihood given that prior. This was compared to the uncollapsed sampler of \cite{Pritchard2000} in and exhibited much faster convergence on the standard NIPS dataset
 
 Symmetric hyper-parameters be inferred by the addition of Metropolis Hastings step in the Gibbs routine, while inferring assymetric hyperparameters requires the addition of hyper-priors as described in \cite{Wallach2009a}. 
 
@@ -72,9 +73,9 @@ In this update, the random variables over which the expectation is taken are the
 \approx 
 \ln (\ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}} + \alpha_k ) - \frac{\var{n_{dk\cdot}^{\setminus dn}}{\hat{q}}}{2\left( \ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}} + \alpha_k \right)^2}
 \end{align}
-where $\ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}} = \sum_{i \neq n} z_{dik}$ and $\var{n_{dk\cdot}^{\setminus dn}}{\hat{q}} = \sum_{i \neq n} z_{dik}(1 - z_{dik})$. This algorithm is known as LDA/CVB. A simpler variant exists which using a zero-th order Taylor approximation, and so lacks the variance term, which is known as LDA/CVB0. It should be noted however, that collapsed variational LDA, unlike all other methods discussed thus far, requires the storage of all topic-assignments $\zdnk$ in addition to the counts $n_{dk\cdot}$ and $n_{\cdot kt}$ making it the most memory intensive of all the methods described thus far.
+where $\ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}} = \sum_{i \neq n} z_{dik}$ and $\var{n_{dk\cdot}^{\setminus dn}}{\hat{q}} = \sum_{i \neq n} z_{dik}(1 - z_{dik})$. This algorithm is known as LDA/CVB. A simpler variant exists which using a zero-th order Taylor approximation, and so lacks the variance term, which is known as LDA/CVB0. A deficiency of collapsed variational LDA however is that unlike all other methods discussed thus far, it requires the storage of all topic-assignments $\zdnk$ in addition to the counts $n_{dk\cdot}$ and $n_{\cdot kt}$ making it the most memory intensive of all the methods described.
 
-In \cite{Asuncion2012} all four methods, LDA/VB, LDA/Gibbs, LDA/CVB and LDA/CVB0, and a further inference algorithm based on MAP-estimation were compared against each other on several datasets using a common evaluation metric known as perplexity (see \fixme{ref}). LDA/VB performed worst of all, with LDA/Gibbs and LDA/CVB having comparable performance, and LDA/CVB0 having best performance of all. This is a strange result, as LDA/CVB0 involves an ostensibly \emph{worse} approximation of the expectation over LDA/CVB. 
+In \cite{Asuncion2012} all four methods, LDA/VB, LDA/Gibbs, LDA/CVB and LDA/CVB0, and a further inference algorithm based on MAP-estimation were compared against each other on several datasets using a common evaluation metric known as perplexity (see \ref{sec:eval}). LDA/VB performed worst of all, with LDA/Gibbs and LDA/CVB having comparable performance, and LDA/CVB0 having best performance of all. This is a strange result, as LDA/CVB0 involves an ostensibly \emph{worse} approximation of the expectation over LDA/CVB. 
 
 An explanation for this was given in\cite{Sato2012} who showed that the terms in the LDA/CVB0 update can be understood as optimizing the $\alpha$-divergence\cite{Minka2005}, with different values of $\alpha$ for each term. The $\alpha$-divergence is a generalization of the KL-divergence that variational Bayes minimizes, and optimizing it is known as power EP. An EP implementation of LDA has also been derived in \cite{Minka2002}
 
@@ -91,15 +92,15 @@ Whilst discussing LDA/CVB, it should not noted that an alternative approach to c
 \end{figure}
 
 \subsubsection*{Scaling to Large Datasets}
-The issue of how to scale LDA to large datasets has been actively researched. With regard to variational methods, one of the earliest approaches was the Online variatinal LDA of \cite{Hoffman2010} which uses stochastic gradient descent\cite{Bottou2004}\cite{Bottou2008}, estimating the ``local" document-level topic assignments in the usual way, a document at a time\footnote{In practice ``mini-batches" of documents are used to minimise the variance}, using those estimates to update counts of topic-word assignments, and then using the derived counts to update the ``global" matrix of topic-specific vocabularies, using a a natural gradient step (which is the same as the standard update in the batch algorithm).
+The issue of how to scale LDA to large datasets has been actively researched. With regard to variational methods, one of the earliest approaches was the Online variatinal LDA of \cite{Hoffman2010} which uses stochastic gradient descent\cite{Bottou2004}\cite{Bottou2008}, estimating the ``local" document-level topic assignments in the usual way, a document at a time\footnote{In practice ``mini-batches" of documents are used to minimise the variance}, using those estimates to update counts of topic-word assignments, and then using these derived counts to update the ``global" matrix of topic-specific vocabularies, using a a natural gradient step (which is the same as the standard update in the batch algorithm).
 
 This was further improved in \cite{Mimno2012a} by using a Gibbs sampler in the ``local" step, which unlike the variational approach led to sparse estimate of the topic distributions, particularly for large topic counts, which in turn meant that sparse computations could be used to update the vocabulary.
 
-This general approach of stochastic gradient descent, with ``local" and ``global" parameters has been described in some depth, for the case of the exponential family, in \cite{Hoffman2012}; however approach cannot be applied to LDA/CVB, as there is no clear separation between ``local" and ``global" variables, and moreover, to determine the new distribution $q(\zdnk)$ one requires the previous mean of that distribution to estimate terms such as $\ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}}$, which one clearly cannot do with massive datasets. In \cite{Boyles2013} they experiments with a variant of LDA/CVB0 where one did not subtract the previous topic assignment, replacing terms like $\ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}}$ with $\ex{n_{dk\cdot}}{\hat{q}}$. Gradient-style update are then made to the counts, which are treated as parameters in this model, similar to online EM\cite{Cappe2009} , and which one expects to converge to the true counts, from which the true parameters can be derived. 
+This general approach of stochastic gradient descent, with ``local" and ``global" parameters has been described in some depth, for the case of the exponential family, in \cite{Hoffman2012}; however approach cannot be applied to LDA/CVB, as there is no clear separation between ``local" and ``global" variables, and moreover, to determine the new distribution $q(\zdnk)$ one requires the previous mean of that distribution to estimate terms such as $\ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}}$, which one clearly cannot do with massive datasets. In \cite{Boyles2013} a variant of LDA/CVB0 is presented where one does not subtract the previous topic assignment, replacing terms like $\ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}}$ with $\ex{n_{dk\cdot}}{\hat{q}}$. Instead the counts are assumed to be random variable, with gradient-style updates are used to update them in a method similar to online EM\cite{Cappe2009}, which should converge to the true counts, from which the true parameters can be derived. 
 
 This reduces the memory requirements of LDA/CVB0 to those of LDA with a collapsed Gibbs sampler, which are still more onerous than the online variants of LDA/VB discussed heretofore. 
 
-\fixme{Need to read Sparse Online Topic Models\cite{Zhang2013}}
+%\fixme{Need to read Sparse Online Topic Models\cite{Zhang2013}}
 
 Significant effort has also been expended on making Gibbs sampling scale to large datasets. Many of these algorithmic improvements are described in \cite{Yao2009}. The most notable is to re-write the sampling distribution as
 
@@ -112,11 +113,11 @@ p(z_dn = k | \vv{z}_{d}^{\setminus dn}, w_{dn}=t) & \propto \frac{\alpha_k \beta
 & + \frac{n_{dk\cdot}\nodn n_{d\cdot t}\nodn}{n_{\cdot k \cdot}\nodn + \sum_v \beta_v}
 \end{split}
 \end{align}
-While ostensibly more complicated, the second and third summands are sparse, and can be stored efficiently, while the first term, which is dense, is trivially changed after each update as only the denominator changes. In addition there are further purely algorithmic improvements are described in the paper, with the resulting ``SparseLDA" algorithm converging at more than ten times the speed of the standard collapsed sampler, and twice the speed of ``Fast LDA"\cite{Porteous2008}, which instead focussed on ensuring the most likely topics were always the first to be considered when drawing a topic for an individual token, eliminating unnecessary comparisons.
+While ostensibly more complicated, the second and third summands are sparse, and can be stored efficiently, while the first term, which is dense, is trivially changed after each update as only the denominator changes. In addition there are further purely algorithmic improvements are described in the paper, with the resulting ``SparseLDA" algorithm converging at more than ten times the speed of the standard collapsed sampler, and twice the speed of ``Fast LDA"\cite{Porteous2008}, which instead focussed on avoiding calculating all K posterior topic probabilities for each token when sampling by means of bounds.
 
-\fixme{See also Fast collapsed gibbs sampling for latent dirichlet allocation. In Proceedings of the ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, pages 569–577, 2008.}
+%\fixme{See also Fast collapsed gibbs sampling for latent dirichlet allocation. In Proceedings of the ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, pages 569–577, 2008.}
 
-To extend this to hundreds of millions of documents, a distributed Gibbs sampler is described in\cite{Newman2009}. The setting is a Hadoop cluster, where the $D$ documents are stored on $M$ machines, with each machine storing $D_M$ documents. For the purposes of illustration, $M$ can be of the order of 1,000. A further restriction is that due to the fact that networks are much slower than CPUs, and that $2^M$ such connections exist, it is not feasible for machines to communicate with each other. Therefore the problem is how to meaningfully infer topics from the whole dataset, through machines which can only see a subset of it, albeit one which may contain 100,000 documents.
+To extend this to hundreds of millions of documents, a distributed Gibbs sampler is described in\cite{Newman2009}. The setting is a Hadoop cluster, where the set of $D$ documents are paritioned into $M$ disjoint sets, each of size $D_m$, each stored on one of $M$ machines. For the purposes of illustration, $M$ can be of the order of 1,000. A further restriction is that due to the fact that networks are much slower than CPUs, and that $2^M$ such connections exist, it is not feasible for machines to communicate with each other. Therefore the problem is how to meaningfully infer topics from the whole dataset, through machines which can only see a subset of it, albeit one which may contain 100,000 documents.
 
 Uncollapsed Gibbs samplers can be trivially implemented in this setting, as topic assignments are conditionally independent given $\thd$ and $\pk$. However uncollapsed Gibbs samplers typically exhibit poor mixing, so it is preferable to implement a distributed, collapsed Gibbs sampler.
 
@@ -139,11 +140,11 @@ This approach defines a valid probabilistic model which can be decomposed across
 
 In practice, the reported convergence and predictive likelihood was broadly similar between the approximate and hierarchical distributed samplers using the same reconciliation strategy. Both models still showed worse convergence, on small datasets, than the non-distributed batch model however.
 
-To address this, a different approach was employed in \cite{Smola2010}. The context, once again, is a Hadoop cluster where inter-machine communication is infeasible. However a single machine, storing the sufficient statistics in a high-speed in-memory database\footnote{Memcache: \fixme{website}} was added to this cluster. At each iteration, for each document, each machine queried this server for the latest counts $n_{\cdot k \cdot}$ and $n_{\cdot k t}$, then proceeded to assign topics to each token in the document, finally transmitting the updated counts when all the current documents tokens had been assigned topics. This is inherently approximate -strictly speaking counts should be queried and updated when processing every individual token, however this would mean that the time taken to process each token was the time of a round-trip across the network to the memcache server.
+To address this, a different approach was employed in \cite{Smola2010}. The context, once again, is a Hadoop cluster where inter-machine communication is infeasible. However a ``blackboard" server storing the sufficient statistics in a high-speed in-memory database\footnote{In this case ``Memcache"} was added to this cluster. At each iteration, for each document, each machine queried the blackboard for the latest counts $n_{\cdot k \cdot}$ and $n_{\cdot k t}$, then proceeded to assign topics to each token in the document, finally transmitting the updated counts when all the current documents tokens had been assigned topics. This is inherently approximate -- strictly speaking counts should be queried and updated when processing every individual token, however this would mean that the time taken to process each token was the time of a round-trip across the network to the blackboard server.
 
-The advantages of this model is that all machines can iterate to convergence independently, instead of pausing at the end of each iteration to reconcile counts. Further, by sharing counts in near real-time, the indentifiability problem is avoided. Moreover, many memcache servers can be used to avoid network contention for a single machine: each holding a counts for a subset of all possible topic-word pairs (their experiments involved corpora with vocabularies of $10^6$ words). While only guaranteeing eventual consistency in the presence of a failing node: assuming all nodes remain active for the duration of the run, all reads from a memcache cluster should remain consistent. 
+The advantages of this model is that all machines can iterate to convergence independently, instead of pausing at the end of each iteration to reconcile counts. Further, by sharing counts in near real-time, the indentifiability problem is avoided. Moreover, the blackboard ``server" can in fact be composed of several servers to avoid network contention for a single machine. Each server holds a subset counts of all possible topic-word pairs (their experiments involved corpora with vocabularies of $10^6$ words). While only guaranteeing eventual consistency in the presence of a failing node: assuming all nodes remain active for the duration of the run, all reads from a MemCache cluster should remain consistent. 
 
-With respect to large-scale inference among correlated topic models, the most significant contribution has been\cite{Chen2013}, who implemented batch and parallel Gibbs samplers. In the batch case, they collapsed out the vocabulary, and drew topic-assignments for each word in the usual way. Sampling the topic-strength vectors for the overall document given the topic assignments is equivalent to logistic regression. By augmenting this likelihood with an auxiliary variable such that
+With respect to large-scale inference among correlated topic models, the most significant contribution has been\cite{Chen2013}, where batch and parallel Gibbs samplers were derived for CTM. In the batch case, the  vocabulary was collapsed out, topic-assignments for each word were drawn in the usual way form a document-level distribution. Given the topic assignments, inferring the hyperparameters of the Gaussian prior is equivalent to logistic regression. However by augmenting this likelihood with an auxiliary variable $\lambda_{dk}$ such that
 \begin{align}
 p(\eta_{dk} | \vv{\eta}_{d\setminus k}) & = \frac{(e^{\rho_{dk}})^{n_{dk\cdot}}}{(1 + e^{\rho_{dk}})^{n_{d\cdot\cdot}}} \qquad\qquad\qquad\text{where }\rho_{dk} = \eta_{dk} - \ln\left(\sum_{j \neq k} \eta_{dj}\right) \\
 &= \frac{1}{2^{n_{d\cdot\cdot}}}
@@ -152,7 +153,7 @@ e^{\kappa_{dk} \rho_{dk}}
 \end{align}
 where $\kappa_{dk} = n_{dk\cdot} - \halve{n_{d\cdot\cdot}}$ and $\lambda_{dk}$ has a Polygamma distribution, they were able to derive an exact Gibbs step, instead of resorting to the more usual approach of rejection sampling with some proposal distribution. Finally, a Normal/Inverse-Wishart prior was used for the topic mean and covariance.
 
-As with the distributed Gibbs LDA algorithm of \cite{Newman2009}, by employing hierarchical priors, it is possible to distribute this across several machines. Specifically the topic strength vectors $\vv{eta}_d$ for each document $d$ are conditionally independent of one another given the $\mathcal{NIW}\left(\vv{\mu}, \rho, \kappa, \Sigma\right)$. The per-token topic assignments need the global $n_{\cdot k t}$ counts, and these are made available via memcache similarly to \cite{Smola2010}. Similar to \cite{Yao2009} careful attention was taken to exploit sparsity when implementing the posterior distribution over topic assignments. Finally, as the auxiliary variable had a Polygamma distribution, an approximate sampling method was derived.
+As with the distributed Gibbs LDA algorithm of \cite{Newman2009}, by employing hierarchical priors, it is possible to distribute this across several machines. Specifically the topic strength vectors $\vv{\eta}_d$ for each document $d$ are conditionally independent of one another given the $\mathcal{NIW}\left(\vv{\mu}, \rho, \kappa, \Sigma\right)$. The per-token topic assignments need the global $n_{\cdot k t}$ counts, and these are made available via a blackboard server similar to \cite{Smola2010}. As with \cite{Yao2009} careful attention was taken to exploit sparsity when implementing the posterior sampler over topic assignments. Finally approximate sampling algorithm for the PolyGamma distribution was presented.
 
 % ---- Gibbs optimisations ----
 
