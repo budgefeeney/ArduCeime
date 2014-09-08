@@ -32,7 +32,7 @@ Many other interpolation and backoff models exist, notably Katz-Smoothing, Witte
 Probabilistic language models include the language model of \cite{MacKay1995} which uses a hierarchical Dirichlet model of text:
 
 \begin{align}
-w_i|w_{i-1} \sim \dir{\vv{\theta}_{i-1}} & \theta_i & \sim \dir{\vv{\alpha}} \forall i 
+w_i|w_{i-1} \sim \dir{\vv{\theta}_{i-1}} & \vv{theta}_i & \sim \dir{\vv{\alpha}} \forall i 
 \end{align}
 
 By learning they prior, the resulting model interpolated between unigram probability ($\vv{\alpha}$) and bigram probabilities $\Theta = \{ \vv{\theta}_i \}_{i}$. Further the update for the prior was shown to be a function of the number of unique contexts the term followed, rather than the simple Jelinek interpolation mode. Despite this, results in \cite{Teh} show that this performs worse than both interpolated and modified Knesser Ney.
