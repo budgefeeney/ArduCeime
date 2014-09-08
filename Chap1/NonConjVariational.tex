@@ -1,6 +1,7 @@
 \input{../header.tex}
 
-\section{Introduction}
+
+\subsection{Non-Conjugate Inference with the Logit and Probit}
 
 We consider the binary case initially, and then build to the multinomial case. Let the dataset be $\mathcal{S} = \{(t_n, \vv{x}_n)\}$ where the target $t_n \in \{0,1\}$ and $\vv{x}_n \in \VReal{D}$ are the features we have extracted from our inputs.
 
@@ -19,7 +20,7 @@ p(t_n = 1) = & f(y_n) & y_n  & = \vv{w}\T\vv{x}_n \\
 
 We consider two sigmoid (i.e. s-shaped) functions for which f(0) = 0.5: the probit $\Phi(a)$ and the logit $\sigma(a)$.
 
-\section{Logit}
+\subsubsection{Logit - Motivation and Interpretation}
 The logit is defined as
 
 \begin{equation}
@@ -34,8 +35,6 @@ The following identities are useful when working with the logit:
 \sigma(-y) & = -\sigma(y)
 \end{align}
 
-\subsection{Motivation and Interpretation}
-
 The logit is motivated as a log-odds ratio. Let $y_n = \vv{w}\T\vv{x}_n$. Then:
 
 \begin{alignat}{3}
@@ -47,9 +46,9 @@ The logit is motivated as a log-odds ratio. Let $y_n = \vv{w}\T\vv{x}_n$. Then:
 
 From this we can see the weights in a logistic regression have a very simple interpretation, where $w_d$ indicates how much the log-odds of the positive class are increased.
 
-\subsection{Inference}
+\subsubsection{Inference with the Logit}
 
-\subsubsection{Maximum Likelihood Estimation}
+\subsubsection*{Maximum Likelihood Estimation}
 With a Bernoulli distribution on $t_n$ our log-likelihood has the form
 
 \begin{align}
@@ -76,7 +75,7 @@ With some re-arrangement of \eqref{eqn:logit-gradient} and \eqref{eqn:logit-hess
 \end{align}
 
 
-\subsubsection{MAP Estimation using Global Approximations}
+\subsubsection*{MAP Estimation using Global Approximations}
 \newcommand \wmap[0] { \vv{w}_{\text{\tiny \sc MAP}} }
 
 We place a zero-mean normal prior on the weight $\vv{w}$.
@@ -117,7 +116,7 @@ where
 \kappa(a^2) & = \left( 1 + \frac{\pi a^2}{8}  \right)^{-\half}
 \end{align}
 
-\subsubsection{MAP Estimation using Local Approximations}
+\subsubsection*{MAP Estimation using Local Approximations}
 
 We consider the same model as in the previous section, but this time derive \emph{local} bounds on the likelihoods of \emph{individual datapoints}. This allows for greater inferential flexibility and so permits better model fit compared to global approximations\cite{Jaakkola1997}.
 
@@ -224,7 +223,7 @@ With this definition we see that the approximate posterior over the weights is a
 
 As in the previous section where we used MAP estimation with global bounds, once we obtain an approximate distribution over our posteriors in the form of a normal distribution we can further approximate the likelihood as a probit and thereby obtain our predictive distribution.
 
-\subsection{Baysian Logistic Regression with Gaussian Processes}
+\subsubsection{Baysian Logistic Regression with Gaussian Processes}
 At the core of logistic regression is a linear regression to infer the utility score $a$, which is then transformed into a probability $\sigma(a)$ via the logit.
 
 Consequently, a straightforward alternative is to fully replace the linear regression with a Gaussian process, which fully captures our uncertainty around the weight $\vv{w}$. We start with a quick recap of Gaussian Processes for linear regression.
@@ -275,7 +274,7 @@ p(a_* | \vv{t}) = \int p(a_*, \vv{a} | \vv{t}) d\vv{a}  = \int p(a_* | \vv{a}) p
 where the first term in \emph{this} integrand is just the usual GP prediction, and in the case of the latter term we can employ the approximation techniques described previously for the MAP case, such as the Laplace approximation \cite{WilliamsBarber1998} or the local Jaakkola approximation \cite{Gibbs2000}.
 
 
-\subsection{Extension to the Multinomial Case}
+\subsubsection{Extending the Logit to the Multinomial Case}
 In the multinomial case, we replace the scalar $t_n$ with a 1-of-$L$ encoding of labels, $\vv{t}_n$ which has a categorical distribution, and learn a separate weight vector $\vv{w}_l$ for each label which are collected into the $L \times F$ matrix W. 
 
 We replace the logistic function with it's multinomial analogue, the \emph{softmax} function $\sigma_l(\vv{y}) = \frac{e^{y_l}}{\sum_j e^{y_j}}$, and denote the vector of such values as $\vv{\sigma}(\vv{y}) = \{ \sigma_l(\vv{y}) \}_{l=1}^{L}$. An issue with the softmax is that it is non-identifiable: $\sigma_l (\vv{y} + \alpha) = \sigma_l(\vv{y})$ as for any scalar $\alpha$. While in practice this rarely an issue, it can nevertheless be addressed by forcing $y_L = 0$, i.e. $\sigma_L(\vv{y}) = \frac{1}{1 + \sum_l^{L-1} e^{y_l}} = 1 - \frac{\sum_l^{L-1} e^{y_l}}{1 + \sum_l^{L-1} e^{y_l}}$, from which the correspondence to the binary logit becomes clear. For reasons of brevity, we will ignore this detail in the following presentation.
@@ -366,7 +365,7 @@ A multivariate ``tilted bound" was proposed by Minka and Knowles\cite{MinkaKnowl
 \end{equation}
 Maximisation of $a_i$ can be achieved using the fixed form update $\vv{a} \leftarrow \sigma(\vv{m} + \half(1 - 2 \vv{a})\vv{v})$ where $\sigma(x) = \frac{1}{1 + e^{-x}}$, however the updates for the means and variances have to be estimated using iterative schemes. 
 
-\section{Probit}
+\subsubsection{Probit - Motivation and Interpretation}
 The probit is the CDF of a standard normal distribution:
 
 \begin{align}
@@ -398,7 +397,6 @@ X & \sim \mathcal{N}_{(-\infty,b)}\left(\mu, \sigma \right) & \implies \ex{X}{} 
 \end{align}
 
 
-\subsection{Motivation and Interpretation}
 The use of the probit is trivially motivated by a slight modification of our original example in the introduction.
 
 Let $t_n$ be denoted by the following:
@@ -444,8 +442,8 @@ This metric provides the amount by which probability of the positive class is in
 
 %\fixme{See http://stats.stackexchange.com/questions/42956/how-do-i-interpret-a-probit-model-in-stata}
 
-\subsection{Inference}
-\subsubsection{Maximum Likelihood Estimation}
+\subsubsection{Inference with the Probit}
+\subsubsection*{Maximum Likelihood Estimation}
 With a Bernoulli distribution on $t_n$ our log-likelihood has the form
 
 \begin{align}
@@ -482,7 +480,7 @@ z & = X \vv{w}^{(old)}  - \inv{R} \text{ vec} \left(\left\{ t_n \frac{\phi(y_n)}
 
 
 
-\subsubsection{MAP Estimation}
+\subsubsection*{MAP Estimation}
 Like the logit we place a zero-mean normal prior on the weight's $\vv{w}$.
 
 \begin{align}
@@ -538,7 +536,7 @@ p(t_* = 1| X, \vv{t}, x_*) & = \int_{\vv{w}} p(t_* | \vv{w})\int_{\vv{y}} p(\vv{
 As with the Logit
 
 
-\subsection{Extension to the Multinomial Case}
+\subsubsection{Extending the Probit to the Multinomial Case}
 In case of the multinomial probit case, as with the multinomial logit, one learns $L$ independent weight vectors $\vv{w}_l$ from which we define the auxiliar variable $\vv{y} \sim \nor{W\vv{x}}{1}$ where $W = \{ \vv{w}_l\T \}_{l=1}^L$. The prediction rule also necessarily changes, becoming:
 
 \begin{align}
@@ -567,7 +565,7 @@ where $Z_n = \ex{\prod_{j \neq l}\Phi\left(u + \ex{\vv{w}_l\T\vv{x}_n}{q} - \ex{
 \fixme{Verify that $m_{nl} = \vv{w}_l\T\vv{x}_n$}
 
 
-\section{Comparison between the Logit and the Probit}
-In the following we implement a correlated topic model\cite{Blei2006} using the Bohning-bounded logit and the probit. As the normal distribution has much lighter tails than the logistic distribution (of the order of $\exp(y^2)$ instead of $\exp(y)$), it is much less accommodating of outliers. We would therefore expect slower convergence in the early iterations as we attempt to fit the noise.
+%\section{Comparison between the Logit and the Probit}
+%In the following we implement a correlated topic model\cite{Blei2006} using the Bohning-bounded logit and the probit. As the normal distribution has much lighter tails than the logistic distribution (of the order of $\exp(y^2)$ instead of $\exp(y)$), it is much less accommodating of outliers. We would therefore expect slower convergence in the early iterations as we attempt to fit the noise.
 
 \input{../footer.tex}
