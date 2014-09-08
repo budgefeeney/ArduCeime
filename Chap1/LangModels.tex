@@ -1,0 +1,42 @@
+\input{../header.tex}
+
+\subsection{Language Models of Text}
+
+Language modelling is the problem of predicting the next word in a sequence (e.g a sentence) given all previous words. Common use-cases are predictive keyboards, spell-checkers and speech recognition. Typically one makes the Markov assumption, with first order (``bigram") and second-order (``trigram") markov models being popular.
+
+As vocabularies are normally quite large (typically of the order of 30,000 terms), raising this to the power of two or three can lead to models that are very overparameterised: simple maximum likelihood estimates therefore will frequently include n-grams with high variance, or whose estimate collapses to zero in the absence of training data. The simple solution to this problem  of ``Laplace smoothing", equivalent to a symmetric Dirichlet prior, is unsatisfying in that it does not take into account the information available in the lower-order n-grams.
+
+Two approaches are common (for a full survey see\cite{Goodman2001}. )
+\begin{itemize}
+    \item Interpolation: where the probability of an n-gram is a weighted combination of the probabilities of all m-grams for $m \in \{n, (n-1), \ldots, 1\}$. Hence for a bigram we'd say its probability $p(w_i|w_{i-1}) = \lambda p(w_i|w_{i-1}) + (1 - \lambda) p(w_i)$. Typically many different values of $\lambda$ are learnt according to the (bucketed) certainties of the distributions. Examples include Jelinek-Mercer smoothing and Witten-Bell smoothing    
+\item Backoff: where if no data exists to support an n-gram, we use the probability of an (n-1)-gram instead. Examples include Katz ``smoothing"
+\end{itemize}
+
+In addition different ways of discounting counts, which may not obviously make sense in a probabilitistic context occur, including the most popular language model, Knesser-Ney, which assigns to each unigram a ``probability" proportional to the number of \emph{different words it follows} rather than the number of occurrences. Knesser-Ney was originally proposed as a backoff algorithm, but was converted to an interpolated algorithm in \cite{Goodman2001} called ``modified Knesser-Ney" which is one of the best performing language models currently in use.
+
+Probabilistic language models include the language model of \cite{MacKay1995} which uses a hierarchical Dirichlet model, where learning a prior is shown to be equivalent to interpolating a bigram probability with a unigram probability. In this model, the update for the prior was shown to be a function of the number of unique contexts the term followed, rather than the simple Jelinek interpolation mode. Despite this, results in \cite{Teh} show that this performs worse than both interpolated and modified Knesser Ney.
+
+One possible reason for this is that the Dirichlet distribution does not adequately capture the power-law distribution of text. Therefore, the model was amended in \cite{Teh} to use Pitman Yor processes (PYPs) instead, which, \emph{do} provide power-law distributions through the addition of a discount parameter. This is a generalization of the Dirichlet process, which is recovered by seting the discount to zero. Inference can be obtained through stick-breaking processes or Chinese restaurant processes. A hierarchical model was obtained by using a PYP for suffix-length (n-1) as the base distribution of the PYP for suffix length n. The resulting inference scheme was a nested Chinese restaurant process, sometimes called a ``Chinese restaurant franchise". It can be shown that interpolated Knesser-Ney is equivalent to this model when we ensure that each word is ``served" at only one ``table" in the restaurant.\footnote{As a PYP represents an infinite number of tokens, but there are only a finite number of words in the vocabulary, a single word may be associated with more than one table in any ``restaurant"}.
+
+
+Summary \cite{Chen1996}. This is ancient and weak.
+
+Better summary with mKN\cite{Goodman2001}. Book is \cite{Jurafsky2002}
+
+HDLM\cite{MacKay1995}
+
+Latent words language model \cite{Deschacht2012}
+
+General reps of text follow:
+
+Deciding when to fuse unigrams: \cite{Dunning1993}. Note topicality here.
+
+Actual HAL\cite{Lund1996}
+
+Probabilistic HAL: \cite{Azzopardi2005}
+
+PYP/Bayesian Knesser Ney\cite{Teh2002}\cite{Teh}
+Sequence Memoizer\cite{Wood2011}
+
+
+\input{../footer.tex}

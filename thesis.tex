@@ -1,0 +1,500 @@
+%
+% Hello! Here's how this works:
+%
+% You edit the source code here on the left, and the preview on the
+% right shows you the result within a few seconds.
+%
+% Bookmark this page and share the URL with your co-authors. They can
+% edit at the same time!
+%
+% You can upload figures, bibliographies, custom classes and
+% styles using the files menu.gh
+%
+% If you're new to LaTeX, the wikibook at
+% http://en.wikibooks.org/wiki/LaTeX
+% is a great place to start, and there are some examples in this
+% document, too.
+%
+% Enjoy!
+%
+\documentclass[10pt,fleqn]{article}
+
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts} 
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{bm}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{todonotes}
+\usepackage{dsfont}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{appendix}
+\usepackage{subcaption}
+
+
+%
+% Macros
+%
+\newcommand \cashort[1] { {\todo[color=yello]{#1 -- Cedric}} }
+\newcommand \calong[1]  { { \todo[inline,color=yellow]{#1 -- Cedric} } }
+\newcommand \gbshort[1] { {\todo[color=cyan!40]{#1 -- Guillaume}} }
+\newcommand \gblong[1]  { { \todo[inline, color=cyan!40]{#1 -- Guillaume} } }
+\newcommand \mgshort[1] { {\todo{#1 -- Mark}} }
+\newcommand \mglong[1]  { { \todo[inline]{#1 -- Mark} } }
+\newcommand \bfshort[1] { {\todo[color=green!40]{#1 -- Bryan}} }
+\newcommand \bflong[1]  { { \todo[inline,color=green!40]{#1 -- Bryan} } }
+
+\newcommand \lse[0] { \mathrm{lse} }
+
+\newcommand \vecf[1] {
+    \text{vec}\left(#1\right)
+}
+
+\newcommand \ent[1] {
+    \text{H} \left[ #1 \right]
+}
+
+\newcommand \ex[2] {
+    \bigl\langle #1 \bigr\rangle_{#2}
+}
+
+\newcommand \halve[1] {
+	\frac{#1}{2}
+}
+
+\newcommand \half {
+    \halve{1}
+}
+
+\newcommand \tr { \text{tr} } 
+
+\newcommand \T { ^\top } 
+
+\newcommand \fixme[1] {
+    {\color{red} FIXME: #1}
+}
+
+\newcommand \vv[1] { \bm #1 }
+
+\newcommand{\mbeq}{\overset{!}{=}}
+
+\newcommand \diag[1] { \text{diag} \left( {#1} \right) }
+\newcommand \diagonal[1] { \text{diagonal} \left( {#1} \right) }
+
+\newcommand \Ed {{ \vv{\xi}_d}}
+\newcommand \Edj {{\xi_{dj}}}
+\newcommand \Edk {{\xi_{dk}}}
+\newcommand \AEdj {{\Lambda(\xi_{dj})}}
+\newcommand \AEdk {{\Lambda(\xi_{dk})}}
+\newcommand \AEd  {{ \bm{\Lambda}(\bm{\xi}_d) }}
+
+\newcommand \Axi { { \Lambda_{\xi} } }
+\newcommand \bxi { { \vv{b}_{\xi} } }
+\newcommand \cxi { { c_{\xi} } }
+
+\newcommand \one  {{  \mathds{1} }}
+
+\newcommand \wdoc      { { \vv{w}_d } }
+\newcommand \wdt[0]  { { w_{dt} } }
+\newcommand \wdn[0]  { { \vv{w}_{dn} } }
+\newcommand \wdnt[0]  { { w_{dnt} } }
+\newcommand \wdd[0]   { { \vv w_{d} } }
+\newcommand \zd[0]   { { \vv z_{d} } }
+\newcommand \zdn[0]  { { \vv{z}_{dn} } }
+\newcommand \zdnk[0] { { z_{dnk} } }
+\newcommand \zdk[0]  { { z_{dk} } }
+\newcommand \thd[0]  { { \vv \theta_d } }
+\newcommand \thdk[0] { { \theta_{dk} } }
+\newcommand \thdj[0] { { \theta_{dj} } }
+\newcommand \epow[1] { { e^{#1} } }
+\newcommand \pkt     { { \phi_{kt}  } }
+\newcommand \pk      { { \vv \phi_k } }
+\newcommand \lmd     { { \vv \lambda_d } }
+\newcommand \lmdk    { { \lambda_{dk} } }
+\newcommand \xd      { { \vv x_d } }
+\newcommand \atxd     { A ^\top \bm x_d}
+\newcommand \axd     { A\bm x_d}
+\newcommand \tsq      { { \tau^2 } }
+\newcommand \ssq      { { \sigma^2 } }
+\newcommand \tmsq     { { \tau^{-2} } }
+\newcommand \asq      { { \alpha^2 } }
+\newcommand \amsq     { { \alpha^{-2} } }
+\newcommand \sgsq     { { \sigma^2 } }
+\newcommand \xvec     { { \vv{x} } }
+\newcommand \omk      { { \bm \omega _k } }
+\newcommand \omkt     { { \omega_{kt} } }
+\newcommand \oma     { { \Omega_A } }
+\newcommand \gdn      { { \vv{\gamma}_{dn} } }
+\newcommand \gdnk     { { \gamma_{dnk} } }
+\newcommand \gdk      { { \gamma_{dk} } }
+\newcommand \isigt   { { \Sigma^{-1}_{\bm \theta} } }
+
+\newcommand \isigma { { \inv{\Sigma} } }
+
+\newcommand \sigv     { { \Sigma_V } }
+\newcommand \isigv     { { \Sigma^{-1}_V } }
+
+\newcommand \sigy { { \Sigma_Y } }
+\newcommand \isigy { { \Sigma_{-1}_Y } }
+
+
+\newcommand \omy  { { \Omega_Y } }
+\newcommand \iomy { { \inv{\Omega_Y} } }
+
+\newcommand \siga     { { \Sigma_A } }
+\newcommand \isiga     { { \Sigma^{-1}_A } }
+\newcommand \diagv { { \diag{\nu_1,\ldots,\nu_P} } }
+
+\newcommand \ma { \vv{m}_a }
+\newcommand \my { \vv{m}_y }
+
+\newcommand \VoU { V \otimes U }
+
+
+\newcommand \halfSig { \frac{1}{2\sigma^2} }
+
+\newcommand \nor[2]   { \mathcal{N} \left( {#1}, {#2} \right) }
+\newcommand \nord[3]   { \mathcal{N}_{#1} \left( {#2}, {#3} \right) }
+\newcommand \mnor[3]  { \mathcal{N} \left(#1, #2, #3\right) }
+\newcommand \norp[3]  { \mathcal{N} \left(#1; #2, #3\right) }
+\newcommand \mnorp[4] { \mathcal{N} \left(#1; #2, #3, #4\right) }
+\newcommand \mul[1]   { \mathcal{M} \left( {#1} \right) }
+\newcommand \muln[2]  { \mathcal{M} \left( {#1},{#2} \right) }
+\newcommand \dir[1]   { \mathcal{D} \left( {#1} \right) }
+\newcommand \pois[1]  { \mathcal{P} \left( {#1} \right) }
+
+
+\newcommand \lne[1]  { { \ln \left( 1 + e^{ #1 } \right) } }
+\newcommand \Tr[1]   { \tr \left(  {#1}  \right) }
+
+\newcommand \roud  { \vv{\rho}_{d}  }
+\newcommand \rodk { \rho_{dk} }
+
+\newcommand \exA[1]  { \ex{#1}{q(A)} }
+\newcommand \exV[1]  { \ex{#1}{q(V)} }
+\newcommand \exT[1]  { \ex{#1}{q(\Theta)} }
+\newcommand \extd[1] { \ex{#1}{q(\thd)} }
+\newcommand \exTV[1] { \ex{#1}{q(\Theta)q(V)} }
+
+\newcommand \Real[0]  { { \mathbb{R} } }
+\newcommand \VReal[1] { { \mathbb{R}^{#1} } }
+\newcommand \MReal[2] { { \mathbb{R}^{#1 \times #2} } }
+\newcommand \Nat[0]  { { \mathbb{N} } }
+\newcommand \VNat[1] { { \mathbb{N}^{#1} } }
+\newcommand \MNat[2] { { \mathbb{N}^{#1 \times #2} } }
+
+\newcommand \inv[1] { {#1}^{-1} }
+\newcommand \invb[1] { \inv{\left( #1 \right)} }
+
+\newcommand \cn { \textsuperscript{\texttt{[{\color{blue}Citation Needed}]}} }
+
+\newcommand \const { { \text{c} } }
+
+\providecommand \floor [1] { \left \lfloor #1 \right \rfloor }
+\providecommand \ceil [1] { \left \lceil #1 \right \rceil }
+
+
+\newcommand \vt[2] { { #1^{(#2)} } }
+
+\newcommand \hashtag[1] { { \ttfamily \##1 } }
+
+\newcommand \mvy  { \vv{m}_{\vv{y}} }
+\newcommand \sigvy { { S_Y } }
+
+\newcommand \mmy  { M_Y      }
+\newcommand \omy  { \Omega_Y }
+\newcommand \sigy { \Sigma_Y }
+\newcommand \md   { \vv{m}_d }
+\newcommand \phin { \vv{\phi}_n }
+
+\newcommand \one { \mathbb{1} }
+
+\newcommand \lse { \text{lse} }
+
+%
+% Document Front-Matter
+%
+\title{Upgrade Report}
+\author{Bryan Feeney}
+
+\begin{document}
+\maketitle
+\begin{abstract}
+
+\end{abstract}
+
+\tableofcontents
+\clearpage
+
+
+\section{Introduction}
+\subsection{Multi-Task Learning}
+
+Caruana
+
+
+Learning Multiple Tasks with a Sparse Matrix-Normal Penalty\cite{Zhang2010a}
+
+Multi-task relationship learning\cite{Zhang2012mtrl}
+
+\subsubsection{Kronecker Covariances}
+
+MTL-GP : \cite{Bonilla2008}. Noise problem is in the book\cite{Wackernagel1998}
+A Note on Noise-free Gaussian Process Prediction with Separable Covariance Functions and Grid Designs\cite{Williams2007}
+
+Kro with GPS also \cite{Stegle2011}
+
+General intro and discussion of ident \cite{Glanz2008}
+
+Markov property \cite{Hagan1998}
+
+Alfred O Hero has a paper on Kronecker PCA, but I only have the powerpoint
+
+General proof of ML\cite{Srivastava2009}
+ML Estimation of Kronecker /Persymm \cite{Jansson}
+Maximum-likelihood estimation for multivariate spatial linear coregionalization models\cite{Zhang2007a}
+
+Tshibsirhiani applied to matrix completion\cite{Allen2010}. Then extended to GPs\cite{Yu2009}. Note this includes leasning covariances across tasks
+
+\begin{quote}
+Those that learn $\Sigma$ across tasks (Lawrence \& Platt, 2004; Schwaighofer et al., 2005; Yu et al., 2005), and those that additionally consider the covariance $\Omega$ between tasks (Yu et al., 2007; Bonilla et al., 2008). The methods that only use $\Sigma$ have been applied to collaborative prediction (Schwaighofer et al., 2005; Yu et al., 2006).
+\end{quote}
+
+
+Properties of graphical lasso with kronecker via Arxiv\cite{Tsiligkaridis2012}. Or as a paper \cite{Tsiligkaridis2012b}. 
+Covariance Estimation in High Dimensions Via Kronecker Product Expansions\cite{Tsiligkaridis2013}
+
+Extension to 3D \cite{Ohlson2011}
+
+On Toeplitz and Kronecker Structured Covariance Matrix Estimation
+\cite{Wirfalt2010}
+
+
+\subsubsection{Gaussian Scale Mixtures}
+Sparse Bayesian MTL \cite{Archambeau2011}
+
+Robust PCA \cite{Archambeau2006a}
+
+Robust Matrix factorization\cite{Balaji2011}
+
+Sparsity overview, Laplace/Gaussian \cite{Figueiredo2003}
+
+
+\subsection{Language Models of Text}
+
+Summary \cite{Chen1996}. This is ancient and weak.
+
+Better summary with mKN\cite{Goodman2001}. Book is \cite{Jurafsky2002}
+
+HDLM\cite{MacKay1995}
+
+Latent words language model \cite{Deschacht2012}
+
+General reps of text follow:
+
+Deciding when to fuse unigrams: \cite{Dunning1993}. Note topicality here.
+
+Actual HAL\cite{Lund1996}
+
+Probabilistic HAL: \cite{Azzopardi2005}
+
+PYP/Bayesian Knesser Ney\cite{Teh2002}\cite{Teh}
+Sequence Memoizer\cite{Wood2011}
+
+\subsection{Admixture Models of Text}
+
+Ancient Bayes mixture paper\cite{Nigam2000}
+LDA : \cite{BleiNgJordan2003}\cite{Pritchard2000}
+
+\subsubsection{Correlated Admixtures}
+
+CTM \cite{Blei2006}
+
+Message passing implementation\cite{Ahmed2006}
+Independent Factor Model of topics\cite{Putthividhya2009}
+
+\subsubsection{Evaluation Methodologies}
+
+Is $p(w|hypers)$ ``intractable" for topic models? Do we \emph{have} to use the complete likelihood $p(w,z|hypers)$?
+
+Connection between perplexity and recall \cite{Azzopardi2003}
+
+Empirical Likelihood Li and MacCallum - Pachinko allocation: DAG-structured mixture models of topic correlations. This generates pseudo documents from a difficult model, a simpler algorithm (e.g. MoM) is then trained on it, and then the real held out data is tested against that simple model.
+
+Reading tea-leaves: \cite{Chang2009}. Mechanical Turk also used in TNG\cite{Wang2007} and HPYP\cite{Lindsey2012}
+
+Complexity, for Bayes non-pams\cite{Kim2011}
+
+Variation of information\cite{Meila2003}
+
+NVI Cluster Eval measure\cite{Reichart2009}
+Comparing clusterings\cite{Wagner2007}
+
+Wallach eval methods\cite{Wallach2009}
+
+\subsubsection{Inference Strategies}
+
+Long var\cite{BleiNgJordan2003}
+Gibbs + hyper suggestion \cite{Griffiths2004} Gibbs the long way\cite{Pritchard2000}
+Detailed explanation \cite{Heinrich2005}
+
+Impact of priors\cite{Wallach2009a}
+
+Roundup of Gibbs vs VM \cite{Asuncion2012}
+
+% ----- CVB ------
+
+CVB \cite{Teh2007}
+Alternative collapsing \cite{Hensman2012} where parameters are marginalized \emph{after} applying the var-bound instead of before. Also does natural/Riemannian gradient
+
+CVB0 Mystery: Sato and Nakagawa  showed that the terms in the CVB0 update can be understood as optimizing the $\alpha$- divergence, with different values of $\alpha$ for each term. The $\alpha$-divergence is a generalization of the KL-divergence that variational Bayes minimizes, and optimizing it is known as power EP. A disadvantage of CVB0 is that the memory requirements are large as it needs to store a variational distribution $gamma$ for every token in the corpus. This can be improved slightly by ``clumping" every occurrence of a specific word in each document together and storing a single $\gamma$ for them. I. Sato and H. Nakagawa. Rethinking collapsed variational Bayes inference for LDA. Proceedings of the International Conference on Machine Learning, 2012.
+
+
+% --- Variational Optimisations ----
+
+Online VB - same as Blei's local/global, but with a natural gradient step \cite{Hoffman2010}. Sparse online VB using Gibbs steps\cite{Mimno2012a} 
+
+Sparse Online Topic Models\cite{Zhang2013}
+
+Fast collapsed gibbs sampling for latent dirichlet allocation. In Proceedings of the ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, pages 569–577, 2008. 
+
+
+SGD+LDA-CVB \cite{Boyles2013} - in this case they don't store the y's, and so ignore the subtraction step. Show it's the same as MAP-EM in Ascuncion
+
+
+Large-scale CTM\cite{Ahmed2006} using message passing.
+
+CTM with different bounds\cite{Wang2013}
+
+Memcache Inference\cite{Ahmed}
+
+% ---- Gibbs optimisations ----
+
+Smola's intro \cite{SmolaWeb2012}
+Distributed Sampler (AD-LDA)\cite{Newman2009}
+Architecture for Parallel Topic Models\cite{Smola2010}
+Gibbs sampler for CTM \cite{Chen2013}
+Efficient methods for topic model inference on streaming document collections\cite{Yao2009}
+
+% ---- Other approaches ----
+
+EP \cite{Minka2002}
+
+Spectral decomposition \cite{Anandkumar}
+
+GPU Implementations: http://papers.nips.cc/paper/3788-parallel-inference-for-latent-dirichlet-allocation-on-graphics-processing-units
+
+Tutorial on SGD with examples for diff models \cite{Bottou2004}. Learning using large datasets \cite{Bottou2008}
+
+Distributed NFM\cite{Liu2010}
+
+
+
+\subsubsection{The Use of Covariates}
+
+% --------- Ad hoc ------------
+
+Author-Topic Model\cite{RosenZvi2004}
+Author-Recipient Topic Model\cite{MacCallum2007}
+Community Topic Model\cite{Sachan2012}
+Group and Topic Discovery from Relations and Text\cite{Wang2005}
+An LDA-based Community Structure Discovery Approach for Large-Scale Social Networks\cite{Zhang2007}
+Topics over time\cite{Wang2006}
+BITAM\cite{Zhao2001}
+
+Region with Twitter \cite{Eisenstein2010}
+
+
+Limited Attention LDA \cite{Kang2013}. Topic model items (i.e. links shared on digg). Use these to infer user interests. Assume linkage idir users based on shared interests. Friends may adopt an item (i.e. share it) based on interest x and topic z. So given a user's interest, a friend chosen based on those interests, an item chosen uniformly, a topic chosen according to that item's topics, a user will adopt that item with prob that's a function of their interest and the topic
+
+% --------- Multi modal -------
+
+"Correspondence LDA" - give images and captions the same topic \cite{Blei2003}
+
+Same idea used for PNAS publications (words and references are the two outputs) \cite{Erosheva2004}. Both share a single topic.
+
+Same for CTM (multiple field) \cite{Salomatin2009}
+
+Factorized multi modal \cite{Virtanen2012a}
+
+Multimodal HDP with images \cite{Yakhnenko2009}
+% ---------- DMR --------------
+
+DMR \cite{Mimno2008}
+GP CTM \cite{Hennig2012}
+matrix-variate DP mixtures\cite{Zhang2010}
+conditional topic random fields\cite{Zhu2010}
+
+% ---------- Supervised -------
+
+LabelledLda\cite{Ramage2009}
+SupervisedLda\cite{Rubin2011}
+
+
+\subsubsection{Non-Multinomial Admixtures of Text}
+See biterm topic model for short texts \cite{Yan2013}
+
+LDA-PYP\cite{Lindsey2012}. 
+
+Recall that the LDA-HDLM\cite{Wallach2006} makes use of Minka's\cite{Minka2000} updates.
+
+Topical keyphrase extraction on twitter\cite{Zhao2011a}
+
+
+\subsubsection{Determining Appropriate Numbers of Mixture Components}
+HDPS\cite{Teh2006b} - there's a 2004 Blei paper though
+
+Data-dependent CRP relaxes exchangeability assumption\cite{Kim2011}
+Gibbs for DPs by Radford Neal\cite{Neal2000}
+
+CTM\cite{Paisley2012}
+
+The nHDP is a generalization of the nested Chinese restaurant process (nCRP) that allows each word to follow its own path to a topic node according to a document-specific distribution on a shared tree. This alleviates the rigid, single-path formulation of the nCRP \cite{Paisley2012a}
+
+\subsubsection{Links to Other Models}
+
+Multinomial PCA: \cite{Buntine2002} With reference to \cite{Rubin2011}
+
+Sparse NMF\cite{Hoyer2004}. NMF needs priming (e.g. with SVD) \cite{Boutsidis2008}
+Multi-modal NMF: \cite{Bouchard2012}. Gradient methods for NMF (note also multiplicative update)\cite{Lin2007}. Distributed NMF\cite{Liu2010}
+
+With PLSI \cite{GiKa2003}, where PLSI is\cite{Hofmann1999}
+
+A multivariate probit paper \cite{Talhouk2011}
+
+\subsection{Non-Conjugate Variational Inference}
+
+Fast Bayesian Inference for Non-Conjugate Gaussian Process Regression\cite{Khan2012fastbayes}. And sticks are \cite{Khan2012stick}.
+
+The factor analysis paper (what have I been citing in probit for the unified bound?)\cite{Khan}. The piecewise paper\cite{Marlin2011}.
+
+
+\section{Multitask Prediction of Admixture Components for Microtexts}
+
+Comparing twitter and traditional media using topic models\cite{Zhao2011}
+
+Matrix variate theory \cite{Dawid1981}
+
+Bursty Topics: Dirichlet Compound Multinomial fused with LDA \cite{Doyle2009}
+Bursty topics / global vs personal interest \cite{Diao2010}
+Predicting hashtags the clumsy way\cite{Preot2012}
+LabelledLDA + Tweets (e.g. Smileys)\cite{Ramage2010}
+TwitterRank - Topic sensitive Twitters\cite{Weng2010}
+Author Topic Model of Twitter\cite{Xu2011}
+
+\bibliographystyle{plain}
+\bibliography{/Users/bryanfeeney/Documents/library.bib}
+
+\end{document}

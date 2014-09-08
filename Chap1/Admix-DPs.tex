@@ -1,0 +1,79 @@
+\input{../header.tex}
+
+\subsubsection{Determining Appropriate Numbers of Mixture Components}
+In both mixture and admixture models, a problem is how to determine the appropriate number of components, $K$. In the case of mixture models, the simplest possible method is to train a model on a number of different values of $K$, and then evaluate the model on held out data using some evaluation metric. Oftentimes a heuristic such as canopy-clustering\cite{McCallum2000} can be used to determine an appropriate range of values of $K$ in advance.
+
+In the field of Bayesian mixture modelling, emphasis has been placed on using the prior over mixture components to select the appropriate number of topics. For example, if one places a Dirichlet prior over the mixing distribution for the corpus with a very small symmetric hyperparameter $\alpha = 10^{-3}$ say encodes a preference for sparse models, where extra redundant clusters may essentially never be used. 
+
+
+In the case of a finite Dirichlet distribution, a well known result is that small values of it's hyper-parameter $\alpha$ encode preferences for sparse values. In fact, if one follows the notation of  one can use a two parameter
+
+
+A more flexible approach is to replace the Dirichlet prior over mixture components with a Dirichlet process, which can be thought of as a the limit of a Dirichlet distiribution over $K$ topics as $K \rightarrow \infty$. In order to motivate the Dirichlet process it is worth considering two other processes: the Chinese-Restaurant Process (CRP) and and the Stick-Breaking Process (SBP).
+
+In the following it is useful to be aware of the two-parameter definition of a Dirichlet distribution used in \cite{MacKay1995}\cite{Wallach2006}\cite{Wallach2009a} among others. In this case we write $\vv{\theta} \sim \dir{\alpha \vv{m}}$ where $\vv{m}$ is the ``base-measure" on the simplex, and $\alpha$ is a ``concentration" parameter. This reflects the fact that two Dirichlet distributions may have the encode prior over the same distribution with different strengths (e.g. $(2, 6, 10, 4)$ and $(0.2, 0.6, 1, 0.4)$) which differ only in ``concentration", i.e. by how much will a single observation affect the posterior. The manner in which the ``pseudo-counts" in the prior are incremented in the posterior by the observed counts in the likelihood is sometimes described as ``Polya Urn" model.
+
+As is well known, small symmetric hyperparameters lead to sparse draws from a Dirichlet. However by taking this form we see that large and small hyper-parameters have the same base measure $\vv{m}=\vv{1}$ and it is in fact that small values of the concentration parameter $\alpha$ that encode a preference for sparse drawss.
+
+The CRP\cite{Neal2000} describes a restaurant which initially opens with no tables. A sequence of customers arrive to the restaurant, and for each customer, they can be sat at a new table, or sat at one of the tables with have already been allocated alongside other customers. If we define a concentration parameter $\alpha$, the number of customers sat at a table $k$ as $n_k$ and the total number of customers as $n = \sum_k n_k$, then we can define the probability that the $(n+1)$-th customer will be sat at a new table as $\frac{1}{\alpha + 1}$ and the probability that a customer will be sat at table $k$ as $\frac{n_k + 1}{N + \alpha}$. 
+
+Clearly for large values of $\alpha$ each customers is more likely to be sat at a new table, while for small values of $\alpha$ it is more likely that each customer will be sat at an existing table, thereby encoding a preference for fewer tables overall. The probability that a customer will be sat at a new table is never zero. Further, the more customers that are sat at a table, the more likely a new customer will also be sat at that table, encoding a ``rich get richer" property.
+
+In summary, the CRP is a distribution over partitions of $n$ datapoints. Additionally, each  partition (i.e. table) can be assigned distribution $\phi_k \sim G_0$ drawn from a prior $G_0$, called ``base distribution".
+
+The stick-breaking process (SBP) handles the case of a CRP run without stop, i.e. for an infinite number of customers. The problem the stick-breaking process solves is determining which proportion of customers overall are sat at each table in the Chinese restaurant.. The process starts by defining a ``stick" of length 1. A point is chosen between $0$ and $1$ to break the stick, equivalent to making a draw $\pi_1 \sim \mathcal{B}eta\left(1, \alpha\right)$. The left-side is the first proportion. For the second proportion we break the righthand side stick, equivalent to making another draw $\pi_2 \sim \mathcal{B}eta\left(1, \alpha\right)$, and then rescaling it by the righthand side stick's length $1-\pi_1$. This can be applied recursively to generate an infinite number of stick subdivisions:
+\begin{align}
+\hat{\pi}_k & \sim \mathcal{B}eta\left(1, \alpha\right) & \pi_k = \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \pi_j)
+\end{align}
+
+Since our stick was of length 1 to begin with, we know that $\sum_{k=1}^{\infty} \pi_k = 1$ and so it defines a valid probability distribution. From the properties of the Beta distribution, we know that for small values of $\alpha$ the initial stick breaks will be quite large, and so that most of the customers will be sat at the first few tables, whereas for large values, small breaks will be created so fewer customers will be sat at more tables. As with the CRP, this does not address the issue of the probability distribution associated with each table, but we can sample this from some prior $G_0$.
+
+With this we can describe the Dirichlet Process. Formally, the Dirichlet Processs is a distribution over distributions $G$, parameterised by a concentration parameter $\alpha$ and a base-measure $G_0$, such that
+\begin{align}
+G \sim \text{DP}\left(\alpha, G_0\right)
+\end{align}
+One can use CRPs or SBPs to implement draws from DP priors. For example, suppose we want to generate a sample $\wdoc$ from $G$. One approach would be to implement a CRP\cite{Neal2000}, where each $\wdoc$ to arrive at the restaurant is sat at a table $k$ according to the CRP with concentration parameter $\alpha$, and each table is associated with some ``atom" $\phi_k \sim G_0$.
+
+Equally, one could use a SBP\cite{Sethuraman1994} to generate weights $\pi_k$ with associated atoms $\phi_k$ and assign $\phi_k$ to observation $\wdoc$ with probability $\pi_k$. In practice, the total number of weights is generally truncated at some upper limit less than or equal to the size of the corpus. 
+
+As should be clear from the presentation, the ``atoms" associated with each table or stick-fragment can correspond to distributions, such as component distributions in a mixture model. The CRP naturally lends itself to the design of Gibbs sampling algorithms, whereas the SBP is typically used optimisation algorithms. 
+
+A non-parametric equivalent to LDA, the Hierarchical Dirichlet Process (HDP) was presented in \cite{Teh2006b}. The model is specified as
+\begin{align}
+G_0 | \gamma, H & \sim \text{DP}\left(\gamma, H \right) &
+G_d | \alpha, G_0 & \sim \text{DP}\left(\alpha, G_0\right) \\
+z_{dn} |G_d &\sim G_d & w_{dn} | z_{dn} & \sim F(z_{dn})
+\end{align}
+
+Despite the superficial similarities to LDA, it should be noted that the whereas in LDA the parameters $z_{dn}$ are keys into a matrix of per-component probability-distributions, in HDP $z_{dn}$ is an atom from which a distribution over words is formed: specifically the base measure $H$ is the prior over \emph{words} (or other discrete observations), and takes the place of the $\dir{\vv{\beta}}$ prior over component distributions in LDA. Implementations using CRPs and SBPs are presented in\cite{Teh2006b}, while an in-depth description of DPs, CRPs, SBPs and their applications is given in\cite{JordanMichael2005a}
+
+Dirichlet processes, like Dirichlet distributions assume that components are near-independent. The Discrete Infinite Logistic Normal (DILN) distribution\cite{Paisley2012} incorporates HDP into CTM in order to capture correlations amongst a potentially infinite number of components. The derivation proceeds in several stages. Firstly, it is observed that just as one can sample from a K-dimensional Dirichlet distribution by normalising draws from K independent Gamma distributions that have been suitably parameterised, so too one can present the HDP as a normalised Gamma Process. The top-level DP is constructing using an SBP:
+\begin{align}
+G_0 & = \sum_{k=1}^\infty \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j)\delta_{\phi_k} & 
+\hat{\pi}_k & \sim \mathcal{B}eta\left(1, \gamma\right) &
+\delta_{\phi_k} & \sim H
+\end{align}
+
+Then the document-level DP is constructed using a normalised Gamma Process
+
+\begin{align}
+G_d|G_0, Z & = \sum_{k=1}^\infty \frac{Z_k^{(d)}}{\sum_{j=1}^\infty Z_j^{(d)}} \delta_{\phi_k} &
+Z_k^{(d)} | G_0 &\sim \gam{\beta \pi_k}{1} &
+\pi_k & = \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j)
+\end{align}
+
+This is then extended to the correlated case by defining a \emph{location} $l_k \sim L$ associated with each atom $\phi_k \sim H$, so that the base and document level distributions are defined by
+
+\begin{align}
+G_0 & = \sum_{k=1}^\infty \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j)\delta_{\phi_k,l_k} &
+G_d|G_0, Z & = \sum_{k=1}^\infty \frac{Z_k^{(d)}}{\sum_{j=1}^\infty Z_j^{(d)}} \delta_{\phi_k, l_k}
+\end{align}
+
+where $Z_k^{(d)} | G_d, W_d \sim \gam{\beta \pi_k}{\exp(-W_d(l_k))}$ and $W_d | G_0 \sim \text{GP}\left(\vv{m}(l), K(l, l')\right)$. The locations serves to generate sequences $Z_1^{(d)}, Z_2^{(d)},\ldots$ which are correlated, and thereby define an infinite dimensional correlated prior over discrete components.
+
+
+
+%The nHDP is a generalization of the nested Chinese restaurant process (nCRP) that allows each word to follow its own path to a topic node according to a document-specific distribution on a shared tree. This alleviates the rigid, single-path formulation of the nCRP \cite{Paisley2012a}
+%Data-dependent CRP relaxes exchangeability assumption\cite{Kim2011}
+
+\input{../footer.tex}

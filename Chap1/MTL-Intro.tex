@@ -1,0 +1,20 @@
+\input{../header.tex}
+
+\subsection{Multi-Task Learning}
+
+There are many cases where one needs to make many predictions from the same data. Examples include predicting scores in many different exams for a school-child\cite{Bonilla2008}\cite{Evgeniou2005}; predicting affinity to different aspects of a product for a single customer\cite{Allenby1999}; and predicting the values of many potentially related financial indicators\fixme{Book: Economic analysis prentice hall, 5th ed, 2002}(referenced in \cite{Evgeniou2005}. As shown in \cite{Caruana1997} in the case where these prediction \emph{tasks} are related, performance can be improved, particularly when data is limited, by allowing a transfer of knowledge between tasks; however \cite{Caruana1997} also showed that simply assuming inter-task relatedness where no relationship exists may be detrimental.
+
+The multitask setting usually consists of a dataset $\mathcal{S} = \left\{\left(\vv{x}_n, \vv{t}\right)\right\}_{n=1}^N$ where $\vv{x}_n \in \VReal{F}$ are the features and $\vv{t} \in \VReal{L}$ are the outputs for each task. In some cases, where not all task outputs are available for each datapoint, or where task-specific features exist, this presentation is amended to $\mathcal{S} = \left\{\left\{\left(\vv{x}_{nl}, t_l\right)\right\}_{l=1}^L\right\}_{n=1}^N$. 
+
+As described in\cite{Argyriou2005} the method of information transfer broadly falls into two categories. In the first, one assumes that tasks have some common underlying representation, which can be shared\cite{Caruana1997}. An example of this is Dirichlet Multinomial Regression\cite{Mimno2008} which, while presented as a method of learning mixture probabilities in an admixture of multinomials for text, can equally be thought of as a multi-task learning problem, issuing predictions for individual words by employing a topic-model to learn a low-dimensional topic-space from which word-counts are generated. \fixme{Exploiting task relatedness for MTL - Ben-David etc, COLT 2003}
+
+The other approach, and the one which will be the focus of this section, is that of assuming that task-specific functions are ``close" together according to some metric. In the case of optimisation-based approached to machine learning, a number of approaches have been investigated to see if appropriate norms could be constructed to transfer knowledge while learning a low-dimensional feature-space\cite{argyriou2007spectral}; learn sparse features\cite{Argyriou2005}; and using kernels to capture correlations\cite{Evgeniou2005}
+
+In the Bayesian case, this naturally corresponds to learning the prior over functions. An early approach is that of \cite{Allenby1999} which, learnt a weight vector $\vv{w}_l$ for each task, each sharing the same Gaussian prior. By learning the parameters of the prior, information was transferred between weights. This method was extended in a number of ways in \cite{BakkerHeskes2003}, notably by using a mixture of Gaussians as the prior over weights, enabling tasks to be clustered, with information shared between clusters, thereby handling task heterogeneity.
+
+
+Learning Multiple Tasks with a Sparse Matrix-Normal Penalty\cite{Zhang2010a}
+
+Multi-task relationship learning\cite{Zhang2012mtrl}
+
+\input{../footer.tex}

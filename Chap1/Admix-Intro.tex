@@ -1,0 +1,93 @@
+\input{../header.tex}
+
+\subsection{Admixture Models of Text}
+In order to perform inference on text, it is necessary to create a representation of text which captures its essential statistical properties in as parsimonious a form as possible, the latter being required to overcome the ``curse of dimensionality"\cite{Bishop2006} in the presence of limited data.
+
+The simplest possible representation of text is the so-called bag of words vector. Given a vocabulary of $T$ words, and a document $d$ containing $n_{d\cdot\cdot}$ word observations, a bag of words is a vector $\vv{w}_d \in \VNat{T}$ where each dimension $w_{dt}$ indicates how many times word $t$ was observed in document $d$. This is sometimes known as the ``vector-space model"\cite{Jst2004} of text. In statistics, this is equivalent to making the exchangeability assumption with regard to words. A finite sequence of random variables $\{w_t\}_{t=1}^{T}$ is exchangeable if its joint distribution is invariant to any permutation of its order. For an infinite sequence to be considered exchangeable, all finite subsequences must be exchangeable. DeFinetti's theorem\cite{Hewitt1955} states that the joint distribution of some exchangeable sequence of variables is equivalent to sampling a random parameter $\theta$ from some prior distribution, then sampling IID random variables conditional on that random parameter such that $p\left(\{w_t\}_{t=1}^{T}\right) = \prod_t p(w_t | \theta)$.
+
+There are a number of problems with this representation. Firstly words with little semantic meaning such as "the", "of" and "a" will dominate; these are known as ``stop-words". Secondly attempts to learn simple naive Bayes classifiers\cite{Nigam2000} will struggle due the synonymy, where different words have the same meaning, and polysemy, where the same word has different meanings. Finally there is the issue of dimensionality: typically $T > 10,000$\footnote{For example for the Reuters-21578 dataset, $T\approx 12,500$ whereas for the large-scale website corpus used in\cite{Smola2010} $T \approx 10^6$}. These issues of synonymy, polysemy in particular affect not only the ability to train models, but also perform information retrieval, where a query phrase may not exist in a document whose words nevertheless match the topic of the query phrase.
+
+The issue of stop-words is addressed in the vector-space model by employing a term-frequency/inverse document-frequency transformation. The term frequency is simply a rescaling of the count matrix by $\frac{1}{||\vv{w}||_1}$, while the $t$-th element of the IDF vector is $\ln N - \ln \sum_d \one_{w_{dt} > 0}$, and the TF-IDF vector is their elementwise product. By counting the number of documents in which a word occurs, the IDF downscales terms which occur across all documents. With regard to synonymy, purely heuristic approaches exist such as ``stemming" which identify additions to words imposed by grammar. For example four rules might be to remove "e", "ing", "ed" and "s" from the end of a word, such that "excite", "exciting", "excited" and "excites" would all be reduced to the word's stem, ``excit". The most popular stemmer is the PorterStemmer\fixme{cite?}. This still does not handle all cases of synonymy however (e.g. ``excited" and "enthusiastic") nor does it address polysemy.
+
+There has been considerable research into deriving inferential methods by which the problems of polysemy and synonymy can be addressed. Typically these have involved the idea of projecting words into some low-dimensional space, where each dimensions correspond to some semantic meaning, often referred to as ``topics". The earliest approach is latent semantic analysis\footnote{Sometimes the term latent semantic indexing (LSI) is used, due to the original application to document retrieval. Similarly pLSA is sometimes referred to as pLSI} (LSA)\cite{Deerwester1990} which takes a $D\times T$ document-term matrix $W$ using TF-IDF encodings of words, and decomposed it using a singular value decomposition $W = USV\T$. By ranking the singular values, similar to principal components analysis (PCA), one can identify the subspaces which account for most of the variance, which it is assumed correspond to topics.
+
+
+\begin{figure}
+\centering
+    \subfigure[]{
+        \input{plots/mom-diagram.tex}
+    }
+    \subfigure[]{
+        \input{plots/lda-diagram-2.tex}
+    }
+    \caption{Plate diagrams for (a) a mixture of multinomials and (b) latent dirichlet allocation}
+\label{fig:plates}
+\end{figure}
+However this does not identify a probabilistic, interpretable model of the text. The simplest possible model is a mixture of multinomials\cite{Nigam2000}:
+
+\begin{align}
+p(W) = p(\vv{\theta}|\vv{\alpha} \prod_d \sum_{z_d} p(z_d|\vv{\theta})\prod_n p(w_{dn} | z_d, \Phi)
+\end{align}
+where $\vv{\theta}$ is the corpus-wide distribution over topics, $z_d$ is teh single topic with which the whole of document $d$ is modelled, and $\Phi$ is the $K \times T$ matrix of $K$ topic-specific $T$-dimensional word-distributions. Finally $\vv{w}_d$ is a list of word-observations of length $n_{d\cdot\cdot}$. In practice the assumption that each document can be described by a single topic is often too restrictive. Further, it precludes better fit by increasing the size of the topic space K as topics defined by fewer training examples will have more elements of vocabulary with zero (or near-zero) probability.
+
+Probabilistic latent semantic analysis\cite{Hofmann1999a} addresses this by enabling each word in a document to have its own topic, allowing for many topics per document, and thereby allowing better fit with greater numbers of topics:
+
+\begin{align}
+p(W) = \prod_d p(d) \prod_n \sum_{z_{dn}} p(w_{dn}|z_{dn})p(z_{dn}|d)
+\end{align}
+The number of parameters - the $K$ topic assignments per document - grows linearly with the size of the training set $W$, and so this model suffers severely from overfitting. In the original presentation, this was addressed by using a variant of EM known as ``tempered" EM which raises the likelihood to the power of some temperature parameter when evaluating the posterior over topic-assignments in the E-Step. Unlike the mixture of multinomials, this is not a generative model, as the topic is sampled based on $d$, an index into the training set. This in turn means that there is not principled way to handle unseen data, and so one must use the fold-in heuristic which evaluates the likelihood of a new document $\vv{w}^*$ as
+
+\begin{align}
+p(\vv{w}^*|\Phi) = \sum_d p(d) \prod_n \sum_{z_{dn}} p(w_{dn}^*|z_{dn}, \Phi) p(z_{dn}|d)
+\end{align}
+An issue with this heuristic is that is necessarily requires that at least one document in the training set have the same topic proportions as the query document, otherwise the probability will collapse to zero, and like the mixture of multinomials, this will become less likely as K increases.
+\fixme{Blei gives no n subscript for z, and puts p(d) in the product over n}
+
+The Latent Dirichlet Allocation model\cite{BleiNgJordan2003} (LDA) addresses by creating a fully generative model, exploiting the exchangeability assumptions not only of words, but also documents.
+
+\begin{align}
+\thd & \sim \dir{\vv{\alpha}} & \pk & \sim \dir{\vv{\beta}} \\
+z_{dn} & \sim \muln{\thd}{1} & w_{dn} & \sim \muln{\vv{\phi}_{z_{dn}}}{1}
+\end{align}
+The generative story is that for each document LDA samples a distribution $\thd$ over topics, then for each word samples a single topic from that distribution, which is then used to sample a word from the appropriate topic-specific word-distribution $\pk$, where we denote $\Phi = \{ \vv{\phi}_k\T \}_{k=1}^K$ and $\Theta = \{ \vv{\theta}_d\T \}_{d=1}^D$. The likelihood of a corpus is therefore defined as
+
+\begin{align}
+p(W | \vv{\alpha}, \vv{\beta}) = \prod_d \int \prod_n \sum_{z_{dn}} p(w_{dn}|z_{dn}, \Phi)p(z_{dn}|\thd)p(\thd|\vv{\alpha})p(\Phi|\vv{\beta}) d\thd d\Phi
+\end{align}
+
+
+
+By defining a complete generative model, LDA can make predictions on unseen documents. As shown in \cite{BleiNgJordan2003} it outperformed pLSA and mixtures of multinomials on perplexity (see \fixme{sections}) and also in prediction experiments where the inferred document-level topic distributions were used as features instead of bag-of-word vectors.
+
+\subsubsection{Comparison with other Models}
+More precisely, LDA can be described as an admixture of multinomials, in that it models a corpus as a mixture of document-level mixtures. The admixture of multinomial model\cite{Pritchard2000} in fact predates LDA, though that result was little known outside of the field of Bioinformatics. The Multinomial PCA algorithm\cite{Buntine2002} also predates LDA. As LDA is a word-level mixture, if one treats $\Phi$ as a parameter with no distribution one can equivalently rewrite the model as
+\begin{align}
+\wdoc & \sim \muln{\Phi\T\thd}{n_{d\cdot\cdot}} & \thd & \sim \dir{\vv{\alpha}}
+\end{align}
+from which the connection with PCA, where one typically write $x \sim \nor{W\T\vv{z}}{\sigma^2 I}$ for $\vv{z} \sim \nor{\vv{0}}{I}$, becomes clear.
+
+It is also possible to see LDA as a Bayesian estimate for pLSA, a result demonstrated in \cite{GiKa2003} where it was shown that LDA with symmetric Dirichlet priors parameterised by $\vv{\alpha} = \vv{\beta} = \vv{1}$ defined a proper Bayesian estimator for the pLSA model. 
+
+Finally it is worth noting that while the presentation has used text as a motivating example, LDA can be applied to any case where an admixture of multinomials is an appropriate distribution for the observations. In the original presentation\cite{BleiNgJordan2003} one example given was that of collaborative filtering, where users and the movie scores corresponded to documents and word-counts. Given that in an LDA model $W = \Theta \Phi$ one can see the correspondence between LDA and matrix factorization, a popular method of implementing recommender systems\cite{Salakhutdinov2007}, and indeed this correspondence has been investigated further in\cite{Agarwal2010}. In particular LDA can be seen to be a probabilistic form of non-negative matrix factorisation\cite{Lin2007}
+
+Other examples have included interactions (``words") between users on social networks (``documents") according to certain latent communities (``topics")\cite{Zhang2007}, or traditional topic modelling applied to images\cite{Philbin2008} using feature extraction methods to generate ``visual words". 
+
+\subsubsection{Capturing Correlation between Admixture Components}
+
+There has also been interest in replacing the Dirichlet prior over mixture components with a logistic normal distribution in order to capture correlations between topics. The logistic-normal distribution is a standard Gaussian, whose samples are mapped onto the simplex by a softmax transformation. This correlated topic-model (CTM), first proposed in \cite{Blei2006} is therefore
+\begin{align}
+\etd & \sim \nor{\vv{\mu}}{\Sigma} & \thd = \vv{\sigma}\left(\etd\right) = \left\{\frac{e^{\eta_{dk}}}{\sum_j e^{\eta_{dj}}}\right\}_{k=1}^K
+\end{align}
+after which the model follows as for LDA. Unlike LDA, where many implementers choose not to learn the hyper-parameters, in CTM it is essential in order to capture topic correlations. The non-conjugacy of the multinomial likelihood with the Gaussian prior makes inference complex and typically requires approximations, discussed in section \fixme{section}
+
+A separate approach to capturing correlations is Pachinko Allocation\cite{Li2006}. In this case, LDA is described as a three level Pachinko allocator, a particular class of tree-structured, directed, acyclic, graphical model, where a single root note, corresponding to a document, gives rise to $K$ intermediate nodes, corresponding to topics, which in turn gives rise to $T$ observations, corresponding to words. While any tree-structured DAG is feasible in the Pachinko model, a particular four-level tree where each node was fully connected to all nodes in the layer below, but not to any other layer (i.e there were no jumps, and no inter-layer links) was considered. This corresponds to a root node generating $Q$ intermediate topics $\vv{\psi}_d$, which generate $K$ topics $\thd$ which in turn generate $T$ words $\wdoc$. As such this encodes a non-linear transformation of the intermediate topics $\vv{\psi}_d$ into words $\wdoc$. One can think of this as implementing multinomial PCA over the topics in an otherwise standard LDA mode. An advantage of this approach over CTM is that it is not limited to capturing pairwise correlations via a covariance matrix.
+
+A similar idea was implemented for the correlated topic-model in \cite{Putthividhya2009} where instead of multinomial PCA, a factor-model over topics was used as a prior. Thus the prior over document-level topics took the form:
+
+\begin{align}
+\vv{z} & \sim \nor{\vv{0}}{I} & \etd & \sim \nor{A\vv{z} + \vv{\mu}}{\Sigma_0} & \thd = \vv{\sigma}\left(\etd\right) 
+\end{align}
+In this case $\Sigma_0$ is a fixed hyper-parameter and correlations are learnt via the factor-analysis model. Clearly this is equivalent to CTM where $\Sigma = AA\T + \Sigma_0$, but as with probabilistic PCA, the addition of the auxiliary variable $\vv{z}$ allows for the straightforward derivation of an inference algorithm using standard techniques. The same model also explores using a Laplacian prior over the latent space $\vv{z}$ in order not only to promote sparse topic-assignments, but also to aid in the interpretability of the matrix A.
+
+
+\input{../footer.tex}
