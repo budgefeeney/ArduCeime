@@ -35,7 +35,7 @@ do
 	echo $chap1File
 	tail -n +2 $chap1File | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap1\/plots\//g" >> $outfile
 done
-
+tail -n +2 "Chap2/main.tex" | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap2\/plots\//g" >> $outfile
 
 echo "\input{footer.tex}" >> $outfile
 echo >> $outfile
