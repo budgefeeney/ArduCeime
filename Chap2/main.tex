@@ -1,7 +1,5 @@
 \input{../header.tex}
 
-\tableofcontents
-
 \section{Multi-Task Prediction of Admixture Components for Microtexts}
 Bayesian admixture models have recently proved popular, particularly relative to traditional mixture models, as a means of modelling observations. Admixture models allow large numbers of mixing components without the over-fitting which would typically affect unregularlized mixture models. Moreover they provide an easily interpretable mechanism for dimensionality reduction.
 
@@ -411,16 +409,19 @@ As a baseline model, we use the correlated topic model, implemented using the Bo
 
 For CTM and LDA, we cross-validate the data, and train a model on the training set. We then partition the words in each document in the test set into estimation words and evaluation words as described perviously. Holding the inferred component-distributions (i.e. vocabularies) fixed, we infer mixture-distributions over each document using the estimation words, then use those distribution with the evaluation words to determine likelihood, and so perplexity, of the test-set.
 
-
 \subsection{Results}
 \subsubsection*{Twitter}
-The results of the correlated author-topic model of tweets, for both Bouchard and Bohning bounds, is given in figure \ref{fig:tweets-ctm}. Various counts of topics, $K$,  were used.
+The results of the correlated author-topic model of tweets, for both Bouchard and Bohning bounds, and for LDA is given in figure \ref{fig:tweet-ctm-lda}. The results are very peculiar, as, with the exception of LDA, they show perplexity \emph{increasing} as $K$ increases. For larger number of topics, LDA obtains a better model fit.
 
-The results of the full-covariance model, again for both the Bouchard and Bohning variants, are shown in figure \ref{fig:tweets-stm} where in addition to topic-counts, we also varied the size of the latent feature-space, $P$. For the Bouchard bound the prior covariance was fixed as a diagonal for performance reasons - no such compromise was required in the case of the Bohning algorithm.
+
+The results for the side-information model are given in figure \ref{fig:stm-p-all}. As with CTM, perplexity \emph{increases} as K increases. However it should be noted that for all values of K, our model outperforms the baseline author-topic model whether implemented using LDA or CTM. Of considerable concern however, is the fact that the selection of features appears to have no effect on model performance.
+
+In table \ref{tbl:generative} we show the ability of the model to generate data: specifically we show the ability to generate tweets for hashtags. As Twitter users often launch searches using hashtags this is of considerable benefit.
+
 
 \begin{figure}
 \centering
-    \includegraphics[width=0.6\textwidth]{plots/TweetCtmLda.pdf}
+    \includegraphics[width=0.7\textwidth]{plots/TweetCtmLda.pdf}
     \caption{Performance of LDA and CTM (implemented with Bohning and Bouchard bounds) on tweets aggregated by author}
     \label{fig:tweet-ctm-lda}
 \end{figure}
@@ -429,18 +430,23 @@ The results of the full-covariance model, again for both the Bouchard and Bohnin
 \centering
     \includegraphics[width=0.8\textwidth]{plots/TweetStmQueryFeatures.pdf}
     \caption{Performance of the STM models depending on the chosen features, which were author only, author and time features, time features only}
-    \label{fig:tweet-ctm-lda}
+    \label{fig:stm-p-all}
 \end{figure}
 
 \begin{table}
-  \begin{tabular}{l || l} \hline 
-  \tt{\#f1} & t shout volunt big singapor heartfelt out austin thank you marshal here all
-2013 round #italiangp championship light out #f1 12 time
-befor aussi grab circuit must beer #v8sc 15 race start
-have trap pit speed lane make #v8sc driver past
-  \end{tabular}
-  \caption{Examples of generative ability. Listed are the three tweets for which a hashtag is mostly likely according to the model, but not actually present in the tweet}
+    \begin{tabular}{| l || l | p{7cm} | } \hline 
+        Hashtag & User (Internal) & Tweet Words \\ \hline
+        \tt{usopen} & BreakPointBR & slam um gs 2007 oitava desd essa qf sua em gasquet foi na wimbledon de grand primeira 2ª apena | \\ \hline
+        \tt{f1} & AustinGrandPrix & mt shout volunt big singapor heartfelt out austin thank you marshal here all \\ \hline
+        \tt{obama} & CraryAP & danger awai unstabl dem bill senat other delaware from peopl keep reject guncontrol nra gun \\ \hline
+        \tt{beer} & Beer\_Disciples & barrel annual brewhous expand growth track capac 150 10,000 \\ \hline
+        \tt{stones50} & RollingStones & summer park stone live hyde sweet youtub sun roll trailer \\ \hline
+    \end{tabular}
+    \caption{This table shows, for each hashtag, the tweet where that hashtag has the highest probability according to our model, yet is not present. Due to stemming, the words shown are not exactly as in the original tweet.}
+    \label{tbl:generative}
 \end{table}
+
+
 
 %\begin{figure}
 %\centering
@@ -458,8 +464,6 @@ have trap pit speed lane make #v8sc driver past
 %  \caption{Perplexity results for the correlated topic model of tweets}
 %  \label{fig:tweets-ctm}
 %\end{figure}
-
-With regard to the baseline, it is clear that our approach provides a better fit than the correlated author-topic model both overall, and for each individual value of $K$.
 
 %\begin{figure}
 %\centering
@@ -506,39 +510,39 @@ Regardless of the algorithm chosen however, one issue which standards out is tha
 %In the NIPS datasets the size of the latent dimension does have an effect on perplexity. Looking at the training data in figure \ref{fig:nips-stm-train}, we can see that as the number of topics increases, P also needs to increase as well to minimise perplexity, but only for the Bouchard bound (which again is essentially a mixture model).
 %
 %Looking at the query results, something slightly different appears, however: perplexity is improved as P is kept \emph{small}, indicating that it is helping to avoid over-fitting of the matrix $A$ to the training data. This same effect is present in both versions of the algorithm, but is much more visible in the Bouchard variant. To make the impact clear, a re-scaled version of the query perplexity is shown in figure \ref{fig:nips-stm-query-bohning} for the Bohning bound, though it's important to bear in mind how tight the scale is.
+
+%\begin{figure}
+%\centering
+%    \includegraphics[width=\textwidth]{nips-stm-train.png}
+%    \caption{Training perplexity results for the full covariance Model on NIPS datasets}
+%    \label{fig:nips-stm-train}
+%\end{figure}
 %
-%%\begin{figure}
-%%\centering
-%%    \includegraphics[width=\textwidth]{nips-stm-train.png}
-%%    \caption{Training perplexity results for the full covariance Model on NIPS datasets}
-%%    \label{fig:nips-stm-train}
-%%\end{figure}
-%%
-%%\begin{figure}
-%%\centering
-%%    \includegraphics[width=\textwidth]{nips-stm-query.png}
-%%    \caption{Query perplexity results for the full covariance Model on NIPS datasets}
-%%    \label{fig:nips-stm-query}
-%%\end{figure}
-%%
-%%\begin{figure}
-%%\centering
-%%    \includegraphics[width=\textwidth]{nips-stm-query-bohning.png}
-%%    \caption{Rescaled plot of the query perplexity results for the full covariance Model on NIPS datasets using the Bohning bound}
-%%    \label{fig:nips-stm-query-bohning}
-%%\end{figure}
+%\begin{figure}
+%\centering
+%    \includegraphics[width=\textwidth]{nips-stm-query.png}
+%    \caption{Query perplexity results for the full covariance Model on NIPS datasets}
+%    \label{fig:nips-stm-query}
+%\end{figure}
+%
+%\begin{figure}
+%\centering
+%    \includegraphics[width=\textwidth]{nips-stm-query-bohning.png}
+%    \caption{Rescaled plot of the query perplexity results for the full covariance Model on NIPS datasets using the Bohning bound}
+%    \label{fig:nips-stm-query-bohning}
+%\end{figure}
 
 
-
-{\color{red}
-{\bf Baseline results:}
-I've had an odd issue with CTM on NIPS. With no regularization (i.e. vanilla MLE updates) the determinant of the covariance matrix approaches zero and the inference crashes out. However if I put a $\mathcal{NIW}(\vv{0}, \lambda I_K)$ hyperprior on the mean and covariance,  with $\lambda=0.01$, the determinant increases exponentially - becoming huge after 500 or so iterations. Moreover, with an NIW prior, the impact of the posterior document topic-variances on the overall covariance is negligible.
-
-That said, on the full NIPS dataset, last year, when I was experimenting with different LDA implementations, at K=40 perplexity was 1,300 with LDA implemented using Gibbs sampling.
-}
+%
+%{\color{red}
+%{\bf Baseline results:}
+%I've had an odd issue with CTM on NIPS. With no regularization (i.e. vanilla MLE updates) the determinant of the covariance matrix approaches zero and the inference crashes out. However if I put a $\mathcal{NIW}(\vv{0}, \lambda I_K)$ hyperprior on the mean and covariance,  with $\lambda=0.01$, the determinant increases exponentially - becoming huge after 500 or so iterations. Moreover, with an NIW prior, the impact of the posterior document topic-variances on the overall covariance is negligible.
+%
+%That said, on the full NIPS dataset, last year, when I was experimenting with different LDA implementations, at K=40 perplexity was 1,300 with LDA implemented using Gibbs sampling.
+%}
 
 \subsection{Conclusion}
-In this paper we have introduced a method employing multi-task learning to predict admixture-components, using quadratic bounds to overcome the non-conjugacy of the model. We have successfully applied this method in the case of a NIPS dataset, where the low-rank covariance over features helps regularize and prevent overfitting. In this case of micro-texts using identity features, the features themselves prove not to show any correlation, and so we gain little benefit from this construction. Notwithstanding this, our model still shows an improvement over a simple correlated. author-topic model, as the addition of temporal features allow a better model fit. Our method is not specific to any particularly dataset, and so can be applied to any dataset where features may be associated with observations which can be fit using an admixture model.
+In this paper we have introduced a method employing multi-task learning to predict admixture-components, using quadratic bounds to overcome the non-conjugacy of the model. We have successfully applied this method in the case of a dataset of tweets demonstrating better model fit versus a simple author topic model, and the ability to generate additional text that may help in query expansion. Our method is not specific to any particularly dataset, and so can be applied to any dataset where features may be associated with observations which can be fit using an admixture model.
 
 
 %\begin{appendices}
