@@ -241,7 +241,7 @@ Assuming the prior covariance is isotropic (e.g. $\Lambda = \frac{1}{\alpha} I$)
 \vv{t}|\vv{w} & = \nor{\vv{y}}{\frac{1}{\beta}I} \\
 p(\vv{t}) & = \int p(\vv{t}|\vv{y})p(\vv{y}) = \nor{\vv{0}}{C}
 \end{align}
-where $C = \frac{1}{\beta} I + \frac{1}{\alpha}K$. As well as capturing observation errors, on a more practical level the addition of a noise term ensures the covariance is positive definite and therefore invertible (kernel matrices are required to be positive semidefinite only\fixme{cite JST}).
+where $C = \frac{1}{\beta} I + \frac{1}{\alpha}K$. As well as capturing observation errors, on a more practical level the addition of a noise term ensures the covariance is positive definite and therefore invertible (kernel matrices are required to be positive semidefinite only\cite{Jst2004}).
 
 Prediction is obtained by augmenting the distribution over $\vv{t}$ with the new value $t_*$ leading to joint distribution from which, again using standard identities, $\vv{t}$ can be marginalised out to derive the predictive distribution.
 
@@ -251,7 +251,6 @@ p(t_*) & = \nor{\vv{k}\T \inv{C} \vv{t}}{c - \vv{k}\T \inv{C} \vv{k}}
 \end{align}
 
 where $c = \frac{1}{\beta} + \kappa (\vv{x}_*, \vv{x}_*)$, $\vv{k} = \{\kappa(\vv{x}_*, \vv{x}_n)\}_{n=1}^{N}$ and $\kappa(\cdot, \cdot)$ is the kernel function.
-\fixme{Verify according to Bishop that this is zero mean throughout}.
 
 In the case of logistic regression, one can again put a GP prior on the utility scores $\vv{a}$, but the observations $\vv{t}$ now have a multi-variate Bernoulli distribution.
 
