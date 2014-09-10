@@ -402,8 +402,8 @@ Within the text itself, tokens were divided into six categories: addressees, has
 
 Unlike \cite{Wu2010} and \cite{Han2011} we did not use query-expansion techniques such as spell-checkers or slang dictionaries to undo abbreviations, as abbreviated vocabularies might be a distinct mixture-component in its own right. URLs were included based on the results published in \cite{Michelson2010} which showed they were associated with distinct topics, though use of URL-shorteners makes it impossible to detect what the true URL was post-hoc.
 
-\subsubsection*{NIPS Dataset}
-The next dataset we consider is a the familiar NIPS dataset prepared by Sam Roweis and Yann Lecun consisting of papers published between 1987 and 1999. The full dataset contains 1,740 documents from 2,037 authors comprising 2,301,375 tokens. We limited this to a corpus consisting only those documents for which all authors and at least one reference occurred at least three other times in that same corpus. This (much reduced) corpus then consisted of 682 documents comprising 1,075,323 tokens, with 133 authors and 232 references. References in this case were identified only by the alphabetically ordered list of surnames and a year, so may not map one-to-one with the true references. 80\% of papers had one author only. With regard to references, approximately 32\% of documents had one reference only, 24\% had two references, 15\% had three references and 30\% had more than three references. Note that within each document many references would have been excluded as they did not occur with sufficient frequency across the entire corpus.
+%\subsubsection*{NIPS Dataset}
+%The next dataset we consider is a the familiar NIPS dataset prepared by Sam Roweis and Yann Lecun consisting of papers published between 1987 and 1999. The full dataset contains 1,740 documents from 2,037 authors comprising 2,301,375 tokens. We limited this to a corpus consisting only those documents for which all authors and at least one reference occurred at least three other times in that same corpus. This (much reduced) corpus then consisted of 682 documents comprising 1,075,323 tokens, with 133 authors and 232 references. References in this case were identified only by the alphabetically ordered list of surnames and a year, so may not map one-to-one with the true references. 80\% of papers had one author only. With regard to references, approximately 32\% of documents had one reference only, 24\% had two references, 15\% had three references and 30\% had more than three references. Note that within each document many references would have been excluded as they did not occur with sufficient frequency across the entire corpus.
 
 
 \subsubsection{Baseline Model}
@@ -432,7 +432,15 @@ The results of the full-covariance model, again for both the Bouchard and Bohnin
     \label{fig:tweet-ctm-lda}
 \end{figure}
 
-
+\begin{table}
+  \begin{tabular}{l || l} \hline 
+  \tt{\#f1} & t shout volunt big singapor heartfelt out austin thank you marshal here all
+2013 round #italiangp championship light out #f1 12 time
+befor aussi grab circuit must beer #v8sc 15 race start
+have trap pit speed lane make #v8sc driver past
+  \end{tabular}
+  \caption{Examples of generative ability. Listed are the three tweets for which a hashtag is mostly likely according to the model, but not actually present in the tweet}
+\end{table}
 
 %\begin{figure}
 %\centering
@@ -494,31 +502,31 @@ Regardless of the algorithm chosen however, one issue which standards out is tha
 
 
 
-\subsubsection*{NIPS}
-In the NIPS datasets the size of the latent dimension does have an effect on perplexity. Looking at the training data in figure \ref{fig:nips-stm-train}, we can see that as the number of topics increases, P also needs to increase as well to minimise perplexity, but only for the Bouchard bound (which again is essentially a mixture model).
-
-Looking at the query results, something slightly different appears, however: perplexity is improved as P is kept \emph{small}, indicating that it is helping to avoid over-fitting of the matrix $A$ to the training data. This same effect is present in both versions of the algorithm, but is much more visible in the Bouchard variant. To make the impact clear, a re-scaled version of the query perplexity is shown in figure \ref{fig:nips-stm-query-bohning} for the Bohning bound, though it's important to bear in mind how tight the scale is.
-
-%\begin{figure}
-%\centering
-%    \includegraphics[width=\textwidth]{nips-stm-train.png}
-%    \caption{Training perplexity results for the full covariance Model on NIPS datasets}
-%    \label{fig:nips-stm-train}
-%\end{figure}
+%\subsubsection*{NIPS}
+%In the NIPS datasets the size of the latent dimension does have an effect on perplexity. Looking at the training data in figure \ref{fig:nips-stm-train}, we can see that as the number of topics increases, P also needs to increase as well to minimise perplexity, but only for the Bouchard bound (which again is essentially a mixture model).
 %
-%\begin{figure}
-%\centering
-%    \includegraphics[width=\textwidth]{nips-stm-query.png}
-%    \caption{Query perplexity results for the full covariance Model on NIPS datasets}
-%    \label{fig:nips-stm-query}
-%\end{figure}
+%Looking at the query results, something slightly different appears, however: perplexity is improved as P is kept \emph{small}, indicating that it is helping to avoid over-fitting of the matrix $A$ to the training data. This same effect is present in both versions of the algorithm, but is much more visible in the Bouchard variant. To make the impact clear, a re-scaled version of the query perplexity is shown in figure \ref{fig:nips-stm-query-bohning} for the Bohning bound, though it's important to bear in mind how tight the scale is.
 %
-%\begin{figure}
-%\centering
-%    \includegraphics[width=\textwidth]{nips-stm-query-bohning.png}
-%    \caption{Rescaled plot of the query perplexity results for the full covariance Model on NIPS datasets using the Bohning bound}
-%    \label{fig:nips-stm-query-bohning}
-%\end{figure}
+%%\begin{figure}
+%%\centering
+%%    \includegraphics[width=\textwidth]{nips-stm-train.png}
+%%    \caption{Training perplexity results for the full covariance Model on NIPS datasets}
+%%    \label{fig:nips-stm-train}
+%%\end{figure}
+%%
+%%\begin{figure}
+%%\centering
+%%    \includegraphics[width=\textwidth]{nips-stm-query.png}
+%%    \caption{Query perplexity results for the full covariance Model on NIPS datasets}
+%%    \label{fig:nips-stm-query}
+%%\end{figure}
+%%
+%%\begin{figure}
+%%\centering
+%%    \includegraphics[width=\textwidth]{nips-stm-query-bohning.png}
+%%    \caption{Rescaled plot of the query perplexity results for the full covariance Model on NIPS datasets using the Bohning bound}
+%%    \label{fig:nips-stm-query-bohning}
+%%\end{figure}
 
 
 
