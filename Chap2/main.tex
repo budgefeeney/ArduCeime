@@ -434,15 +434,26 @@ In table \ref{tbl:generative} we show the ability of the model to generate data:
 \end{figure}
 
 \begin{table}
-    \begin{tabular}{| l || l | p{7cm} | } \hline 
-        Hashtag & User (Internal) & Tweet Words \\ \hline
-        \tt{usopen} & BreakPointBR & slam um gs 2007 oitava desd essa qf sua em gasquet foi na wimbledon de grand primeira 2ª apena | \\ \hline
-        \tt{f1} & AustinGrandPrix & mt shout volunt big singapor heartfelt out austin thank you marshal here all \\ \hline
-        \tt{obama} & CraryAP & danger awai unstabl dem bill senat other delaware from peopl keep reject guncontrol nra gun \\ \hline
-        \tt{beer} & Beer\_Disciples & barrel annual brewhous expand growth track capac 150 10,000 \\ \hline
-        \tt{stones50} & RollingStones & summer park stone live hyde sweet youtub sun roll trailer \\ \hline
+    \centering
+    \begin{tabular}{| l || p{9cm} | } \hline 
+        \bf{Hashtag} & %\bf{User (Internal)} & 
+        \bf{Tweet Words} \\ \hline
+        $\#$\tt{usopen} & %BreakPointBR & 
+        Essa foi apenas a 2a vitoria de Gasquet nas oitavas de um Grand Slam. O frances alcanca sua primeira QFs em GS desde Wimbledon 2007 | \\ \hline
+        $\#$\tt{f1} & %AustinGrandPrix & 
+         MT @f1paddockpass: ...a big shout out to the marshalls \& volunteers here in Singapore. To all of you, heartfelt thanks @F1NightRace \\ \hline
+        $\#$\tt{tcot} & %CraryAP & 
+        $\#$Delaware Senate rejects bill to keep guns away from unstable people deemed danger to others http://hrld.us/110xnGt $\#$guncontrol $\#$NRA \\ \hline
+        $\#$\tt{beer} & %Beer\_Disciples & 
+        No-Li Brewhouse on track for 150\% growth, expanding annual capacity to 10,000 barrels ... \\ \hline
+        $\#$\tt{obamacare} & %AFPhq & 
+        @michellemalkin $\#$feded supporters simply believe you won't challenge them. $\#$stopcommoncore @afpne \\ \hline
+        $\#$\tt{stones50} & %RollingStones & 
+        Sweet Summer Sun - Hyde Park Live full length trailer! What do you think? http://www.youtube.com/watch?v=jgIXgYFUErE ... $\#$StonesHydePark \\ \hline
+        $\#$\tt{eurozone} & %Annika\_Reuters & 
+        $\#$German finmin $\#$Schaeuble argues $\#$Karlsruhe may have no jurisdiction over $\#$ECB measures.1st question by court's judges also focuses on this. \\ \hline
     \end{tabular}
-    \caption{This table shows, for each hashtag, the tweet where that hashtag has the highest probability according to our model, yet is not present. Due to stemming, the words shown are not exactly as in the original tweet.}
+    \caption{This table shows, for each hashtag, the tweet where that hashtag has the highest probability according to our model. The ``tcot" hashtag refers to ``true conservatives on twitter".}
     \label{tbl:generative}
 \end{table}
 
