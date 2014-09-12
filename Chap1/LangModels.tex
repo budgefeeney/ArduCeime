@@ -1,7 +1,7 @@
 \input{../header.tex}
 
 \subsection{Language Models of Text}
-
+\label{sec:langmodels}
 Language modelling is the problem of predicting the next word in a sequence (e.g a sentence) given all previous words. Common use-cases are predictive keyboards, spell-checkers and speech recognition. Typically one makes the Markov assumption, with first order (``bigram") and second-order (``trigram") markov models being popular.
 
 As vocabularies are normally quite large (typically of the order of 30,000 terms), raising this to the power of two or three can lead to models that are overparameterised: simple maximum likelihood estimates therefore will frequently include n-grams whose estimate simply collapses to zero in the absence of training data. The simple solution to this problem  of ``Laplace smoothing", equivalent to a symmetric Dirichlet prior, is unsatisfying in that it does not take into account the information available in the lower-order n-grams.
