@@ -11,7 +11,7 @@ The simplest possible regression model is
 p(t_n = 1) = y_n = \vv{w}\T\vv{x}_n
 \end{equation*}
 
-where $y_n$ is our predicted target value and $w \in \VReal{D}$ is a vector of weights\footnote{We assume the usual setup where the final element of $\vv{x}$ is fixed at one so the final element of $\vv{w}$ is the intercept}. However this model obviously will not work, as $y_n$ is in no way constrained to lie in $[0 \ldots 1]$.
+where $y_n$ is our predicted target value and $w \in \VReal{D}$ is a vector of weights\footnote{We assume the usual setup where the final element of $\vv{x}$ is fixed at one so the final element of $\vv{w}$ can act as the intercept}. However this model obviously will not work, as $y_n$ is in no way constrained to lie in $[0 \ldots 1]$.
 
 To handle this, we introduce an \emph{activation function} $f(y) : \mathbb{R} \rightarrow [0, 1]$ which maps the real number line onto the interval $[0,1]$.
 \begin{align*}
@@ -91,7 +91,7 @@ With reference to the Laplace approximation, the gradient at the mode is by defi
 p(\vv{w}|X,\vv{t}) \approx q(\vv{w}) = \nor{\wmap}{-\inv{H_w}}
 \end{equation}
 
-Following the central limit theorem, we would expect the Laplace approximation to better approximate the posterior as the number of datapoints increases. The MAP estimate of the weigts $\vv{w}_{MAP}$ is found, as in the MLE case, by some iterative method such as Newton-Raphson. The for the Hessian is
+Following the central limit theorem, we would expect the Laplace approximation to better approximate the posterior as the number of datapoints increases. The MAP estimate of the weigts $\vv{w}_{MAP}$ is found, as in the MLE case, by some iterative method such as Newton-Raphson. The the Hessian is defined as:
 
 \begin{align}
 H_w   & = \inv{\Lambda} + X\T R X & R = \diag{y_n(1 - y_n)} 
@@ -183,7 +183,7 @@ Having derived the bound, we can now use it to implement a variational inference
 \begin{align}
 p(\vv{t}|X) = \int \prod_n p(t_n | x_n, \vv{w}) p(\vv{w}) d\vv{w}
 \end{align}
-Where $p(t_n | x_n, \vv{w}) = \sigma(y_n)^{t_n}(1- \sigma(y_n)^{1-t_n}$ for $y = \vv{w}\T\vv{x}_n$. This can be simplified to $e^{gt}\sigma(-g)$. Using the Jaakkola bound we see that
+Where $p(t_n | x_n, \vv{w}) = \sigma(y_n)^{t_n}(1- \sigma(y_n)^{1-t_n}$ for $y = \vv{w}\T\vv{x}_n$. This can be simplified to $e^{y_n t_n}\sigma(-y_n)$. Using the Jaakkola bound we see that
 
 \begin{equation}
 p(t_n | x_n, \vv{w}) = e^{y_n t_n}\sigma(-y_n) \geq e^{y_n t_n} \sigma(\xi_n) \exp\left( -\halve{y_n + \xi_n} - m(\xi_n)(y_n^2 - \xi_n^2)\right)
@@ -195,7 +195,7 @@ Plugging this approximation in and taking derivatives leads to an approximate po
 \Sigma & = \invb{\inv{\Lambda} + 2 \sum_n m(\xi_n)\vv{x}_n\vv{x}_n\T} & \vv{\mu} & = \inv{\Sigma} \left(\sum_n (t_n - \half) \vv{x}_n)\right)
 \end{align}
 
-By considering the weights $w$ to be a latent variable we obtain an EM algorithm where we infer the most likely posterior distribution $q(\vv{w})$ in the E-Step, and then maximise the expected joint likelihood $\ln p(\vv{t}| \vv{w})p(\vv{w}) \approx ln y(\vv{t}, \vv{\xi})p(\vv{w})$  with respect to $\xi_n$ in the M-Step. Taking derivatives, we see the update for $\xi_n$ is the solution to the equation
+By considering the weights $w$ to be a latent variable we obtain an EM algorithm where we infer the most likely posterior distribution $q(\vv{w})$ in the E-Step, and then maximise the expected joint likelihood $\ln p(\vv{t}| \vv{w})p(\vv{w}) \approx \ln q(\vv{t}, \vv{\xi})p(\vv{w})$  with respect to $\xi_n$ in the M-Step. Taking derivatives, we see the update for $\xi_n$ is the solution to the equation
 \begin{align}
 m'(\xi_n) \left( \vv{x}_n \ex{\vv{w}\vv{w}\T}{}\vv{x}_n - \xi^2_n \right) \mbeq 0
 \end{align}
@@ -209,7 +209,7 @@ The third local bound is, like the Jaakkola bound, quadratic. The Bohning bound 
 
 Compared to the Newton-Raphson update procedure, and indeed the other bounds presented in this section, this has the benefit that for certain classes of model - which include logistic regression - Bohning derived updates are guaranteed to monotonically update the likelihood. The cost of this is that it converges only linearly - as measured in iterations - however this is offset by the fact that one no longer has to recalculate the inverse of the Hessian on each iteration.
 
-The derivation starts as for the Laplace approximation: we take a second order Taylor approximation around a point $\xi$. When $\xi$ is the maximum of the function being calculated the result is a quadratic function of $x$. Finally we replace the Hessian with a suitable matrix.
+The derivation starts as for the Laplace approximation: we take a second order Taylor approximation around a point $\xi$. When $\xi$ is the maximum of the function being calculated the result is a quadratic function of $x$. Finally we replace the Hessian with a suitable matrix B.
 
 In more general terms the Bohning bound to a function $f(x)$ can be expressed as
 
@@ -219,12 +219,12 @@ f(x) \geq (x - \xi)\T B (x - \xi)
 
 Returning to our running example of Bayesian logistic regression, we see that $H = \Lambda + X\T R X$ where $R = \diag{t_n (1-t_n)}$ and $y_n = \sigma(\vv{w}\T\vv{x}_n)$. Observing that R is a sequence of Bernoulli variances, which are upper bounded at $\frac{1}{4}$ we can set $B = \Lambda + 4 X\T X$. Note that $\Lambda$, the prior covariance, is typically a fixed hyper-parameter, and so the entire expression, and its inverse, need only be calculated once.
 
-With this definition we see that the approximate posterior over the weights is again a normal distribution $q(\vv{w}) \sim \nor{\mu}{\Sigma}$
+With this definition we see that the approximate posterior over the weights is again a Gaussian distribution.% $q(\vv{w}) \sim \nor{\mu}{\Sigma}$
 
 As in the previous section where we used MAP estimation with global bounds, once we obtain an approximate distribution over our posteriors in the form of a normal distribution we can further approximate the likelihood as a probit and thereby obtain our predictive distribution.
 
 \subsubsection{Baysian Logistic Regression with Gaussian Processes}
-At the core of logistic regression is a linear regression to infer the utility score $a$, which is then transformed into a probability $\sigma(a)$ via the logit.
+At the core of logistic regression is a linear regression to infer the utility score $y$, which is then transformed into a probability $\sigma(y)$ via the logit.
 
 Consequently, a straightforward alternative is to fully replace the linear regression with a Gaussian process, which fully captures our uncertainty around the weight $\vv{w}$. We start with a quick recap of Gaussian Processes for linear regression.
 
@@ -238,7 +238,7 @@ p(\vv{y}) = \int p(\vv{y}|\vv{w})p(\vv{w}) d\vv{w} = \nor{\vv{0}}{X \Lambda X\T}
 \end{align}
 Assuming the prior covariance is isotropic (e.g. $\Lambda = \frac{1}{\alpha} I$) we can employ the kernel trick rewriting $p(\vv{y}) = \nor{\vv{0}}{\frac{1}{\alpha} K}$. Next we add some zero mean Gaussian noise to the $N$ observations $\vv{t} \in \mathbb{R}^N$ and integrate that out to finally obtain
 \begin{align}
-\vv{t}|\vv{w} & = \nor{\vv{y}}{\frac{1}{\beta}I} \\
+\vv{t}|\vv{w} & \sim \nor{\vv{y}}{\frac{1}{\beta}I} \\
 p(\vv{t}) & = \int p(\vv{t}|\vv{y})p(\vv{y}) = \nor{\vv{0}}{C}
 \end{align}
 where $C = \frac{1}{\beta} I + \frac{1}{\alpha}K$. As well as capturing observation errors, on a more practical level the addition of a noise term ensures the covariance is positive definite and therefore invertible (kernel matrices are required to be positive semidefinite only\cite{Jst2004}).
@@ -252,22 +252,21 @@ p(t_*) & = \nor{\vv{k}\T \inv{C} \vv{t}}{c - \vv{k}\T \inv{C} \vv{k}}
 
 where $c = \frac{1}{\beta} + \kappa (\vv{x}_*, \vv{x}_*)$, $\vv{k} = \{\kappa(\vv{x}_*, \vv{x}_n)\}_{n=1}^{N}$ and $\kappa(\cdot, \cdot)$ is the kernel function.
 
-In the case of logistic regression, one can again put a GP prior on the utility scores $\vv{a}$, but the observations $\vv{t}$ now have a multi-variate Bernoulli distribution.
+In the case of logistic regression, one can again put a GP prior on the utility scores $\vv{y}$, but the observations $\vv{t}$ now have a multi-variate Bernoulli distribution.
 
 \begin{align}
-p(t_n|a_n) & = \sigma(a_n)^{t_n}(1 - \sigma(a))^{1-t_n} & \vv{a} \sim \nor{\vv{0}}{C}
+p(t_n|y_n) & = \sigma(y_n)^{t_n}(1 - \sigma(a))^{1-t_n} & \vv{y} \sim \nor{\vv{0}}{C}
 \end{align}
-There is no noise term in our observations $\vv{t}$, but for numerical tractability we still define $C=\frac{1}{\beta} + \frac{1}{\alpha}K$.
-\fixme{Which model does this correspond to?}. For prediction we then need to marginalise out $\vv{a}$ from the augmented vector $\binom{\vv{a}}{a_*}$.
+There is no noise term in our observations $\vv{t}$, but for numerical tractability we still define $C=\frac{1}{\beta} + \frac{1}{\alpha}K$. For prediction we then need to marginalise out $\vv{y}$ from the augmented vector $\hat{\vv{y}} = \binom{\vv{y}}{y_*}$.
 
 \begin{equation}
-p(t_{n+1} | \vv{t}) = \int p(t_* | a_*) p (a_* | \vv{t}) d\vv{a_*}
+p(t_* | \vv{t}) = \int p(t_* | \hat{\vv{y}}) p (\hat{\vv{y}} | \vv{t}) d\hat{\vv{y}}
 \end{equation}
 
 For the first term in the integrand, one can use the usual transformations (e.g. the probit approximation) used previously with respect to MAP approximation provided the second term is approximated with a Gaussian distribution. With some manipulations, the second term can be decomposed into
 
 \begin{equation}
-p(a_* | \vv{t}) = \int p(a_*, \vv{a} | \vv{t}) d\vv{a}  = \int p(a_* | \vv{a}) p(\vv{a} | \vv{t}) d
+p(y_* | \vv{t}) = \int p(y_*, \vv{y} | \vv{t}) d\vv{y}  = \int p(y_* | \vv{y}) p(\vv{y} | \vv{t}) d
 \end{equation}
 
 where the first term in \emph{this} integrand is just the usual GP prediction, and in the case of the latter term we can employ the approximation techniques described previously for the MAP case, such as the Laplace approximation \cite{WilliamsBarber1998} or the local Jaakkola approximation \cite{Gibbs2000}.
@@ -281,7 +280,7 @@ We replace the logistic function with it's multinomial analogue, the \emph{softm
 The model is therefore
 
 \begin{align}
-\vv{t}_n & \sim \muln{\vv{\sigma}(\vv{a}_n)}{1} & \vv{a}_n & \sim \nor{W \vv{x}_n}{\alpha^2 I} \\
+\vv{t}_n & \sim \muln{\vv{\sigma}(\vv{y}_n)}{1} & \vv{y}_n & \sim \nor{W \vv{x}_n}{\alpha^2 I} \\
  & & \{\vv{w}_l\}_{l = 1}^{L} & \sim \prod_l \nor{0}{\Lambda}
 \end{align}
 
@@ -295,7 +294,7 @@ where F is the dimension of the feature space.
 With regard to other bounds on the binary logistic sigmoid, there are a number of ways to extend them to the multinomial case. One, proposed by Bouchard\cite{Bouchard2007} is to observe that the multinomial softmax can be expressed as a product of logistic sigmoids
 
 \begin{equation}
-\ln \sum_k e^{\theta_k} \leq s + \sum_k \lne{s + \theta_k}
+\ln \sum_l e^{y_l} \leq s + \sum_l \lne{s + y_l}
 \end{equation}
 
 One can then employ one of the binary bounds mentioned earlier in conjunction with this to derive a multinomial bound. In Bouchard's case they used the Jaakkola bound, to derive what we refer to as the \emph{Bouchard} bound. Minka and Knowles reported poor predictive accuracy with this bound\cite{MinkaKnowles}, though this was arguably addressed in the original paper which showed empirically that the Bouchard bound under-performed the log-bound\footnote{A taylor expansion around an arbitrary point, introduced as a new parameter, notably used in\cite{Blei2006} and discussed further in \cite{Wang2013a}} in cases where the variance was small, but bettered it in cases where the variance was large.
@@ -303,7 +302,7 @@ One can then employ one of the binary bounds mentioned earlier in conjunction wi
 Being both quadratic bounds, the details of the Bouchard and Bohning bounds be abstracted into the following form, as used in \cite{Khan2010}.
 
 \begin{align}
-\ln \sigma_l(\vv{y}) & = y_l - \lse (\vv{y}) & \lse (\vv{y}) & = \ln \left(\sum_l e^{\xi_l} \right)\\
+\ln \sigma_l(\vv{y}) & = y_l - \lse (\vv{y}) & \lse (\vv{y}) & = \ln \left(\sum_l e^{y_l} \right)\\
 \lse(\vv{y}) & \leq \half \vv{y}\T \Axi \vv{y} - \bxi\T\vv{y} + \cxi
 \end{align}
 
@@ -332,37 +331,37 @@ We can then derive a unified update for the posterior distribution over weights 
 There are other approaches to extending logistic bounds to the multinomial case. One is the stick-breaking construction of Khan et al \cite{Khan2012stick}, where we iteratively divide up the the unassigned probability mass according to each class specific probability.
 \begin{align}
 \begin{split}
-p(z = 0 | \vv{\theta}) = & \sigma(\theta_0) \\
-p(z = k | \vv{\theta}) = & \sigma(\theta_k) \prod_{j < k - 1} (1 - \sigma(\theta_k)) \qquad\qquad 0 < k < K \\
-p (z = K | \vv{\theta}) = & \prod_{j = 1}^{K - 1} (1 - \sigma(\theta_j))
+p(t = 0 | \vv{y}) = & \sigma(y_0) \\
+p(t = l | \vv{y}) = & \sigma(y_l) \prod_{j < k - 1} (1 - \sigma(y_l)) \qquad\qquad 0 < k < K \\
+p (t = L | \vv{y}) = & \prod_{j = 1}^{L - 1} (1 - \sigma(y_j))
 \end{split}
 \end{align}
 
 Expanding the sigmoid this can then be expressed in a more compact form
 
 \begin{equation}
-p(z = k | \vv{\theta}) = \exp \left( \theta_k - \sum_{j \leq k} \ln (1 + e^{\theta_k}) \right)
+p(t = l | \vv{y}) = \exp \left( y_l - \sum_{j \leq l} \ln (1 + e^{y_j}) \right)
 \end{equation}
 
 This has the advantage that it defines a proper probability distribution, instead of bounding it as is the case with the product of sigmoids, though it is still necessary to bound the logistic term.
 
-Many other approximations to the logit have been produced in addition to those mentioned here. A piece-wise quadratic bound was proposed in \cite{Marlin2011}, which employs a R quadratic bounds over R pieces of the support of $\theta$. The parameters are the R end-points $t_r$ delineating the pieces, and the quadratic coefficients for each piece, $a_r$ and $b_r$, which are collectively denoted by $\vv{\alpha}$. To determine these parameters, it's necessary to solve a constrained minimax problem, which -- once simplified and reparameterised -- becomes 
+Many other approximations to the logit have been produced in addition to those mentioned here. A piece-wise quadratic bound was proposed in \cite{Marlin2011}, which employs a R quadratic bounds over R pieces of the support of $y$. The parameters are the R end-points $e_r$ delineating the pieces, and the quadratic coefficients for each piece, $a_r$ and $b_r$, which are collectively denoted by $\vv{\alpha}$. To determine these parameters, it's necessary to solve a constrained minimax problem, which -- once simplified and reparameterised -- becomes 
 
 \begin{align}
 \begin{split}
 \min_{\vv{\alpha}} \max_{r \in {1 \ldots R}}
- & \left(  \max_{t_{r-1} \leq \theta < t_r} a_r \theta^2 + b_r \theta - \sigma(\theta) \right) \\
- & \left(  \min_{t_{r-1} \leq \theta < t_r} a_r \theta^2 + b_r \theta - \sigma(\theta)  \right)
+ & \left(  \max_{e_{r-1} \leq y < e_r} a_r y^2 + b_r y - \sigma(y) \right) \\
+ & \left(  \min_{e_{r-1} \leq y < e_r} a_r y^2 + b_r y - \sigma(y)  \right)
 \end{split}
 \end{align}
 
 This has the advantage that the error approaches zero as the number of pieces increases. Optimising the parameters is somewhat involved, requiring numerical optimisation techniques for the inner minima and maxima, and Nelder-Mead optimisation for outer minimum.
 
-A multivariate ``tilted bound" was proposed by Minka and Knowles\cite{MinkaKnowles} derived from a binary bound in \cite{SaulJordan1998}:
+A multivariate ``tilted bound" for the $\lse(\cdot)$ function was proposed by Minka and Knowles\cite{MinkaKnowles} derived from a binary bound in \cite{SaulJordan1998}:
 \begin{equation}
-\ex{\ln \sum_i e^{\theta_i}}{q} \leq \half \sum_i a_i^2 v_i + \ln \sum_i e^{m_i + (1-2a_i)v_i/2}
+\ex{\ln \sum_l e^{y_l}}{q} \leq \half \sum_l a_l^2 v_l + \ln \sum_l e^{m_l + (1-2a_l)v_l/2}
 \end{equation}
-Maximisation of $a_i$ can be achieved using the fixed form update $\vv{a} \leftarrow \sigma(\vv{m} + \half(1 - 2 \vv{a})\vv{v})$ where $\sigma(x) = \frac{1}{1 + e^{-x}}$, however the updates for the means and variances have to be estimated using iterative schemes. 
+where $m_l$ and $v_l$ are the posterior mean and variance of $y_l$. Maximisation of $a_l$ can be achieved using the fixed form update $\vv{a} \leftarrow \sigma(\vv{m} + \half(1 - 2 \vv{a})\vv{v})$ where $\sigma(y) = \frac{1}{1 + e^{-y}}$, however the updates for the means and variances have to be estimated using iterative schemes. 
 
 \subsubsection{Probit - Motivation and Interpretation}
 The probit is the CDF of a standard normal distribution:
@@ -408,7 +407,7 @@ Let $t_n$ be denoted by the following:
 
 % Some presentations alternatively let $t_n \in \{-1, +1\}$ and thus be defined as $t_n = \text{sgn}(y_n)$. However this has no practical effect on the inference.
 
-Following \cite{AlbertChib1994}, define an auxiliary variable $y_n$ as
+Following \cite{AlbertChib1993}, define an auxiliary variable $y_n$ as
 \begin{align}
 y_n & = \vv{w}\T \vv{x}_n + \epsilon_n & \epsilon_n \sim \nor{0}{1}
 \end{align}
@@ -417,7 +416,7 @@ which is of course the same as saying $y_n \sim \nor{\vv{w}\T\vv{x}_n}{1}$. With
 p(t_n = 1 | \vv{x}_n) & = p (y_n > 0) \\
 & = p(\vv{w}\T\vv{x}_n + \epsilon_n > 0) \\
 & = p(\epsilon_n > - \vv{w}\T\vv{x}_n) \\
-& = p(\epsilon_n \leq \vv{w}\T\vv{x}_n) & \text{By symmetry of the Gaussian PDF} \\
+& = p(\epsilon_n \leq \vv{w}\T\vv{x}_n) & \text{\emph{by symmetry of the Gaussian PDF}} \\
 & = \Phi(y_n)
 \end{align}
 
@@ -425,8 +424,8 @@ A similar result can be obtained by making use of the usual identities for trunc
 
 \begin{align}
 p(t = 1 | \vv{x}, \vv{w}) & = \int p(t = 1 | \vv{y}) p(\vv{y} | \vv{x}, \vv{w}) d\vv{y} \\
- & = \int \delta(y > 0) p(\vv{y} | \vv{x}, \vv{w}) d\vv{y} & \text{a right-truncated distribution} \\
- & = \Phi(\vv{w}\T\vv{x}) & \text{its normalizing constant}
+ & = \int \delta(y > 0) p(\vv{y} | \vv{x}, \vv{w}) d\vv{y} & \text{\emph{a right-truncated distribution}} \\
+ & = \Phi(\vv{w}\T\vv{x}) & \text{\emph{its normalising constant}}
 \end{align}
 
 
@@ -536,13 +535,13 @@ p(t_* = 1| X, \vv{t}, x_*) & = \int_{\vv{w}} p(t_* | \vv{w})\int_{\vv{y}} p(\vv{
 
 
 \subsubsection{Extending the Probit to the Multinomial Case}
-In case of the multinomial probit case, as with the multinomial logit, one learns $L$ independent weight vectors $\vv{w}_l$ from which we define the auxiliar variable $\vv{y} \sim \nor{W\vv{x}}{1}$ where $W = \{ \vv{w}_l\T \}_{l=1}^L$. The prediction rule also necessarily changes, becoming:
+In case of the multinomial probit case, as with the multinomial logit, one learns $L$ independent weight vectors $\vv{w}_l$ from which we define the auxiliary variable $\vv{y} \sim \nor{W\vv{x}}{1}$ where $W = \{ \vv{w}_l\T \}_{l=1}^L$. The prediction rule also necessarily changes, becoming:
 
 \begin{align}
 t_{nl} = \left\{ \begin{array}{lr} 1 & \text{if } y_{nl} > y_{nj} \quad \forall j \neq l \\ 0 & \text{otherwise} \end{array} \right.
 \end{align}
 
-In the binary model, the conditional distribution on the scalar $y$ given $t$ was involves decomposing the $\mathbb{R}$ space into $\mathbb{R}_-$ and $\mathbb{R}_+$ with their respective, disjoint, truncated Gaussian distributions. In the multinomial model, the conditional distribution of the vector $\vv{y} \in \VReal{L}$ involves decomposing the $\VReal{L}$ space into $L$ cones $C_l = \{ \vv{y} : y_l > y_j \forall l \neq j \}$, each of dimension L, such that $\bigcup_l C_l = \VReal{L}$. The conically truncated Gaussian distribution is denoted as $y_n \sim \mathcal{N}^{t_n}\left(W\vv{x}, 1\right)$. 
+In the binary model, the conditional distribution on the scalar $y$ given $t$ involves decomposing the $\mathbb{R}$ space into $\mathbb{R}_-$ and $\mathbb{R}_+$, with corresponding disjoint, truncated Gaussian distributions. In the multinomial model, the conditional distribution of the vector $\vv{y} \in \VReal{L}$ involves decomposing the $\VReal{L}$ space into $L$ cones $C_l = \{ \vv{y} : y_l > y_j \forall l \neq j \}$, each of dimension L, such that $\bigcup_l C_l = \VReal{L}$. The conically truncated Gaussian distribution for a label $l$ is denoted as $y_n \sim \mathcal{N}^{l}\left(W\vv{x}, 1\right)$. 
 
 From \cite{Girolami2007} we see the predictive distribution is:
 \begin{align}
@@ -561,7 +560,7 @@ and for $y_{nk}$ for all $k \neq l$
 \end{align}
 where $Z_n = \ex{\prod_{j \neq l}\Phi\left(u + \ex{\vv{w}_l\T\vv{x}_n}{q} - \ex{\vv{w}_i\T\vv{x}_n}{q} \right) }{p(\epsilon)}$
 
-\fixme{Verify that $m_{nl} = \vv{w}_l\T\vv{x}_n$}
+
 
 
 %\section{Comparison between the Logit and the Probit}
