@@ -1,0 +1,299 @@
+LDA / CVB,8,nips,400,1604.599359
+LDA / CVB,8,reuters,400,1044.011576
+LDA / CVB,8,20newsclean,400,1561.581545
+LDA / CVB,100,nips,400,1425.188382
+LDA / CVB,100,reuters,400,814.2504822
+LDA / CVB,100,20newsclean,400,1390.317797
+LDA / CVB,70,nips,400,1406.38454
+LDA / CVB,70,reuters,400,833.1451265
+LDA / CVB,70,20newsclean,400,1414.193315
+LDA / CVB,250,nips,400,1315.078919
+LDA / CVB,250,reuters,400,782.7559981
+LDA / CVB,250,20newsclean,400,1288.217574
+LDA / CVB,5,nips,400,1685.913069
+LDA / CVB,5,reuters,400,1085.53432
+LDA / CVB,5,20newsclean,400,1621.918853
+LDA / CVB,150,nips,400,1355.506073
+LDA / CVB,150,reuters,400,778.8859759
+LDA / CVB,150,20newsclean,400,1334.13441
+LDA / CVB,80,nips,400,1419.882705
+LDA / CVB,80,reuters,400,814.4262534
+LDA / CVB,80,20newsclean,400,1420.975322
+LDA / CVB,12,nips,400,1587.748782
+LDA / CVB,12,reuters,400,973.2449108
+LDA / CVB,12,20newsclean,400,1530.152548
+LDA / CVB,50,nips,400,1450.25644
+LDA / CVB,50,reuters,400,839.6147193
+LDA / CVB,50,20newsclean,400,1452.802458
+LDA / CVB,6,nips,400,1658.45254
+LDA / CVB,6,reuters,400,1045.188258
+LDA / CVB,6,20newsclean,400,1618.575382
+LDA / CVB,200,nips,400,1338.415754
+LDA / CVB,200,reuters,400,788.1962692
+LDA / CVB,200,20newsclean,400,1310.566946
+LDA / CVB,30,nips,400,1492.785387
+LDA / CVB,30,reuters,400,879.0725674
+LDA / CVB,30,20newsclean,400,1514.013341
+LDA / CVB,90,nips,400,1410.302825
+LDA / CVB,90,reuters,400,800.8861648
+LDA / CVB,90,20newsclean,400,1366.760233
+LDA / CVB,20,nips,400,1545.190511
+LDA / CVB,20,reuters,400,953.6676432
+LDA / CVB,20,20newsclean,400,1537.436598
+LDA / CVB,175,nips,400,1341.622912
+LDA / CVB,175,reuters,400,776.1630849
+LDA / CVB,175,20newsclean,400,1303.217531
+LDA / CVB,25,nips,400,1509.658373
+LDA / CVB,25,reuters,400,900.4347945
+LDA / CVB,25,20newsclean,400,1491.950651
+LDA / CVB,60,nips,400,1437.978844
+LDA / CVB,60,reuters,400,827.0497374
+LDA / CVB,60,20newsclean,400,1444.529619
+LDA / CVB,40,nips,400,1477.698507
+LDA / CVB,40,reuters,400,858.6415511
+LDA / CVB,40,20newsclean,400,1486.787567
+LDA / CVB,4,nips,400,1709.69323
+LDA / CVB,4,reuters,400,1124.438291
+LDA / CVB,4,20newsclean,400,1691.2142
+LDA / CVB,10,nips,400,1621.562818
+LDA / CVB,10,reuters,400,1005.986121
+LDA / CVB,10,20newsclean,400,1585.597785
+LDA / CVB,15,nips,400,1559.306302
+LDA / CVB,15,reuters,400,948.7283452
+LDA / CVB,15,20newsclean,400,1570.500349
+LDA / CVB,35,nips,400,1496.059164
+LDA / CVB,35,reuters,400,869.5432995
+LDA / CVB,35,20newsclean,400,1503.548856
+LDA / CVB,2,nips,400,1827.545657
+LDA / CVB,2,reuters,400,1335.853448
+LDA / CVB,2,20newsclean,400,1806.566279
+LDA / CVB,125,nips,400,1382.872316
+LDA / CVB,125,reuters,400,802.3657163
+LDA / CVB,125,20newsclean,400,1350.68674
+LDA / CVB,3,nips,400,1731.668667
+LDA / CVB,3,reuters,400,1209.981417
+LDA / CVB,3,20newsclean,400,1708.884397
+LDA / Gibbs,8,nips,6000,1696.867963
+LDA / Gibbs,8,reuters,6000,957.4473173
+LDA / Gibbs,8,20newsclean,4000,1457.180282
+LDA / Gibbs,100,nips,4000,1291.975937
+LDA / Gibbs,100,reuters,4000,676.7054719
+LDA / Gibbs,100,20newsclean,4000,1091.846607
+LDA / Gibbs,70,nips,4000,1349.587352
+LDA / Gibbs,70,reuters,6000,702.8312491
+LDA / Gibbs,70,20newsclean,4000,1154.422575
+LDA / Gibbs,250,nips,4000,1179.817313
+LDA / Gibbs,250,reuters,4000,674.2859036
+LDA / Gibbs,250,20newsclean,4000,1060.725254
+LDA / Gibbs,5,nips,6000,1760.983415
+LDA / Gibbs,5,reuters,6000,1022.03745
+LDA / Gibbs,5,20newsclean,4000,1516.98288
+LDA / Gibbs,150,nips,4000,1248.931396
+LDA / Gibbs,150,reuters,4000,669.3350948
+LDA / Gibbs,150,20newsclean,4000,1086.254716
+LDA / Gibbs,80,nips,4000,1327.1508
+LDA / Gibbs,80,reuters,4000,681.5802965
+LDA / Gibbs,80,20newsclean,4000,1144.40205
+LDA / Gibbs,12,nips,6000,1601.746803
+LDA / Gibbs,12,reuters,6000,872.7561808
+LDA / Gibbs,12,20newsclean,4000,1431.363472
+LDA / Gibbs,50,nips,6000,1401.983612
+LDA / Gibbs,50,reuters,6000,708.2991734
+LDA / Gibbs,50,20newsclean,4000,1190.680496
+LDA / Gibbs,6,nips,6000,1714.206654
+LDA / Gibbs,6,reuters,6000,1004.75572
+LDA / Gibbs,6,20newsclean,4000,1470.31617
+LDA / Gibbs,200,nips,4000,1224.548661
+LDA / Gibbs,200,reuters,4000,673.0074575
+LDA / Gibbs,200,20newsclean,4000,1046.884351
+LDA / Gibbs,30,nips,6000,1487.020665
+LDA / Gibbs,30,reuters,6000,766.1941005
+LDA / Gibbs,30,20newsclean,4000,1277.118828
+LDA / Gibbs,90,nips,4000,1328.196761
+LDA / Gibbs,90,reuters,4000,689.7323507
+LDA / Gibbs,90,20newsclean,4000,1110.719159
+LDA / Gibbs,20,nips,6000,1516.989851
+LDA / Gibbs,20,reuters,6000,825.7054048
+LDA / Gibbs,20,20newsclean,4000,1307.839554
+LDA / Gibbs,175,nips,4000,1226.234605
+LDA / Gibbs,175,reuters,4000,678.6227172
+LDA / Gibbs,175,20newsclean,4000,1067.353781
+LDA / Gibbs,25,nips,6000,1491.064009
+LDA / Gibbs,25,reuters,6000,782.5525111
+LDA / Gibbs,25,20newsclean,4000,1331.593335
+LDA / Gibbs,60,nips,4000,1372.037896
+LDA / Gibbs,60,reuters,6000,706.7446941
+LDA / Gibbs,60,20newsclean,4000,1161.29206
+LDA / Gibbs,40,nips,6000,1455.650768
+LDA / Gibbs,40,reuters,6000,736.3988531
+LDA / Gibbs,40,20newsclean,4000,1220.959989
+LDA / Gibbs,4,nips,6000,1783.661589
+LDA / Gibbs,4,reuters,6000,1091.438765
+LDA / Gibbs,4,20newsclean,4000,1547.601684
+LDA / Gibbs,10,nips,6000,1654.541955
+LDA / Gibbs,10,reuters,6000,924.9157505
+LDA / Gibbs,10,20newsclean,4000,1417.282791
+LDA / Gibbs,15,nips,6000,1550.830045
+LDA / Gibbs,15,reuters,6000,866.4312936
+LDA / Gibbs,15,20newsclean,4000,1355.309704
+LDA / Gibbs,35,nips,6000,1444.711304
+LDA / Gibbs,35,reuters,6000,769.4402036
+LDA / Gibbs,35,20newsclean,4000,1214.867822
+LDA / Gibbs,2,nips,6000,1928.040437
+LDA / Gibbs,2,reuters,6000,1323.317821
+LDA / Gibbs,2,20newsclean,4000,1811.744019
+LDA / Gibbs,125,nips,4000,1257.792832
+LDA / Gibbs,125,reuters,4000,667.1365583
+LDA / Gibbs,125,20newsclean,4000,1109.56529
+LDA / Gibbs,3,nips,6000,1838.670789
+LDA / Gibbs,3,reuters,6000,1160.168456
+LDA / Gibbs,3,20newsclean,4000,1759.860436
+Multinomial Mix / Gibbs,8,nips,6000,1923.277852
+Multinomial Mix / Gibbs,8,reuters,4000,1390.283878
+Multinomial Mix / Gibbs,8,20newsclean,4000,1901.61528
+Multinomial Mix / Gibbs,100,nips,4000,1825.664548
+Multinomial Mix / Gibbs,100,reuters,4000,1390.055377
+Multinomial Mix / Gibbs,100,20newsclean,4000,1658.43524
+Multinomial Mix / Gibbs,70,nips,6000,1807.18387
+Multinomial Mix / Gibbs,70,reuters,4000,1398.037752
+Multinomial Mix / Gibbs,70,20newsclean,4000,1657.173575
+Multinomial Mix / Gibbs,250,nips,4000,1940.228615
+Multinomial Mix / Gibbs,250,reuters,4000,1470.187352
+Multinomial Mix / Gibbs,250,20newsclean,4000,1538.749219
+Multinomial Mix / Gibbs,5,nips,6000,1966.062253
+Multinomial Mix / Gibbs,5,reuters,4000,1370.517625
+Multinomial Mix / Gibbs,5,20newsclean,4000,1922.35801
+Multinomial Mix / Gibbs,150,nips,4000,1988.448213
+Multinomial Mix / Gibbs,150,reuters,4000,1351.789589
+Multinomial Mix / Gibbs,150,20newsclean,4000,1553.445907
+Multinomial Mix / Gibbs,80,nips,4000,1864.061378
+Multinomial Mix / Gibbs,80,reuters,4000,1374.053113
+Multinomial Mix / Gibbs,80,20newsclean,4000,1666.434631
+Multinomial Mix / Gibbs,12,nips,6000,1925.073558
+Multinomial Mix / Gibbs,12,reuters,4000,1395.015733
+Multinomial Mix / Gibbs,12,20newsclean,4000,1894.616319
+Multinomial Mix / Gibbs,50,nips,6000,1885.410735
+Multinomial Mix / Gibbs,50,reuters,4000,1397.511006
+Multinomial Mix / Gibbs,50,20newsclean,4000,1773.570165
+Multinomial Mix / Gibbs,6,nips,6000,1960.113131
+Multinomial Mix / Gibbs,6,reuters,4000,1349.843673
+Multinomial Mix / Gibbs,6,20newsclean,4000,1899.633196
+Multinomial Mix / Gibbs,200,nips,4000,1977.013764
+Multinomial Mix / Gibbs,200,reuters,4000,1343.423538
+Multinomial Mix / Gibbs,200,20newsclean,4000,1556.424945
+Multinomial Mix / Gibbs,30,nips,6000,1911.995252
+Multinomial Mix / Gibbs,30,reuters,4000,1409.300954
+Multinomial Mix / Gibbs,30,20newsclean,4000,1820.554241
+Multinomial Mix / Gibbs,90,nips,4000,1837.130574
+Multinomial Mix / Gibbs,90,reuters,4000,1378.335252
+Multinomial Mix / Gibbs,90,20newsclean,4000,1649.916546
+Multinomial Mix / Gibbs,20,nips,6000,1930.054879
+Multinomial Mix / Gibbs,20,reuters,4000,1393.112112
+Multinomial Mix / Gibbs,20,20newsclean,4000,1870.289373
+Multinomial Mix / Gibbs,175,nips,4000,1985.453645
+Multinomial Mix / Gibbs,175,reuters,4000,1342.475373
+Multinomial Mix / Gibbs,175,20newsclean,4000,1530.586607
+Multinomial Mix / Gibbs,25,nips,6000,1901.686994
+Multinomial Mix / Gibbs,25,reuters,4000,1412.935146
+Multinomial Mix / Gibbs,25,20newsclean,4000,1838.212495
+Multinomial Mix / Gibbs,60,nips,6000,1874.74407
+Multinomial Mix / Gibbs,60,reuters,4000,1417.818228
+Multinomial Mix / Gibbs,60,20newsclean,4000,1707.7405
+Multinomial Mix / Gibbs,40,nips,6000,1881.219564
+Multinomial Mix / Gibbs,40,reuters,4000,1386.53233
+Multinomial Mix / Gibbs,40,20newsclean,4000,1784.49727
+Multinomial Mix / Gibbs,4,nips,6000,1979.060737
+Multinomial Mix / Gibbs,4,reuters,4000,1342.30328
+Multinomial Mix / Gibbs,4,20newsclean,4000,1910.942059
+Multinomial Mix / Gibbs,10,nips,6000,1929.476616
+Multinomial Mix / Gibbs,10,reuters,4000,1422.168195
+Multinomial Mix / Gibbs,10,20newsclean,4000,1911.212854
+Multinomial Mix / Gibbs,15,nips,6000,1922.203357
+Multinomial Mix / Gibbs,15,reuters,4000,1422.916595
+Multinomial Mix / Gibbs,15,20newsclean,4000,1870.933854
+Multinomial Mix / Gibbs,35,nips,6000,1881.050414
+Multinomial Mix / Gibbs,35,reuters,4000,1407.379853
+Multinomial Mix / Gibbs,35,20newsclean,4000,1784.651736
+Multinomial Mix / Gibbs,2,nips,6000,1987.300404
+Multinomial Mix / Gibbs,2,reuters,4000,1424.340393
+Multinomial Mix / Gibbs,2,20newsclean,4000,1858.557509
+Multinomial Mix / Gibbs,125,nips,4000,1844.902716
+Multinomial Mix / Gibbs,125,reuters,4000,1352.07308
+Multinomial Mix / Gibbs,125,20newsclean,4000,1594.377401
+Multinomial Mix / Gibbs,3,nips,6000,1983.093052
+Multinomial Mix / Gibbs,3,reuters,4000,1354.988565
+Multinomial Mix / Gibbs,3,20newsclean,4000,1860.630334
+Multinomial Mix / EM,8,nips,400,1865.455188
+Multinomial Mix / EM,8,reuters,600,1492.345597
+Multinomial Mix / EM,8,20newsclean,400,1891.975518
+Multinomial Mix / EM,100,nips,200,1825.079594
+Multinomial Mix / EM,100,reuters,400,1401.046135
+Multinomial Mix / EM,100,20newsclean,400,1791.737533
+Multinomial Mix / EM,70,nips,400,1873.901564
+Multinomial Mix / EM,70,reuters,400,1438.3956
+Multinomial Mix / EM,70,20newsclean,400,1876.069357
+Multinomial Mix / EM,250,nips,200,1840.845303
+Multinomial Mix / EM,250,reuters,200,1392.641342
+Multinomial Mix / EM,250,20newsclean,400,1768.911703
+Multinomial Mix / EM,5,nips,400,1887.017055
+Multinomial Mix / EM,5,reuters,600,1508.214676
+Multinomial Mix / EM,5,20newsclean,400,1921.786668
+Multinomial Mix / EM,150,nips,200,1856.931429
+Multinomial Mix / EM,150,reuters,200,1425.084565
+Multinomial Mix / EM,150,20newsclean,400,1903.717615
+Multinomial Mix / EM,80,nips,400,1848.608468
+Multinomial Mix / EM,80,reuters,400,1463.48393
+Multinomial Mix / EM,80,20newsclean,400,1856.327868
+Multinomial Mix / EM,12,nips,400,1845.664802
+Multinomial Mix / EM,12,reuters,200,1421.839104
+Multinomial Mix / EM,12,20newsclean,400,1922.181091
+Multinomial Mix / EM,50,nips,400,1836.456136
+Multinomial Mix / EM,50,reuters,600,1472.748855
+Multinomial Mix / EM,50,20newsclean,400,1899.851005
+Multinomial Mix / EM,6,nips,400,1852.50794
+Multinomial Mix / EM,6,reuters,600,1476.771775
+Multinomial Mix / EM,6,20newsclean,400,1948.669051
+Multinomial Mix / EM,200,nips,200,1847.115245
+Multinomial Mix / EM,200,reuters,200,1410.217061
+Multinomial Mix / EM,200,20newsclean,400,1775.435577
+Multinomial Mix / EM,30,nips,400,1896.181272
+Multinomial Mix / EM,30,reuters,600,1467.699163
+Multinomial Mix / EM,30,20newsclean,400,1939.507024
+Multinomial Mix / EM,90,nips,400,1871.582135
+Multinomial Mix / EM,90,reuters,400,1475.532841
+Multinomial Mix / EM,90,20newsclean,400,1892.374896
+Multinomial Mix / EM,20,nips,400,1843.406763
+Multinomial Mix / EM,20,reuters,600,1452.993148
+Multinomial Mix / EM,20,20newsclean,400,1905.320079
+Multinomial Mix / EM,175,nips,200,1758.671757
+Multinomial Mix / EM,175,reuters,200,1420.368416
+Multinomial Mix / EM,175,20newsclean,400,1876.932247
+Multinomial Mix / EM,25,nips,400,1848.646044
+Multinomial Mix / EM,25,20newsclean,400,1944.20999
+Multinomial Mix / EM,60,nips,400,1821.884946
+Multinomial Mix / EM,60,reuters,400,1414.469801
+Multinomial Mix / EM,60,20newsclean,400,1894.20532
+Multinomial Mix / EM,40,nips,400,1831.995098
+Multinomial Mix / EM,40,reuters,600,1458.942693
+Multinomial Mix / EM,40,20newsclean,400,1961.596122
+Multinomial Mix / EM,4,nips,400,1924.242063
+Multinomial Mix / EM,4,reuters,600,1522.361033
+Multinomial Mix / EM,4,20newsclean,400,1940.669698
+Multinomial Mix / EM,10,nips,400,1861.661954
+Multinomial Mix / EM,10,reuters,600,1479.881205
+Multinomial Mix / EM,10,20newsclean,400,1879.822546
+Multinomial Mix / EM,15,nips,400,1848.083929
+Multinomial Mix / EM,15,reuters,600,1424.730412
+Multinomial Mix / EM,15,20newsclean,400,1920.617244
+Multinomial Mix / EM,35,nips,400,1838.305745
+Multinomial Mix / EM,35,reuters,200,1443.649885
+Multinomial Mix / EM,35,20newsclean,400,1933.603984
+Multinomial Mix / EM,2,nips,400,1897.124276
+Multinomial Mix / EM,2,reuters,400,1664.995058
+Multinomial Mix / EM,2,20newsclean,400,2008.080468
+Multinomial Mix / EM,125,nips,200,1795.509876
+Multinomial Mix / EM,125,reuters,400,1406.490289
+Multinomial Mix / EM,125,20newsclean,400,1807.911106
+Multinomial Mix / EM,3,nips,400,1872.699499
+Multinomial Mix / EM,3,reuters,600,1655.724495
+Multinomial Mix / EM,3,20newsclean,400,1933.034671
