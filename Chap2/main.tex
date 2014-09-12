@@ -400,8 +400,8 @@ Within the text itself, tokens were divided into six categories: addressees, has
 
 Unlike \cite{Wu2010} and \cite{Han2011} we did not use query-expansion techniques such as spell-checkers or slang dictionaries to undo abbreviations, as abbreviated vocabularies might be a distinct mixture-component in its own right. URLs were included based on the results published in \cite{Michelson2010} which showed they were associated with distinct topics, though use of URL-shorteners makes it impossible to detect what the true URL was post-hoc.
 
-%\subsubsection*{NIPS Dataset}
-%The next dataset we consider is a the familiar NIPS dataset prepared by Sam Roweis and Yann Lecun consisting of papers published between 1987 and 1999. The full dataset contains 1,740 documents from 2,037 authors comprising 2,301,375 tokens. We limited this to a corpus consisting only those documents for which all authors and at least one reference occurred at least three other times in that same corpus. This (much reduced) corpus then consisted of 682 documents comprising 1,075,323 tokens, with 133 authors and 232 references. References in this case were identified only by the alphabetically ordered list of surnames and a year, so may not map one-to-one with the true references. 80\% of papers had one author only. With regard to references, approximately 32\% of documents had one reference only, 24\% had two references, 15\% had three references and 30\% had more than three references. Note that within each document many references would have been excluded as they did not occur with sufficient frequency across the entire corpus.
+\subsubsection*{NIPS Dataset}
+The next dataset we consider is a the familiar NIPS dataset prepared by Sam Roweis and Yann Lecun consisting of papers published between 1987 and 1999. The full dataset contains 1,740 documents from 2,037 authors comprising 2,301,375 tokens. We limited this to a corpus consisting only those documents for which all authors and at least one reference occurred at least three other times in that same corpus. This (much reduced) corpus then consisted of 682 documents comprising 1,075,323 tokens, with 133 authors and 232 references. References in this case were identified only by the alphabetically ordered list of surnames and a year, so may not map one-to-one with the true references. 80\% of papers had one author only. With regard to references, approximately 32\% of documents had one reference only, 24\% had two references, 15\% had three references and 30\% had more than three references. Note that within each document many references would have been excluded as they did not occur with sufficient frequency across the entire corpus.
 
 
 \subsubsection{Baseline Model}
@@ -457,100 +457,42 @@ In table \ref{tbl:generative} we show the ability of the model to generate data:
     \label{tbl:generative}
 \end{table}
 
+\begin{figure}
+\centering
+    \includegraphics[width=0.8\textwidth]{plots/nips-stm-bou-kp.pdf}
+    \caption{Performance of the STM models on NIPS datasets, using references and authors as features, implemented with the Bouchard bound}
+    \label{fig:nips-stm-bou-p-all}
+\end{figure}
+
+\begin{figure}
+\centering
+    \includegraphics[width=0.8\textwidth]{plots/nips-stm-boh-kp.pdf}
+    \caption{Performance of the STM models on NIPS datasets, using references and authors as features, implemented with the Bohning bound}
+    \label{fig:nips-stm-boh-p-all}
+\end{figure}
 
 
-%\begin{figure}
-%\centering
-%    \begin{subfigure}[b]{0.48\textwidth}
-%        \includegraphics[width=\textwidth]{Tweets-CTM-Train.png}
-%        \caption{Training Results}
-%        \label{fig:tweets-ctm-train}
-%    \end{subfigure}
-%    \quad
-%    \begin{subfigure}[b]{0.48\textwidth}
-%        \includegraphics[width=\textwidth]{Tweets-CTM-Query.png}
-%        \caption{Query Results}
-%        \label{fig:tweets-ctm-query}
-%    \end{subfigure}
-%  \caption{Perplexity results for the correlated topic model of tweets}
-%  \label{fig:tweets-ctm}
-%\end{figure}
 
-%\begin{figure}
-%\centering
-%    \begin{subfigure}[b]{0.66\textwidth}
-%        \includegraphics[width=\textwidth]{Tweets-STM-Train.png}
-%        \caption{Training Results}
-%        \label{fig:tweets-stm-train}
-%    \end{subfigure}
-%    \\
-%    \begin{subfigure}[b]{0.66\textwidth}
-%        \includegraphics[width=\textwidth]{Tweets-STM-Query.png}
-%        \caption{Query Results}
-%        \label{fig:tweets-stm-query}
-%    \end{subfigure}
-%  \caption{Perplexity results for our full-covariance model. \emph{Bouchard bound results absent in many cases, likely due to overflow issue mentioned in the text}}
-%  \label{fig:tweets-stm}
-%\end{figure}
 
 With regards to the choice of bound for the full-covariance model, the Bohning implementation is superior. One explanation of this could be that the Bohning approach allows us to calculate a full covariance matrix. However if we look at the results for individual users (see figure \ref{fig:bohing-bouchard-assignments}) we can see that when using the Bouchard bound, the algorithm essentially degenerates into a mixture model, as the posterior variances around the topic means approaches zero. 
 
-
-%\begin{figure}
-%\centering
-%    \begin{subfigure}[b]{0.475\textwidth}
-%        \includegraphics[width=\textwidth]{Tweets-User-Bou-k50-p50.png}
-%        \caption{Bouchard}
-%        \label{fig:tweets-user-bouchard}
-%    \end{subfigure}
-%    \quad
-%    \begin{subfigure}[b]{0.485\textwidth}
-%        \includegraphics[width=\textwidth]{Tweets-User-Boh-k50-p50.png}
-%        \caption{Bohning}
-%        \label{fig:tweets-user-bohning}
-%    \end{subfigure}
-%  \caption{Comparisons of mixture-distributions by bound for a contiguous subset of tweets from a single user with $K = P = 50$}
-%  \label{fig:bohing-bouchard-assignments}
-%\end{figure}
 
 Regardless of the algorithm chosen however, one issue which standards out is that the choice of the dimension of the latent feature-space, $P$, does not appear to affect results, suggesting that there is no correlation between features which can be exploited.
 
 
 
-%\subsubsection*{NIPS}
-%In the NIPS datasets the size of the latent dimension does have an effect on perplexity. Looking at the training data in figure \ref{fig:nips-stm-train}, we can see that as the number of topics increases, P also needs to increase as well to minimise perplexity, but only for the Bouchard bound (which again is essentially a mixture model).
-%
-%Looking at the query results, something slightly different appears, however: perplexity is improved as P is kept \emph{small}, indicating that it is helping to avoid over-fitting of the matrix $A$ to the training data. This same effect is present in both versions of the algorithm, but is much more visible in the Bouchard variant. To make the impact clear, a re-scaled version of the query perplexity is shown in figure \ref{fig:nips-stm-query-bohning} for the Bohning bound, though it's important to bear in mind how tight the scale is.
+\subsubsection*{NIPS}
+In the NIPS datasets the size of the latent dimension does have an effect on perplexity, though only in the case of the Bouchard bound (compare figure \ref{fig:nips-stm-bou-p-all} with figure \ref{fig:nips-stm-boh-p-all}). Looking at the training data in figure, we can see that as the number of topics increases, P also needs to increase as well to minimise perplexity, but only for the Bouchard bound (which again is essentially a mixture model).
 
-%\begin{figure}
-%\centering
-%    \includegraphics[width=\textwidth]{nips-stm-train.png}
-%    \caption{Training perplexity results for the full covariance Model on NIPS datasets}
-%    \label{fig:nips-stm-train}
-%\end{figure}
-%
-%\begin{figure}
-%\centering
-%    \includegraphics[width=\textwidth]{nips-stm-query.png}
-%    \caption{Query perplexity results for the full covariance Model on NIPS datasets}
-%    \label{fig:nips-stm-query}
-%\end{figure}
-%
-%\begin{figure}
-%\centering
-%    \includegraphics[width=\textwidth]{nips-stm-query-bohning.png}
-%    \caption{Rescaled plot of the query perplexity results for the full covariance Model on NIPS datasets using the Bohning bound}
-%    \label{fig:nips-stm-query-bohning}
-%\end{figure}
+Looking at the query results, something slightly different appears, however: perplexity is improved as P is kept \emph{small}, indicating that it is helping to avoid over-fitting of the matrix $A$ to the training data. This same effect is present in both versions of the algorithm, but is much more visible in the Bouchard variant. To make the impact clear, a re-scaled version of the query perplexity is shown in figure \ref{fig:nips-stm-query-bohning} for the Bohning bound, though it's important to bear in mind how tight the scale is.
 
 
-%
-%{\color{red}
-%{\bf Baseline results:}
-%I've had an odd issue with CTM on NIPS. With no regularization (i.e. vanilla MLE updates) the determinant of the covariance matrix approaches zero and the inference crashes out. However if I put a $\mathcal{NIW}(\vv{0}, \lambda I_K)$ hyperprior on the mean and covariance,  with $\lambda=0.01$, the determinant increases exponentially - becoming huge after 500 or so iterations. Moreover, with an NIW prior, the impact of the posterior document topic-variances on the overall covariance is negligible.
-%
-%That said, on the full NIPS dataset, last year, when I was experimenting with different LDA implementations, at K=40 perplexity was 1,300 with LDA implemented using Gibbs sampling.
-%}
+\begin{figure}
+\centering     %%% not \center
+\subfigure[NIPS]{\label{fig:a}\includegraphics[width=60mm]{plots/nips-cov-k50-k50-boh.pdf}}
+\subfigure[Tweets]{\label{fig:b}\includegraphics[width=60mm]{plots/tweets-cov-k50-k50-boh.pdf}}
+\caption{Covariances over topics inferred using the Bohning implementation of the STM/YV model}
+\end{figure}
 
 \subsection{Conclusion}
 In this paper we have introduced a method employing multi-task learning to predict admixture-components, using quadratic bounds to overcome the non-conjugacy of the model. We have successfully applied this method in the case of a dataset of tweets demonstrating better model fit versus a simple author topic model, and the ability to generate additional text that may help in query expansion. Our method is not specific to any particularly dataset, and so can be applied to any dataset where features may be associated with observations which can be fit using an admixture model.
