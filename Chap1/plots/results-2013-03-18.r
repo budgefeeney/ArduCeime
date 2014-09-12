@@ -2,7 +2,7 @@ library("ggplot2")
 library("gridExtra")
 
 # Load and parse file into factors and measures
-res <- read.csv("/Users/bryanfeeney/Workspace/TextModelling/results-2013-03-18/results-2013-03-18.csv")
+res <- read.csv("/Users/bryanfeeney/Workspace/ArduCeime/Chap1/plots/summary-all-on-all-clean.csv")
 res$algor <- factor(res$algor)
 res$algor_props_alpha <- factor(res$algor_props_alpha)
 res$algor_props_beta <- factor(res$algor_props_beta)
@@ -38,7 +38,7 @@ View(res)
 
 # Graphing hints
 # 
-# qplot(data=subset(res, corpus='reuters'), y=perplexity, color=algor facets=beta~alpha)
+qplot(data=subset(res, corpus='reuters'), y=perplexity, color=algor facets=beta~alpha)
 # 
 # l <- qplot (data=res, x=SampleLag, y=HardMisClass, color=BurnIn)
 # r <- qplot (data=res, x=SampleLag, y=Perplexity, color=BurnIn)
