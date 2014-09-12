@@ -13,9 +13,9 @@ While the admixture of multinomials is the best known topic-model, admixtures of
 \subsubsection*{Poisson}
 An alternative to modelling corpora as a document at a time, is to model each word in each document independently as having a Poisson distribution, with mean parameter $\lambda_t$. 
 
-A well-known result\cite{Bishop2006}\cite{Inouye2014} is that for T independent variables $x_1, x_2, \ldots, x_T$, each with a Poisson distribution characterised by mean parameter $\lambda_t$, their joint distribution is the product of two distributions: the first a multinomial, with mean parameter $\frac{1}{\sum_t \lambda_t} \{\lambda_1, \lambda_2, \ldots, \lambda_T\}$ and the second Poisson with mean parameter $\sum_t \lambda_t$. The traditional bag of words model typically employs a Multinomial/Poisson combination, where the Poisson represented document length, instead of T Poissons. Many models proceed to discard the Poisson over document length entirely, believing it to be uninformative, as can be seen in the above presentations of LDA.
+A well-known result\cite{Bishop2006}\cite{Inouye2014} is that for T independent variables $w_1, w_2, \ldots, w_T$, each with a Poisson distribution characterised by mean parameter $\lambda_t$, their joint distribution can be factored into the product of a a multinomial, with mean parameter $\frac{1}{\sum_t \lambda_t} \{\lambda_1, \lambda_2, \ldots, \lambda_T\}$ and a Poisson with mean parameter $\sum_t \lambda_t$, the latter capturing the probability of the document length. In most probabilistic models of text, the distribution over length is typically discarded on the presumption that it is uninformative, as can be seen in the presentations of the models thus far.
 
-An admixture of Poissons for discrete count data was proposed in \cite{Gopalan2013}. Such a model retains the distribution over lengths of each ``document" (in this the number movies reviewed by a customer). As with the multinomials, this model takes advantage of the ability to implicitly express the admixture via a weighted combination of parameters. Specifically, for each individual word (or other discrete measurement), the probability given the document mixture is:
+An admixture of Poissons for discrete count data was proposed in \cite{Gopalan2013}. Such a model implicitly retains the distribution over lengths of each ``document" (in this the number movies reviewed by a customer). As with admixtures of multinomials, this model takes advantage of the ability to implicitly express the admixture via a weighted combination of parameters. Specifically, for each individual word (or other discrete measurement), the probability given the document mixture is:
 
 %\fixme{Where does this stand on counts}
 
@@ -23,18 +23,18 @@ An admixture of Poissons for discrete count data was proposed in \cite{Gopalan20
 w_{dt} \sim \pois{\thd\T\Phi_{\cdot,t}}
 \end{align}
 
-This approach used independent Gamma priors for $\theta_{dk}$ and $\Phi_{kt}$, analoguously to the Dirichlet priors used in LDA. The claim is that the Gamma distribution imposed sparsity (though this is true also of an appropriate parameterised Dirichlet), and that this model captures ``long-tail" results, though again again this is possible in the case of LDA by learning the topic distribution's hyperparameter\cite{Wallach2009a}. The fundamental advantage of this approach, particularly when compared against other \emph{matrix factorization} approaches, is that by employing the same class of tricks used for LDA in \cite{Mimno2012a} it is possible exploit sparsity in the input matrix to enable fast inference.
+This approach uses independent Gamma priors for $\theta_{dk}$ and $\Phi_{kt}$, analoguous to the Dirichlet priors used in LDA. The claim is that the Gamma distribution imposes sparsity (though this is true also of an appropriately parameterised Dirichlet), and that this model captures ``long-tail" results, though again again this is possible in the case of LDA by learning the topic distribution's hyperparameter\cite{Wallach2009a}. The fundamental advantage of this approach, particularly when compared against other \emph{matrix factorisation} approaches, is that by employing the same class of implementation tricks discussed earlier for LDA such as \cite{Mimno2012a} it is possible exploit sparsity in the input matrix to enable fast inference.
 
 \subsubsection*{Gaussian}
 %The Gaussian distribution encodes a scaled Euclidean distance from a centroid. Consequently, using our distance-metric intuition, we can see that while distances will degenerate at high-dimensionalities, it will at penalise missing values more than Poisson or Multinomial distributions. In practice, the covariance matrix $\Sigma \in \MReal{T}{T}$ is too large for efficient inference, and given limited data estimates may well be low rank.
 
 Gaussian distributions, in the form of logistic-normal distributions, have been used in admixtures of text in both the dynamic topic model\cite{Blei2006a} and the regional topic model of \cite{Eisenstein2010}.
 
-In the regional topic model, the use of Gaussians was primarily motivated by the desire to perturb vocabularies according to proximity to regional centre, thereby accounting for regional dialects. The model presented a three-level hierarchy of Gaussians (prior, base topic, regional topic) with adjustable isotropic covariances at each step, so the regional variation was captured by iterative shrinkage of of the global vocabulary to a topic-vocabulary and thence to regional topic vocabulary. This was then used as a prior over multinomial observations using a softmax transformation.
+In the regional topic model, the use of Gaussians was primarily motivated by the desire to perturb vocabularies according to proximity to regional centre in a three-level hierarchical model of language prior, topic prior, and topic-region prior.
 
-The Dynamic Topic Model uses the logistic-normal in order to use well-known algorithms for dyanmical systems, notably the Kalman filter, to model changes in a topic's distribution over words over time.
+The Dynamic Topic Model also seeks to perturb distribution over vocabularies (and topics), by employing a Kalman filter over the vocabulary and topic priors.
 
-No-one appears to have used Gaussian distribution directly on term-frequency representations of text. Direct usage of the Guassian would penalise missing words, something which is not the case for a Multinomial where, given a probability $\{\oneover{3}, \oneover{3}, \oneover{4}\}$ observations $\{3,0,0\}$ and $\{1,1,1\}$ have equal probability.
+No-one appears to have used Gaussian distribution directly on term-frequency representations of text. Direct usage of the Gaussian would penalise missing words, something which is not the case for a Multinomial where, given a probability $\{\oneover{3}, \oneover{3}, \oneover{3}\}$ observations $\{3,0,0\}$ and $\{1,1,1\}$ have equal probability. Equally, all methods assume isotropic covariances: none have looked into learning diagonalized covariances to induce sparsity, or low-rank approximations to covariances that might capture correlations between words.
 
 %Something which hasn't been used in the literature is investigating the use of low-rank covariance approximations. Perhaps this is simply because it may be easier to run PCA as a preprocessing step. However one could easily envisage a model such as
 %
@@ -83,7 +83,7 @@ where $||\vv{\mu}||_2 = ||\vv{x}||_2 = 1$. The normaliser $c_T(\kappa)$ is defin
 where $I_r(\cdot)$ is the modified Bessel function of the third kind and the r-th order.
 
 
-An admixture of Von-Mises Fisher distributions was used in the Spherical Topic Models paper\cite{Reisinger2010}. The authors claim the von Mises Fisher Distribution is robust at high-dimensionalities and/or when the number of non-zero values is very small, particularly compared against Euclidean-based metrics, though this seems to be contradicted by the link between cosine and Euclidean distances described earlier in this report. Unlike the Gaussian approaches outlined above, it doesn't allow one to capture correlations between words.
+An admixture of Von-Mises Fisher distributions was used in the Spherical Topic Models paper\cite{Reisinger2010}. The authors claim the von Mises Fisher Distribution is robust at high-dimensionalities and/or when the number of non-zero values is very small.
 
 The model is
 
@@ -94,12 +94,12 @@ The model is
 \wdoc & \sim  vMF(\text{WAvg}(\thd, \Phi), \kappa) 
 \end{align}
 
-In this model they the mixing function WAvg$(\thd, \Phi) = \frac{\thd\T\Phi}{||\thd\T\Phi||}$ is used to blend the individual component distributions, though it is not clear that this constitutes a valid mixture distribution.  It is noted that formula does not yield the vector that minimizes the weighted sum of geodesic distances to the mean, that would be the  Buss \& Fillmore spherical average $BFAvg(\thd,\Phi) = \arg \min_{\vv{q}} \sum_k \thdk \delta_\mathbb{S}(\vv{\phi}_k, \vv{q})$ where $\delta_\mathbb{S}(\vv{x}, \vv{y})$ is the geodesic distance between $\vv{x}, \vv{y} \in \mathbb{S}^T$. 
+In this model the mixing function WAvg$(\thd, \Phi) = \frac{\thd\T\Phi}{||\thd\T\Phi||}$ is used to blend the individual component distributions, though it is not clear that this constitutes a valid mixture distribution.  It is noted that formula does not yield the vector that minimizes the weighted sum of geodesic distances to the mean, that would be the  Buss \& Fillmore spherical average $BFAvg(\thd,\Phi) = \arg \min_{\vv{q}} \sum_k \thdk \delta_\mathbb{S}(\vv{\phi}_k, \vv{q})$ where $\delta_\mathbb{S}(\vv{x}, \vv{y})$ is the geodesic distance between $\vv{x}, \vv{y} \in \mathbb{S}^T$. 
 
 Two variants were employed in\cite{Reisinger2010}: a straightforward admixture of vMF distributions, and an admixture of ``trucated" vMF distributions restricted to the positive othant of the unit sphere only. Despite the fact that the latter variant respects the support of the TF-IDF vectors used as an input to the algorithm, it was the plain admixture of vMFs that gave better results. However the paper explicitly refused to evaluate results using common metrics such as perplexity: instead evaluating the predictive accuracy obtained by logistic regression on topic-distributions generated by different topic models.
 
 \subsubsection*{Markov Random Fields with Discrete Observations}
-Markov Random Fields have been proposed as a means to  model correlations between words. The method is to consider the vocabulary as a fully connected graph over all possible terms, and by means of a sparsity-inducing regularization prune out edges, so that what is left is a sparse, disconnected graph of related words.
+Markov Random Fields have been proposed as a means to  model correlations between words. The method is to consider the vocabulary as a fully connected graph over all possible terms, and by means of a sparsity-inducing regularisation prune out edges, so that what is left is a sparse, disconnected graph of related words.
 
 %This is achieved by means of a Markov Random Field, a type of undirected graphical model.
 %
@@ -108,9 +108,9 @@ Markov Random Fields have been proposed as a means to  model correlations betwee
 %In both cases scaling is hard, though in the former it is at least well-studied.
 
 \subsubsection*{Bernoulli MRF}
-The Bernoulli MRF model of \cite{Nallapati2007} assumes that words have been encoded in a binary bag-of-words vector, where for term $t$, if that term occurs \emph{at least once} in the document, then $w_{dt} = 1$ , otherwise $w_{dt} = 0$. For microtexts, where repeated word occurrences are rare in any event, nothing is lost by this construction.
+The Bernoulli MRF model of \cite{Nallapati2007} assumes that words have been encoded in a binary bag-of-words vector, where for term $t$, if that term occurs \emph{at least once} in the document, then $w_{dt} = 1$ , otherwise $w_{dt} = 0$. For very short texts, where repeated word occurrences are rare in any event, nothing is lost by this construction.
 
-In the case of LDA, words are distributed according to a Multinomial distribution, whose parameter $\phi_k$ is drawn from the appropriate Dirichlet according to the topic assigned to that particular word. In the Bernoulli MRF model words would be distributed according to a topic-specific Bernoulli MRF, with parameter-matrix $\Lambda^{(k)}$, where $\Lambda^{(k)}$ encodes the edge structure, and an L1 regularlizer encodes a preference for sparse graphs.
+In the case of LDA, words are distributed according to a Multinomial distribution, whose parameter $\phi_k$ is drawn from the appropriate Dirichlet according to the topic assigned to that particular word. In the Bernoulli MRF model words are distributed according to a topic-specific Bernoulli MRF, with parameter-matrix $\Lambda^{(k)}$, where $\Lambda^{(k)}$ encodes the edge structure, and an L1 regularlizer encodes a preference for sparse graphs.
 
 \newcommand \vertices { { \mathcal{V} } }
 \newcommand \edges    { { \mathcal{E} } }
@@ -164,7 +164,7 @@ w_t | \vv{w}_{\setminus t}, \vl, \bl  \sim \pois{\exp(\lambda_t + \Lambda_t \vv{
 
 Knowing the relationship between the Poisson and its canonical definition as a member of the exponential family, we can see that this distribution's natural parameter is $\eta_t = \lambda_t + \Lambda_t \vv{w}$. 
 
-The matrix $\bl$ is equivalent to the precision matrix in a Gaussian MRF. If it is set to zero, then the resulting distribution is a multivariate Poisson distribution, similar to the pure Poisson model discussed earlier. The matrix can contain negative or positive values (the latter the refinement Yang introduced in \cite{Yang2013a}). This allows us to capture the fact that words rarely co-occur, as well as the converse.
+The matrix $\bl$ is equivalent to the precision matrix in a Gaussian MRF. If it is set to zero, then the resulting distribution is a multivariate Poisson distribution, similar to the pure Poisson model discussed earlier. The matrix can contain negative or positive values (the latter the refinement Yang introduced in \cite{Yang2013a}). This allows one to capture the fact that words rarely co-occur, as well as the converse.
 
 As with the straightforward multinomial distribution, they implement the admixture by defining the parameters as a convex optimisation of the component parameters and the topic assignments.
 \begin{align} 
@@ -193,7 +193,7 @@ The posterior update follows an intuitive pseudo-count scheme where
 
 and the norm weightings $\rho_\lambda$ and $\rho$ are kept fixed.
 
-One issue the the paper does not dwell on the consequences of mixing in the exponential space instead of the mean parameter space. As the section on the multinomial distribution illustrated, a weighted combination of the natural parameters is not the same as a weighted combination of the mean parameters.
+One issue the the paper does not dwell on the consequences of mixing in the exponential space instead of the mean parameter space. A weighted combination of the natural parameters is not the same as a weighted combination of the mean parameters, as will be shown later in this section
 
 For inference to be tractable, they optimise the pseudo-likelhood instead of the likelihood. This gives rise to the following approximate log-posterior:
 
@@ -217,15 +217,39 @@ Results are only reported for the case where $K=5$ topics and $T=500$ terms and 
 
 
 \subsubsection*{Admixtures of Language Models}
-In \cite{Wallach2006} an admixture of hierarchical Dirichlet language models (HDLMs)\cite{MacKay1995} was used on a tiny dataset of 150 NIPS abstracts and a subset of 20-newsgroup posts. Unlike the original HDLM paper, they used Minka's update algorithm\cite{Minka2002} for the vocabulary and topic hyperparameters. Topic inference was identical to LDA. Two variants of vocabulary distributions were employed, one which shared the vocabularly hyperprior amongst all topics, and one which had a different hyperprior for each topic which gave better results. Both models provided better perplexity results than LDA.
+In \cite{Wallach2006} an admixture of hierarchical Dirichlet language models (HDLMs)\cite{MacKay1995} was used on a tiny dataset of 150 NIPS abstracts and a subset of 20-newsgroup posts. Unlike the original HDLM paper, they used Minka's update algorithm\cite{Minka2002} for the vocabulary and topic hyperparameters. Topic inference was otherwise identical to LDA. Two variants of vocabulary distributions were employed, one which shared the vocabularly hyperprior amongst all topics, and one which had a different hyperprior for each topic which gave better results. Both models provided better perplexity results than LDA.
 
-This method was revisited in the ``Topical N-gram Model"\cite{Wang2007}, which viewed the model as an admixture of bigrams instead of an admixture of language models. The belief is that a model which views a vocabularly as a mixture of unigrams, bigrams, trigrams etc. should be a better fit. An LDA model is therefore augments with a Bernoulli switch $c_{dn}$ which when zero indicates that word $w_{dn}$ are to be fused into a bigram with word $w_{d(n-1)}$ (i.e. sampled according to a transition matrix $\Phi_k$), and which when set to one indicated that the word was independently generated (i.e. sampled from a multinomial $\phi_k$). By tying together sequences where $c_{dn}=1$ they higher-order n-grams are obtained.
+This method was revisited in the ``Topical N-gram Model"\cite{Wang2007}. This takes the view that modelling a document solely by bigrams is too restrictive, and that one should consider documents to be formed out of unigrams (such as ``SVM"), bigrams (such as ``machine learning"), trigrams (such as ``support vector machines") and so on. Topics are inferred as for LDA, with a different topic assigned to each unique token (i.e. unigram). However the model is was therefore with a Bernoulli switch $c_{dn}$ which when zero indicates that word $w_{dn}$ is to be fused into a bigram with word $w_{d(n-1)}$ (i.e. sampled according to a transition matrix $\Phi_k$), and which when set to one indicates that the word was independently generated (i.e. sampled from a multinomial $\phi_k$). By tying together sequences where $c_{dn}=1$ higher-order n-grams are obtained.
 
-An issue with this model is that for each word a topic is sampled, such that the various words in an n-gram have separate topic assignments. Empirically it was found that retroactively setting all topics to the topic of the last word worked best, but there was no theoretical justification for this. A more theoretically sound approach is the Admixture of PYPs \cite{Lindsey2012} which uses hierarchical Pitman-Yor language models to generate text. In this case a single topic is generated, and fixed, until $c_{dn}=1$ -- essentially a form of Bayesian change-point detection -- at which point a new topic is sampled. Further, the distribution of $c_{dn}$ is such that the posterior depends on the topic and the previous word. Using Amazon's Mechanical Turk they obtained superior performance in a phrase-intrusion test to LDA and the ``Topical N-Gram" model of \cite{Wang2007}, neither report results using the common perplexity metric.
+The issue then is that having fused together several unigrams into a single n-gram, how should one choose a single topic for the n-gram from the individual topics that were assigned to each unigram, Empirically it was found that retroactively setting all topics to the topic of the last word worked best, but there was no theoretical justification for this. 
 
-Both of these methods are interested in ``collocations", i.e. the idea that a unique concept is represented by more than one word, but that such collocations only exist for certain topics. An example is that the words ``White" and "House" should always be fused together except in the case of a topic centred on real-estate say, where they should be kept separate. The most recent extension of these methods used for the purposes of topical collocation is that of \cite{Johnson2010} which uses an admixture of adaptor grammars, described as a hierarchical, non-parameteric Bayesian extension of probabilistic context-free grammars.
+A theoretically sound alternative is the Admixture of PYPs \cite{Lindsey2012} which uses hierarchical Pitman-Yor language models to generate text. In this case a single topic is generated, and fixed, until $c_{dn}=1$ -- essentially a form of Bayesian change-point detection -- at which point a new topic is sampled. Employing the notation in \ref{sec:langmodels}, words are sampled condition on their topic according to:
 
-There are many other models using variants of these ideas. In \cite{Griffiths2005} a hidden markov model was employed, where the emission distributions consisted of $S-1$ multinomial distributions and one LDA model. For each word a topic $z_dn$ and a hidden state $c_dn$ were sampled, with the topic used only if the appropriate LDA emission distribution was used. The intent was that the other emission distributions would capture ``syntax" words. Equally, the idea of employing a markov property was used in \cite{Gruber2007} where a topic was assigned to an entire sentence, and a Bernoulli switch was used to determine whether a new topic should be sampled for the next sentence or not. A variation of these methods have been used in author-topic models\cite{RosenZvi2004} of Tweets\cite{Zhao2011}\cite{Zhao2011a} where a single topic was assigned to each tweet, and for each word within that tweet a Bernoulli switch was used to distinguish topic words from ``syntax" words. In this case there was just one distribution for ``syntax words" the empirical distribution of words in the corpus.
+\begin{align}
+w_{dn} | \vv{u} &\sim \muln{G_{\vv{u}}}{1} &
+G_{\vv{u}} &\sim \text{PYP}\left( a_{|\vv{u}|}, b_{|\vv{u}|}, G_{\pi(\vv{u})} \right) &
+G_{\emptyset} &\sim \text{PYP}\left( a_{0}, b_{0}, H \right)
+\end{align}
+
+with topics sampled according to
+
+\begin{align}
+c_{dn} | w_{d,n-1}, z_{d,n-1}, \vv{\pi} &\sim \mathcal{B}ern \left(\pi_{ w_{d,n-1}, z_{d,n-1}}\right) \\
+z_{dn} | c_{dn}, z_{d,n-1}, \thd & \sim \left\{ \begin{array}{lr}
+     \delta_{z_{d,n - 1}} & c = 0 \\
+     \muln{\thd}{1} & c = 1
+ \end{array}\right.
+\end{align}
+
+with Beta priors for $a_{|\vv{u}|}$ and $\pi_{zw}$, a Gamma prior for  $b_{|\vv{u}|}$ and $\thd \sim \dir{\vv{\alpha}}$.
+
+Using Amazon's Mechanical Turk they obtained superior performance in a phrase-intrusion test versus LDA and the ``Topical N-Gram" model of \cite{Wang2007}: however perplexity was not reports for this or the Topical N-gram model.
+
+Both of these methods are interested in ``collocations", i.e. the idea that a unique concept is represented by more than one word, but that such collocations only exist for certain topics. An example is that the words ``White" and "House" should always be fused together except in the case of a topic centred on real-estate say, where they should be kept separate. The most recent extension of these methods used for the purposes of topical collocation is that of \cite{Johnson2010} which uses an admixture of adaptor grammars, described as a hierarchical, non-parametric Bayesian extension of probabilistic context-free grammars. 
+
+A simpler approach used in practice, is attempt to infer collations as a preprocessing step, feeding fused n-grams to a model that presumes its inputs are unigrams. Obviously this fails to address the topical collocation problem mentioned in the preceding paragraph. A word pair $\left(w_1, w_2\right)$ can be thought of as a bigram if $p(w_1, w_2) \neq p(w_1)p(w_2)$. An obvious approach to this is mutual information, but as discussed in \cite{Dunning1993} mutual information estimates may not be reliable given the very small probabilities involved; they found better decisions were made using a log-likelihood ratio test to disprove the independence hypothesis. The same approach can be extended to higher-order n-grams.
+
+There are many other models using variants of these ideas. In \cite{Griffiths2005} a hidden markov model was employed, where the emission distributions consisted of $S-1$ multinomial distributions and one LDA model. For each word a topic $z_{dn}$ and a hidden state $c_{dn}$ were sampled, with the topic used only if the appropriate LDA emission distribution was used. The intent was that the other emission distributions would capture ``syntax" words. Equally, the idea of employing a markov property was used in \cite{Gruber2007} where a topic was assigned to an entire sentence, and a Bernoulli switch was used to determine whether a new topic should be sampled for the next sentence or not. A variation of these methods have been used in author-topic models of Tweets\cite{Zhao2011}\cite{Zhao2011a} where a single topic was assigned to each tweet, and for each word within that tweet a Bernoulli switch was used to distinguish topic words from ``syntax" words. In this case there was just one fixed distribution for ``syntax words" the empirical distribution of words across the entire corpus.
 
 
 
