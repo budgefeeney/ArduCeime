@@ -484,8 +484,6 @@ Regardless of the algorithm chosen however, one issue which standards out is tha
 \subsubsection*{NIPS}
 In the NIPS datasets the size of the latent dimension does have an effect on perplexity, though only in the case of the Bouchard bound (compare figure \ref{fig:nips-stm-bou-p-all} with figure \ref{fig:nips-stm-boh-p-all}). Looking at the training data in figure, we can see that as the number of topics increases, P also needs to increase as well to minimise perplexity, but only for the Bouchard bound (which again is essentially a mixture model).
 
-Looking at the query results, something slightly different appears, however: perplexity is improved as P is kept \emph{small}, indicating that it is helping to avoid over-fitting of the matrix $A$ to the training data. This same effect is present in both versions of the algorithm, but is much more visible in the Bouchard variant. To make the impact clear, a re-scaled version of the query perplexity is shown in figure \ref{fig:nips-stm-query-bohning} for the Bohning bound, though it's important to bear in mind how tight the scale is.
-
 
 \begin{figure}
 \centering     %%% not \center
