@@ -1,7 +1,11 @@
 \input{../header.tex}
 
 \subsubsection{Gaussian Scale Mixtures}
-In the previous section we described how, essentially, a Laplace prior on a covariance can be used to introduce sparsity. An alternative to the Laplace distribution which has been the subject of some research in multi-task learning is the use of a Gaussian scale mixture. A common example of the Gaussian scale mixture is the Gaussian-Gamma mix, which is equivalent to the Student-T distribution:
+In the previous section we described how, essentially, a Laplace prior on a covariance can be used to introduce sparsity. An alternative to a Laplace distribution is the use of a Gaussian scale mixture.
+
+For example, if one places a Gaussian-Exponential prior on each dimension of a weight vectors $\vv{w}_f \sim \nor{0}{\alpha_f}$ and places an exponential prior on the variance $\tau_f \sim \mathcal{E}\left(\gamma\right)$ then the marginal distribution over $w_f$ is a zero-mean Laplace distribution, where $\gamma$ controls the degree of sparsity \cite{Figueiredo2003}.
+
+Similarly, if one employs a Gaussian-Gamma prior instead, the resulting distribution is a Student-T distribution, but now in a form amendable to inference using EM where with a latent variable $u$
 
 \begin{align}
 u & \sim \mathcal{G}\left(\halve{\nu}, \halve{\nu} \right) ,
@@ -9,16 +13,17 @@ u & \sim \mathcal{G}\left(\halve{\nu}, \halve{\nu} \right) ,
 & \implies & \vv{z} & \sim \mathcal{S}\left(\vv{\mu}, \inv{\Sigma}, \nu \right)
 \end{align}
 
-This simplifies inference using Student-T distributions considerably, as one can use the EM algorithm and treat $u$ as a latent variable. As the Student-T distribution has ``heavier" tails than the Gaussian, it is more accommodating of outliers, and so Student-T distributions, using this framework, have been used for ``robust" PCA and CCA\cite{Archambeau2006a}, and also robust matrix factorization\cite{Balaji2011}.
+As the Student-T distribution has ``heavier" tails than the Gaussian, it is more accommodating of outliers, and so replacing Gaussian likelihood with Student-T likelihoods can lead algorithms which are more ``robust" to outliers, such as PCA and CCA\cite{Archambeau2006a}, and also matrix factorization\cite{Balaji2011}.
 
-With regard to sparse solutions, it was shown in \cite{Figueiredo2003} that if one places a Gaussian-Exponential prior on each dimension of a weight vectors $\vv{w}_f \sim \nor{0}{\alpha_f}$ and places an exponential prior on the variance $\tau_f \sim \mathcal{E}\left(\gamma\right)$ then the marginal distribution over $w_f$ is a zero-mean Laplace distribution, where $\gamma$ controls the degree of sparsity. A different approach to sparsity was taken by \cite{Archambeau2009a} which, inspired by automatic relevance-determination (ARD), used a different Gaussian-Gamma mix on every individual component of a matrix $W \in \MReal{L}{F}$ of the form
+Likewise if one places a different Gaussian-Gamma mix on every individual component of a matrix $W \in \MReal{L}{F}$ of the form
 \begin{align}
 w_{ij} &\sim \nor{0}{\alpha_{ij}} & \alpha_{ij} \sim \mathcal{G}\left(\frac{a}{LF}, b\right)
 \end{align}
-Unlike the previous presentation, this does not automatically correspond to any known distribution. If one sets $a=0$ the marginal over $w_{ij}$ is the Laplace distribution, while the marginal approaches a Normal-Jeffry's prior as both $a$ and $b$ approach zero. Finally, if $\frac{a}{LF} = b$ then we recover a product of student-T distributions, which is also sharply peaked around zero and so sparsity inducing. The posterior distribution over the $\alpha_{ij}$ is a produce of generalised inverse Gaussian distributions.
+one obtains a sparsifying inference scheme\cite{Archambeau2009a} similar automatic relevance-determination (ARD)
 
+Such a model does not directly correspond to any known distribution. If one sets $a=0$ the marginal over $w_{ij}$ is the Laplace distribution, while the marginal approaches a Normal-Jeffry's prior as both $a$ and $b$ approach zero. Finally, if $\frac{a}{LF} = b$ then one recovers a product of student-T distributions, which is also sharply peaked around zero and so sparsity inducing. The posterior distribution over the $\alpha_{ij}$ is a produce of generalised inverse Gaussian distributions.
 
-The idea of Gaussian-Scale priors over covariances for multi-task learning was first employed in \cite{Archambeau2011}. This followed the same outline as multi-task GPs\cite{Bonilla2008} introduced earlier, but did not marginalize out the weights, taking a parametric view instead. The model featured a covariance over features where sparsity was induced by a Gaussian scale prior and a low-rank covariance over tasks estimated using the pPCA framework, which jointly formed the matrix-variate distribution over the weight matrix $W \in \MReal{L}{F}$. The model used block-level rather than element-level sparsity, so W was decomposed into submatrices $W_i$. Finally a generalised inverse Gaussian (GIG) distribution was used in the \emph{prior} Gaussian-Scale mixture. As a result, the marginal prior distribution over the weight matrix -- depending on its inferred parameterisation -- could be a matrix-variate Laplace, Student-T or Gamma distribution. The identifiability issues caused by the Kronecker matrix were dealt with using priors. The full model was therefore:
+This permits an alternative, and more robust,  approach to sparse, correlated multi-task regression than that described earlier using the Glasso approach. Placing a matrix-variate prior over the multi-task weights matrix, and then placing a Gaussian-Gamma prior on the covariance over features, allows for inference of sparse weights. However, there are a few extensions. First, if the features have a block structure (e.g. multiple 1-of-F categorical encodings), one can place priors over weights corresponding to \emph{blocks} of features $W_i$. At the same time, if there are many tasks, one can learn a \emph{low-rank} distribution over tasks, using the the same derivation of as PCA. The resulting model\cite{Archambeau2011} is:
 
 \begin{align}
 \vv{t}_n|W,\vv{x}_n & \sim \nor{W\vv{x}_n}{\sigma^2 I_L} &
@@ -35,11 +40,13 @@ p(\alpha_i) = \frac{\chi^{-\omega}\left(\sqrt{\chi \phi}\right)^\omega}{2 K_w \l
 \end{align}
 with $K_w(\cdot)$ being a modified Bessel function of the second kind. Inference, using variational EM, is complex, with gradient based methods required to learn the parameters of the GIG distribution.
 
-This model was in turn extended in \cite{Yang2011} who defined a \emph{matrix-variate} generalised inverse Gaussian (MGIG) distribution $G\sim \mathcal{MGIG}\left(\Psi, \Phi, \nu\right), G \in \MReal{F}{F}$
+The use of a generalised inverse Gaussian (GIG) distribution as a prior over \emph{prior} Gaussian-Scale mixture means that the marginal distribution over the weight matrix -- depending on its inferred parameterisation -- can be a matrix-variate Laplace, Student-T or Gamma distribution. The identifiability issues caused by the Kronecker matrix are handled by the shrinkage priors.
+
+This model can be extended\cite{Yang2011} by defining a \emph{matrix-variate} generalised inverse Gaussian (MGIG) distribution $G\sim \mathcal{MGIG}\left(\Psi, \Phi, \nu\right), G \in \MReal{F}{F}$
 \begin{align}
 \frac{|G|^{\omega - (F + 1)/2}}{|\half \Psi|^\omega K_\omega \left(\frac{1}{4}\Phi \Psi\right)} \text{etr}\left( -\half \Psi \inv{G} - \half \Phi G \right)
 \end{align}
-where $K_\omega(\cdot)$ is a matrix-variate Bessel function. The Wishart and inverse-Wishart distributions are a special case of the MGIG distribution. They used this in a Gaussian-scale mixture to create a Gaussian MGIG (GMGIG) prior over weights.
+where $K_\omega(\cdot)$ is a matrix-variate Bessel function. The Wishart and inverse-Wishart distributions are a special case of the MGIG distribution. Combined with a Gaussian-scale mixture this leads to a Gaussian MGIG (GMGIG) prior over weights.
 \begin{align}
 W & \sim \mnor{VZ}{\Omega}{\Sigma} &
 V & \sim \mnor{V_0}{\kappa_v I_P}{\Sigma} &
@@ -47,9 +54,8 @@ Z & \sim \mnor{Z_0}{\Omega}{\kappa_z I_P} \\
 \Omega & \sim \mathcal{MGIG}\left( \Psi_\Omega, \Phi_\Omega, \nu_\Omega \right) &
 \Sigma & \sim \mathcal{MGIG}\left( \Psi_\Sigma, \Phi_\Sigma, \nu_\Sigma \right) &
 \end{align}
-which as can be seen, is a prior that assumes W is of low rank, with latent features $P \ll F$. Like the GIG prior of \cite{Archambeau2011} prior is similarly flexible, encompassing matrix-variate Student-T, Laplace and Bessel distributions. As before, identifiability is weakly enforced using priors, and in experiments they demonstrate better predictive performance versus the block-sparsifying GIG model.
+which as can be seen, is a prior that assumes W is of low rank, with latent features $P \ll F$. Like the GIG prior of this, depending on the parameterisation, encompasses matrix-variate Student-T, Laplace and Bessel distributions. 
 
-It is worth re-iterating that Gaussian-Scale mixtures are not the only way of inducing sparsity. A considerably simpler approach was employed in \cite{Zhang2010a} for example, which simply added L1 matrix norm terms to the log-likelihood of a model using a matrix-variate prior with separate covariances, and then derived MLE estimates for the covariances in a ``flip-flop" style algorithm with the usual adjustments for identifiability. 
 
 %\fixme{This paper notes you can add a condition that $\tr{\Epsilon} \leq 1$ to avoid it going to infinity, which would have been good to know.}
 

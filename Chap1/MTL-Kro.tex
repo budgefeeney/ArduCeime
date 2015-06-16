@@ -7,47 +7,48 @@ An alternative to employing a single multivariate Gaussian prior over many weigh
 p(W) = (2\pi)^{KF}|\Sigma|^{-F}|\Omega|^{-K} \Etr{\half \inv{\Sigma}\left(W - M\right) \inv{\Omega} \left(W - M \right)\T}
 \end{equation}
 
-where $\Etr(X) = \exp (\Tr{X})$.
+where $\Etr{X} = \exp (\Tr{X})$.
 
-It is related to the multivariate normal distribution by the identity $\mnor{M}{\Omega}{\Sigma} = \nor{\vecf{M}}{\Sigma \otimes \Omega}$ where $\vecf{\cdot}$ is the function that converts a matrix to a vector by stacking its columns. 
+This is related to the multivariate normal distribution by the identity $\mnor{M}{\Omega}{\Sigma} = \nor{\vecf{M}}{\Sigma \otimes \Omega}$ where $\vecf{\cdot}$ is the function that converts a matrix to a vector by stacking its columns. 
 
-The row and column covariances $\Omega$ and $\Sigma$ are unidentifiable as $A \otimes B = \lambda A \otimes \frac{1}{\lambda}B$ for any scalar $\lambda$. In practice this is resolved by forcing the first elements on the diagonals of the matrices to 1\footnote{Which element of the diagonal is chosen is arbitary, other presentations such as \cite{Srivastava2009} choose the last element of the diagonal}, which gives rise to the iterative ``flip-flop" algorithm in the maximum-likelihood setting: given N observations of a matrix $X_n \in \MReal{L}{F}$, one can fit a matrix-variate Gaussian of the form $\mnor{M}{\alpha^2 \Omega}{\Sigma}$ using the following update
+The row and column covariances $\Omega$ and $\Sigma$ are unidentifiable as $A \otimes B = \lambda A \otimes \frac{1}{\lambda}B$ for any scalar $\lambda$. In practice this is resolved by forcing the one of the elements on the diagonals of the matrices, such as the the last, to 1 which gives rise to the iterative ``flip-flop" algorithm\cite{Srivastava2009} for maximum-likelihood estimation Given N observations of a matrix $X_n \in \MReal{L}{F}$, one can fit a matrix-variate Gaussian of the form $\mnor{M}{\alpha^2 \Omega}{\Sigma}$ using the following update
 
 \begin{align}
 \Omega & = \frac{1}{\hat{\Omega}}_{ll} \hat{\Omega}, \qquad\qquad\hat{\Omega} = \frac{1}{N F} \sum_n (\vv{x} - \vv{m}) \inv{\Sigma} (\vv{x} - \vv{m})\T \\
-\Sigma & = \frac{1}{\hat{\Sigma}}_{ll} \hat{\Sigma}, \qquad\qquad\hat{\Sigma} = \frac{1}{N L} \sum_n (\vv{x} - \vv{m})\T \inv{\Omega} (\vv{x} - \vv{m}) \\
+\Sigma & = \frac{1}{\hat{\Sigma}}_{ff} \hat{\Sigma}, \qquad\qquad\hat{\Sigma} = \frac{1}{N L} \sum_n (\vv{x} - \vv{m})\T \inv{\Omega} (\vv{x} - \vv{m}) \\
 \alpha^2 & = \frac{1}{NFL} \sum_n (\vv{x} - \vv{m})\T\invb{\Sigma \otimes \Omega}(\vv{x} - \vv{m})
 \end{align}
 where $\vv{x} = \vecf{X}$, $\vv{m} = \vecf{M}$ and $M=\frac{1}{N} \sum_n X_n$. These updates are iteratively evaluated till convergence.
 
-Note that $\Omega \in \MReal{L}{L}$ but its estimator is scaled by $\frac{1}{N F}$ and similarly for $\Sigma$. It has been proven that if $N > \max(L, F)$ then this procedure should converge on unique estimates of $\Sigma$ and $\Omega$\cite{Srivastava2009}. This was extended in \cite{Srivastava2009a} where for a matrix-variate distribution $\mnor{XZY}{\Omega}{\Sigma}$ where $X$ and $Y$ are known design matrices and $Z$ is a latent matrix, unique estimators were derived for $Z$, $\Omega$ and $\Sigma$ under the identifiability condition that the last element of the diagonal in $\Omega$ be set to one.
+Note that $\Omega \in \MReal{L}{L}$ but its estimator is scaled by $\frac{1}{N F}$ and similarly for $\Sigma$. It has been proven that if $N > \max(L, F)$ then this procedure should converge on unique estimates of $\Sigma$ and $\Omega$\cite{Srivastava2009}. Similarly, this approach can be extended\cite{Srivastava2009a} to the case of a matrix-variate distribution $\mnor{XZY}{\Omega}{\Sigma}$ where $X$ and $Y$ are known design matrices and $Z$ is a latent matrix, providing unique estimators of $Z$, $\Omega$ and $\Sigma$ under the identifiability condition that the last element of the diagonal in $\Omega$ be set to one.
 
-Many special-case MLE algorithms have been derived for separable covariances with Toeplitz\cite{Wirfalt2010} and per-symmetric\cite{Jansson} structures. Moreover, \cite{Ohlson2011}\cite{Ohlson2013} extend this algorithm to more than two dimensions, creating a multilinear normal distribution over tensors by means of a multi-linear $\vecf{\cdot}$ function with particular emphasis on the ``doubly-separable" case where the covariance is factorized into three covariance matrices. ``Flip-flop" style estimators are then presented for these covariances.
+Further extensions have been derived separable covariances with Toeplitz\cite{Wirfalt2010} and per-symmetric\cite{Jansson} structures. The same algorithm can also be extended to more than two dimensions\cite{Ohlson2011}\cite{Ohlson2013}, creating a multilinear normal distribution over tensors by means of a multi-linear $\vecf{\cdot}$ function with particular emphasis on the ``doubly-separable" case where the covariance is factorized into three covariance matrices.
 
+In the Bayesian case, the use of shrinkage priors, such as the Inverse-Wishart distribution, on the covariances penalizes explosions and implosions\cite{Archambeau2011}, and also addresses this issue.
 
-One of the first approaches to employ a matrix-variate prior in the case of multi-task learning was the Gaussian process (GP) model of \cite{Bonilla2008}. In a standard GP, the model is usually presented as
+Matrix-variate priors can be employed to derive efficient algorithms for multi-task regression. Consider a Gaussian process, typically\cite{Bishop2006} presented as:
 
 \begin{align}
-\vv{w} \sim & \nor{0}{\alpha^2 I_F} & \vv{t}|\vv{w} & \sim \nor{\vv{0}}{\sigma^2 I_N} \\
+\vv{w} \sim & \nor{0}{\alpha^2 I_F} & \vv{t}|\vv{w},X & \sim \nor{X\vv{w}}{\sigma^2 I_N} \\
 & & \vv{t} & \sim \nor{\vv{0}}{\sigma^2I_N + K}
 \end{align}
-where $K = \frac{1}{\alpha^2} X X\T$ and via the kernel trick\cite{Jst2004} can be replaced with any other valid kernel. In the case of multitask Gaussian Processes, our single weight vector is replaced with a weight matrix $W$ and similarly the target vector $t$ is replaced with a matrix $T \in \MReal{L}{F}$. We can use the $\vecf{\cdot}$ function to represent these with multivariate distributions and so using standard Gaussian\cite{Bishop2006} and Kronecker\cite{Minka2000a} identities derive
+where $K = \frac{1}{\alpha^2} X X\T$ and via the kernel trick\cite{Jst2004} can be replaced with any other valid kernel. To extend this to the multi-task case, the single weight vector can be replaced with a weight matrix $W$ and similarly the target vector $t$ is with a matrix $T \in \MReal{L}{F}$. Using the $\vecf{\cdot}$ function to represent these with multivariate distributions and employing standard Gaussian\cite{Bishop2006} and Kronecker\cite{Minka2000a} identities once can derive the following multi-task GP regression algorithm\cite{Bonilla2008}:
 
 \begin{align}
-\vecf{W} \sim & \nor{0}{\alpha^2 I_F \otimes I_L} & \vecf{T}|W & \sim \nor{\vv{0}}{\sigma^2 I_N \otimes I_L} \\
+\vecf{W} \sim & \nor{0}{\alpha^2 I_F \otimes I_L} & \vecf{T}|W,X & \sim \nor{\vecf{XW}}{\sigma^2 I_N \otimes I_L} \\
 & & \vecf{T} & \sim \nor{\vv{0}}{\Sigma \otimes K + I_L \otimes \sigma^2I_N}
 \end{align}
-An interesting fact worth nothing is that despite employing a matrix-variate prior over functions, the marginal distribution over T is not equivalent to any matrix-variate distribution as the sum in the covariance precludes any factorization into a Krnoecker product of two matrices. One could recover a matrix-variate distribution in the no-noise case (i.e. $\sigma^2 = 0$) but this leads to additional complications, discussed later.
+An interesting fact worth nothing is that despite employing a matrix-variate prior over functions, the marginal distribution over T is not equivalent to any matrix-variate distribution as the sum in the covariance precludes any factorisation into a Krnoecker product of two matrices. One could recover a matrix-variate distribution in the no-noise case (i.e. $\sigma^2 = 0$) but this leads to additional complications, discussed later.
 
 The mean prediction $\vv{t}_l^*$ for the l-th task given features $\vv{x}^*$ follows the standard form for a GP.
 
 \begin{align}
-m(\vv{x}^*)_l & = \left(\vv{k}_l \otimes \vv{k}_x^* \right)\T\inv{C} \vv{y} & C & = \Sigma \otimes K + \sigma^2 I_N \otimes I_L
+m(\vv{x}^*)_l & = \left(\vv{k}_l \otimes \vv{k}_x^* \right)\T\inv{C} \vv{t} & C & = \Sigma \otimes K + \sigma^2 I_N \otimes I_L
 \end{align}
 
 where $\vv{k}_l$ is the l-th column of the task covariance matrix $\Sigma$ and $\vv{k}_*$ is the usual vector of covariances between the input $\vv{x}_*$ and all other points.
 
-The authors presenting this model noted that in fact the same model had been independently derived in the geostatistics literature, where it was a type of co-kriging method known as the intrinsic correlation model\cite{Wackernagel1998}. A counter-intuitive property of this model, reproduced in the paper, is that no transfer of learning happens in the no-noise case (i.e. where $\sigma^2 = 0$ causing the covariance over $\vecf{T}$ to simplify to $\Sigma \otimes K$). 
+This model has been independently derived in the geostatistics literature, where it is is considered a co-kriging method known as the intrinsic correlation model\cite{Wackernagel1998}. A counter-intuitive property of this model is that in the no-noise case -- where $\sigma^2 = 0$ and so the covariance of $\vecf{T}$ simplifies to $\Sigma \otimes K$) -- no transfer of learning occurs. 
 
 The reason is that in the case maximum of likelihood estimation this leads to an update of $K$ proportional to $-L \ln |K| - N \ln |T\T \inv{K} T|$, an expression that does not involve $\Sigma$, whereas the update for $\Sigma$ is $\frac{1}{N}T\T \inv{K} T$. In short, the targets are correlated using $\Sigma$ and $K$, but we can decorrelate those targets so that only $\Sigma$ remains. This is clearer if we work through the equation for the mean of the predicted target $\vv{t}_* \in \VReal{L}$ for a new input $\vv{x}^*$ in the no noise case:
 
@@ -62,19 +63,24 @@ m(\vv{x}_*) & = (\Sigma \otimes \vv{k}_*)\T\invb{\Sigma \otimes K}\vecf{T} \\
  \end{array}\right) \\
 \end{align}
 
-With regard to inference, the authors did not use any of the tricks outlined earlier to handle identifiability: presumably the use of a parameterised covariance function instead of a covariance matrix ensured that no identifiability issues arose in practice, however they did factor the task covariance $\Sigma = L L\T$ according to the Cholesky decomposition to ensure that the resulting estimate of the covariance was always positive semi-definite. 
+With regard to inference, in published work\cite{Bonilla2008} no flip-flop algorithm has been employed: presumably the use of a parameterised covariance function instead of a covariance matrix ensured that no identifiability issues arose in practice.
+
+%With regard to inference, the authors did not use any of the tricks outlined earlier to handle identifiability: presumably the use of a parameterised covariance function instead of a covariance matrix ensured that no identifiability issues arose in practice, however they did factor the task covariance $\Sigma = L L\T$ according to the Cholesky decomposition to ensure that the resulting estimate of the covariance was always positive semi-definite. 
 
 %Additionally, a number of approximations were used to make calculation of the kernel feasible, such as subselecting a sparse subset of inputs to calculate the kernel matrix\fixme{Nystrom}.
 
-Matrix-variate priors for multi-task learning were also employed in \cite{Stegle2011} which introduced an auxiliary variable $Y$ to allow them retain noise in the marginal distribution of $T$ while regaining a matrix-variate form for the conditional distributions: $T\sim\nor{\vecf{Y}}{\sigma^2 I_{LF}}$, $Y\sim\nor{\vv{0}}{\Sigma \otimes \Omega}$. Following the Glasso approach a Laplace prior was put on $\vecf{\inv{\Sigma}}$ to encourage sparse features while $\Omega$ was a kernel capturing task correlations. The case of applying the Glasso approach to both covariances, in a parametric, maximum likelihood setting, was additionally investigated by \cite{Tsiligkaridis2012b}\cite{Tsiligkaridis2012}
+An alternative approach the method outlined above is to introduce a noise-free auxiliary variable, Y, such that $T|Y\sim\nor{\vecf{Y}}{\sigma^2 I_{LF}}$, $Y\sim\nor{\vv{0}}{\Sigma \otimes \Omega}$\cite{Stegle2011}. The advantage of this model is that $Y$ and $T$ therefore have a matrix-variate distributions, and so there's no need to resort to multi-variate forms as outlined above. 
+
+Such a model could further be extended (\cite{Stegle2011} again) to encode a preference for sparse feature by following the Glasso approach\cite{Friedman2008} and putting a Laplace prior on $\vecf{\inv{\Sigma}}$, while representing $\Omega$ as a kernel which captures task correlations. The case of applying the Glasso approach to both covariances, in a parametric, maximum likelihood setting, has additionally been investigated by \cite{Tsiligkaridis2012b} and \cite{Tsiligkaridis2012}, while a much simpler approach of adding an L1 penalty term, for both matrices, to the log-likelihood has been presented in\cite{Zhang2010a}.
 
 %\fixme{cite Glasso}
 
-Matrix-variate priors have been used in other cases not necessarily part of the multi-task learning domain due to the dramatic reduction in parameters (from $(LF)^2$ to $L^2 + F^2$) enabled by the kronecker product structure.
+While the use of matrix-variate priors has been motivated here as a means of facilitating multi-task learning, such methods can also be used as a way of factorising a large matrix into two considerably smaller ones. (from $(LF)^2$ to $L^2 + F^2$) enabled by the Kronecker product structure.
 
-In \cite{Allen2010} they investigate the matrix completion problem where rows or columns can be treated as independent features, and so the distribution over the matrix can be treated as matrix-normal with separate covariances. The motivating example was a recommender system for movies, using a subset of the Netflix dataset. As there is only one matrix, $X \in \MReal{N}{P}$ they use a variant of the matrix-normal distribution $X \sim \mnor{\vv{m}_c \one_P\T + \vv{m}_r \one_N\T}{\Omega}{\Sigma}$ where $\vv{m}_c \in \VReal{N}$ is the mean of the columns, and $\vv{m}_r \in \VReal{P}$ is the mean of the rows. This can equally be explained as a random-effects model with $X_{np} = m_{c,n} + m_{r,p} + \epsilon_{np}$ where $\epsilon_{np} \sim \nor{0}{\Sigma_{nn}\Omega{pp}}$. Inference was by expectation conditional maximisation, but the need to infer full rank covariances, even with the factorization, meant that the method could only be applied to a subset of the Netflix dataset, which features the reviews of 17,000 movies given by 480,000 customers. 
+For example, in the case of the matrix completion problem where rows or columns can be treated as independent features, a natural distribution over the matrix is as matrix-normal with separate covariances. As there is only one matrix, $X \in \MReal{N}{P}$ one cannot reliably estimate the mean matrix, but if the mean matrix where itself factored into row and column parts, one would arrive at the model\cite{Allen2010}  $X \sim \mnor{\vv{m}_c \one_P\T + \vv{m}_r \one_N\T}{\Omega}{\Sigma}$ where $\vv{m}_c \in \VReal{N}$ is the mean of the columns, and $\vv{m}_r \in \VReal{P}$ is the mean of the rows. This can equally be explained as a random-effects model with $X_{np} = m_{c,n} + m_{r,p} + \epsilon_{np}$ where $\epsilon_{np} \sim \nor{0}{\Sigma_{nn}\Omega_{pp}}$. Unfortunately, the fact that typical recommender datasets features large number of both users and products limits the applicability of this approach unless one simultaneously reduces the rank of \emph{both} covariances.
 
-A non-parametric extension of this model was presented in\cite{Yu2009} where $y_{nl} = m_{nl} + f_{nl} + \epsilon_{nl}$, $m_{nl}$ is a function of the task and input features, $f_{nl}$ are the random effects and $\epsilon_{nl}$ is IID zero-mean Gaussian noise. A matrix-variate GP was employed for $m_{nl} \sim \gp{0}{\Omega_0 \otimes \Sigma}$ while $L$ multi-variate GPs were employed for the random effected $f_{l} \sim \gp{0}{\tau \Sigma}$. An inverse Wishart process\cite{Dawid1981} was used as a prior for $\Sigma \sim \mathcal{IWP} \left(\kappa, \Sigma_0 + \lambda\delta\right)$. $\Omega_0$ and $\Sigma_0$ were the covariance functions over task and input features respectively. The marginal distribution over Y is shown to be a matrix-variate Student-T process
+
+%A non-parametric extension of this model was presented in\cite{Yu2009} where $y_{nl} = m_{nl} + f_{nl} + \epsilon_{nl}$, $m_{nl}$ is a function of the task and input features, $f_{nl}$ are the random effects and $\epsilon_{nl}$ is IID zero-mean Gaussian noise. A matrix-variate GP was employed for $m_{nl} \sim \gp{0}{\Omega_0 \otimes \Sigma}$ while $L$ multi-variate GPs were employed for the random effects $f_{l} \sim \gp{0}{\tau \Sigma}$. An inverse Wishart process\cite{Dawid1981} was used as a prior for $\Sigma \sim \mathcal{IWP} \left(\kappa, \Sigma_0 + \lambda\delta\right)$. $\Omega_0$ and $\Sigma_0$ were the covariance functions over task and input features respectively. The marginal distribution over Y is shown to be a matrix-variate Student-T process
 
 
 \input{../footer.tex}
