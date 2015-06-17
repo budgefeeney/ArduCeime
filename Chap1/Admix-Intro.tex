@@ -87,7 +87,7 @@ It worth nothing that in practice, the main difference between the two is regula
 \subsubsection{Comparison with other Models}
 More precisely, LDA can be described as an admixture of multinomials, in that it models a corpus as a mixture of document-level mixtures. In fact \cite{BleiNgJordan2003} was not the first time such a model had been presented,  admixtures of multinomials had been used in Bioinformatics previously\cite{Pritchard2000} though that result was little known in machine learning fields. 
 
-The Multinomial PCA algorithm\cite{Buntine2002} also predates LDA. As LDA is a word-level mixture, if one treats $\Phi$ as a parameter with no distribution one can equivalently rewrite the model as
+The Multinomial PCA algorithm\cite{Buntine2002} is also an independent invention of the LDA model published in advance of \cite{BleiNgJordan2003} It is a word-level mixture, if one treats $\Phi$ as a parameter with no distribution one can equivalently rewrite the model as
 \begin{align}
 \wdoc & \sim \muln{\Phi\T\thd}{n_{d\cdot\cdot}} & \thd & \sim \dir{\vv{\alpha}}
 \end{align}
@@ -96,7 +96,6 @@ from which the connection with PCA, where one typically write $x \sim \nor{W\T\v
 Finally it is worth noting that while the presentation has used text as a motivating example, LDA can be applied to any case where an admixture of multinomials is an appropriate distribution for the observed data. In the original presentation\cite{BleiNgJordan2003} one example given was that of collaborative filtering, where users and the movie scores corresponded to documents and word-counts. Given that in an LDA model $W = \Theta \Phi$ one can see the correspondence between LDA and matrix factorization, a popular method of implementing recommender systems\cite{Salakhutdinov2007}, and indeed this correspondence has been investigated further in\cite{Agarwal2010}. In particular LDA can be seen to be a probabilistic form of non-negative matrix factorisation\cite{Lin2007}
 
 Other examples have included interactions between users on social networks  according to certain latent communities, analoguous to words, documents and latent-topics respectively\cite{Zhang2007}, or applied to features derived from images, i.e. ``visual words", to infer latent image topics.\cite{Philbin2008}
-
 
 \subsubsection{Capturing Correlation between Admixture Components}
 
@@ -107,6 +106,8 @@ The correlated topic model\cite{Blei2006} (CTM) replaces the Dirichlet distribut
 \etd & \sim \nor{\vv{\mu}}{\Sigma} & \thd = \vv{\sigma}\left(\etd\right) = \left\{\frac{e^{\eta_{dk}}}{\sum_j e^{\eta_{dj}}}\right\}_{k=1}^K
 \end{align}
 after which the model follows as for LDA. Unlike LDA, where many implementers choose not to learn the hyper-parameters, in CTM it is essential in order to capture topic correlations. The non-conjugacy of the multinomial likelihood with the Gaussian prior makes inference complex and typically requires approximations, discussed in section \ref{sec:nonconj}
+
+
 
 A separate approach to capturing correlations is Pachinko Allocation\cite{Li2006}. In this case, LDA is described as a three level Pachinko allocator, a particular class of tree-structured, directed, acyclic, graphical model, where a single root note, corresponding to a document, gives rise to $K$ intermediate nodes, corresponding to topics, which in turn gives rise to $T$ observations, corresponding to words. While any tree-structured DAG is feasible in the Pachinko model, a particular four-level tree where each node was fully connected to all nodes in the layer below, but not to any other layer (i.e there were no jumps, and no inter-layer links) was considered. This corresponds to a root node generating $Q$ intermediate topics $\vv{\psi}_d$, which generate $K$ topics $\thd$ which in turn generate $T$ words $\wdoc$. As such this encodes a non-linear transformation of the intermediate topics $\vv{\psi}_d$ into words $\wdoc$. One can think of this as implementing multinomial PCA over the topics in an otherwise standard LDA mode. An advantage of this approach over CTM is that it is not limited to capturing pairwise correlations via a covariance matrix.
 
