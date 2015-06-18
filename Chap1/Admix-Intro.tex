@@ -107,16 +107,21 @@ The correlated topic model\cite{Blei2006} (CTM) replaces the Dirichlet distribut
 \end{align}
 after which the model follows as for LDA. Unlike LDA, where many implementers choose not to learn the hyper-parameters, in CTM it is essential in order to capture topic correlations. The non-conjugacy of the multinomial likelihood with the Gaussian prior makes inference complex and typically requires approximations, discussed in section \ref{sec:nonconj}
 
-
-
-A separate approach to capturing correlations is Pachinko Allocation\cite{Li2006}. In this case, LDA is described as a three level Pachinko allocator, a particular class of tree-structured, directed, acyclic, graphical model, where a single root note, corresponding to a document, gives rise to $K$ intermediate nodes, corresponding to topics, which in turn gives rise to $T$ observations, corresponding to words. While any tree-structured DAG is feasible in the Pachinko model, a particular four-level tree where each node was fully connected to all nodes in the layer below, but not to any other layer (i.e there were no jumps, and no inter-layer links) was considered. This corresponds to a root node generating $Q$ intermediate topics $\vv{\psi}_d$, which generate $K$ topics $\thd$ which in turn generate $T$ words $\wdoc$. As such this encodes a non-linear transformation of the intermediate topics $\vv{\psi}_d$ into words $\wdoc$. One can think of this as implementing multinomial PCA over the topics in an otherwise standard LDA mode. An advantage of this approach over CTM is that it is not limited to capturing pairwise correlations via a covariance matrix.
-
-A similar idea was implemented for the correlated topic-model in \cite{Putthividhya2009} where instead of multinomial PCA, a factor-model over topics was used as a prior. Thus the prior over document-level topics took the form:
+An issue with learning correlated topic-model is the quadratic growth in covariance parameters as the number of topics increase: given large numbers of topics. A straightfoward way to address this is to learnt a low-rank projection of the covariance, giving rise to the prior over topics:\cite{Putthividhya2009}:
 
 \begin{align}
 \vv{z} & \sim \nor{\vv{0}}{I} & \etd & \sim \nor{A\vv{z} + \vv{\mu}}{\Sigma_0} & \thd = \vv{\sigma}\left(\etd\right) 
 \end{align}
-In this case $\Sigma_0$ is a fixed hyper-parameter and correlations are learnt via the factor-analysis model. Clearly this is equivalent to CTM where $\Sigma = AA\T + \Sigma_0$, but as with probabilistic PCA, the addition of the auxiliary variable $\vv{z}$ allows for the straightforward derivation of an inference algorithm using standard techniques. A variante of the model using a Laplacian prior over the latent space $\vv{z}$ was also explored in \cite{Putthividhya2009} so as to promote sparse topic-assignments, and also to aid in the interpretability of the matrix A.
+In this case $\Sigma_0$ is a fixed hyper-parameter and correlations are learnt via the factor-analysis model. This is equivalent to CTM where $\Sigma = AA\T + \Sigma_0$, however the addition of the auxiliary variable $\vv{z}$ allows for the straightforward derivation of an inference algorithm using standard techniques. Once can also use a Laplacian prior over the latent space $\vv{z}$ to promote sparse topic-assignments\cite{Putthividhya2009}, and also to aid in the interpretability of the matrix A.
 
+One can also explore low-rank equivalents when using Dirichlet priors, using Pachinko Allocation\cite{Li2006}. A Pachinko allocato is a tree-structured, directed, acyclic, graphical model, of which LDA is a special case,  where a single root note, corresponding to a document, gives rise to $K$ intermediate nodes, corresponding to topics, each of which in turn gives rise to $T$ observations, corresponding to words. This can be arbitrarily extended to a model of depth $m+1$ by writing:
+
+\begin{align}
+z^{(1)}_{dn} \sim & \muln{\vv{\theta}_{d,0}^{(1)}}{1} &
+z^{(2)}_{dn} \sim & \muln{\vv{\theta}^{(2)}_{d, z^{(1)}_{dn}}}{1} & \ldots \quad
+z^{(m)}_{dn} \sim & \muln{\vv{\theta}^{(m)}_{d, z^{(m-1)}_{dn}}}{1} \\
+w_{dn} \sim & \muln{\vv{\phi}_{z^{(m)}_{dn}}}{1}
+\end{align}
+Clearly $w_{dn}$ can be viewed as the $(m+1)$-th instance of $z_{dn}$, particularly since all values of $\vv{\theta}$ and $\vv{\phi}_k$ all share Dirichlet priors. An advantage of this approach over CTM is that it is not limited to capturing pairwise correlations via a covariance matrix, instead it can be thought of as learning a low-rank topic-space using multinomial PCA. A disadvantage is the increase in parameters that can be learnt for each document.
 
 \input{../footer.tex}
