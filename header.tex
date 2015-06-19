@@ -133,6 +133,18 @@
 
 \newcommand{\mbeq}{\overset{!}{=}}
 
+\def\app#1#2{%
+  \mathrel{%
+    \setbox0=\hbox{$#1\sim$}%
+    \setbox2=\hbox{%
+      \rlap{\hbox{$#1\propto$}}%
+      \lower1.1\ht0\box0%
+    }%
+    \raise0.25\ht2\box2%
+  }%
+}
+\def\approxpropto{\mathpalette\app\relax}
+
 \newcommand \diag[1] { \text{diag} \left( {#1} \right) }
 \newcommand \diagonal[1] { \text{diagonal} \left( {#1} \right) }
 
