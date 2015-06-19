@@ -1,8 +1,44 @@
 \input{../header.tex}
 
-\subsubsection{Other Admixture Distributions of Text}
+\subsubsection{Admixed Distributions of Text}
 
-While the admixture of multinomials is the best known topic-model, admixtures of other distributions have been proposed as a means to capture useful features of text.
+While the admixture of multinomials is the best known topic-model, admixtures of other distributions have been proposed as a means to capture useful features of text. 
+
+The use of a Dirichlet-Compound-Multinomial (DCM) has been used to model word ``burstiness"\cite{Madsen2005}. The idea is that documents may only specify a certain subset of words in a topic, such as a football topic listing every football team, but a document about a match will only mention two. In such cases, it may be useful to specialise topics to particular documentsso  that given a topic assignment $z_{dn}$ a word is generated according to
+\begin{align}
+w_{dn} & \sim \muln{\vv{\phi}_{dk}}{1} &
+\vv{\phi}_{dk} & \sim \dir{\alpha \vv{m}_k} &
+\vv{m}_k & \sim \dir{\vv{\beta}}
+\end{align}
+Overfitting is handled by collapsing out the document-level and global vocabularies, giving rise to sampling distribution defined solely in terms of counts and hyper-parameters. 
+
+Remaining with the multinomial, LDA does not model the lengths of documents according to topics. One can replace the multinomials over per-token topic assignments, and words with Poissons using Gamma priors to take into account lengths, and thereby model a ``budget" of words per topics\cite{Gopalan2013}. 
+
+If one uses a logistic-normal distribution instead of a multinomial, one can model the idea of vocabularies being permuted according to some covariate. For example to capture regional variation, topic vocabularies can be modelled modelled using a two-level hierarchical model of prior, global topic-specific vocabulary distribution, and thence regional topic-specific vocabulary distributions, as used in \cite{Eisenstein2010} to model regional variation in language used by Twitter users, and to thereby to predict locations of users with unknown locations given their tweets.
+
+For cases where one wants to permute vocabularies over time, one can generate words according to
+\begin{align}
+w_{dn} & \sim \muln{\sigma(\vv{\phi}_k^t)}{1} &
+\vv{\phi}_k^t & \sim \nor{\vv{\phi}_k^{t-1}}{\tau^2 I_T} & \ldots\quad
+\vv{\phi}_k^0 & \sim \nor{\vv{\beta}}{\tau^2 I_T}
+\end{align}
+Using the same prior over topics, one can derive a topic model that allows for drift over topic usage and topic-specific vocabulary over time\cite{Blei2006a}. 
+
+As mentioned in the section section \ref{sec:langmodels}, the Von-Mises Fisher distribution, unlike the multinomial, penalises missing words, and a topic model based on this was proposed in \cite{Reisinger2010}
+
+\begin{align}
+\vv{\mu} | \kappa_0 & \sim  vMF(\vv{m}, \kappa_0) &
+\vv{\phi}_k | \vv{\mu}, \xi & \sim  vMF(\vv{\mu}, \xi) \\
+\thd & \sim  \dir{\vv{\alpha}} &
+\wdoc & \sim  vMF(\text{WAvg}(\thd, \Phi), \kappa) 
+\end{align} 
+
+Where the mixing function WAvg$(\thd, \Phi) = \frac{\thd\T\Phi}{||\thd\T\Phi||}$ is used to blend the individual component distributions, though it is not clear that this constitutes a valid mixture distribution.  The WAvg formula does not yield the vector that minimizes the weighted sum of geodesic distances to the mean, that would be the  Buss \& Fillmore spherical average $BFAvg(\thd,\Phi) = \arg \min_{\vv{q}} \sum_k \thdk \delta_\mathbb{S}(\vv{\phi}_k, \vv{q})$ where $\delta_\mathbb{S}(\vv{x}, \vv{y})$ is the geodesic distance between $\vv{x}, \vv{y} \in \mathbb{S}^T$. 
+
+There are two variants one can employ: a straightforward admixture of vMF distributions, and an admixture of ``truncated" vMF distributions restricted to the positive othant of the unit sphere only. Despite the fact that the latter variant respects the support of the TF-IDF vectors used as an input to the model, in \cite{Reisinger2010} the plain admixture of vMFs gave better results when the topics were used as features to a logistic regression, though the model has never been compared to LDA using standard metrics like perplexity.
+
+Less esoteric is the use of a Pitman-Yor Process to model vocabularies, in order to capture the power-law distribution of text originally used in \cite{Sato2010}. The generative story of the vocabulary, under a Chinese Restaurant Process, involves choosing a table for a word, and assigning it a topic. This means that there can be may tables with the same word-topic combination. PYPs can also by used in conjunction with the burstiness model\cite{Buntine2014}.
+
 
 %LDA-PYP\cite{Lindsey2012}. 
 %
