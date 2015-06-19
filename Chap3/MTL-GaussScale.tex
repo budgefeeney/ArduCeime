@@ -1,6 +1,7 @@
 \input{../header.tex}
 
-\subsubsection{Gaussian Scale Mixtures}
+\section{Future Work}
+\subsection{Gaussian Scale Mixtures}
 In the previous section we described how, essentially, a Laplace prior on a covariance can be used to introduce sparsity. An alternative to a Laplace distribution is the use of a Gaussian scale mixture.
 
 For example, if one places a Gaussian-Exponential prior on each dimension of a weight vectors $\vv{w}_f \sim \nor{0}{\alpha_f}$ and places an exponential prior on the variance $\tau_f \sim \mathcal{E}\left(\gamma\right)$ then the marginal distribution over $w_f$ is a zero-mean Laplace distribution, where $\gamma$ controls the degree of sparsity \cite{Figueiredo2003}.

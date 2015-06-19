@@ -1,6 +1,5 @@
 \input{../header.tex}
-
-\subsubsection{The Use of Covariates}
+\section{Admixture Models with Covariates}
 Oftentimes documents $\vv{w}_d$ are accompanied by features $\vv{x}_d$ which can be used to improve inference. The methods of incorporating covariates into LDA fall into two categories, as described in\cite{Mimno2008}: ``downstream" models and ``upstream" models.
 
 In ``downstream" models a single topic distribution $\thd$ is assigned to a document and then multiple classes of outputs such as words $\vv{w}_d$ and features $\vv{x}_d$ are generated, with most models extending to many classes of output $\vv{w}_d, \vv{x}_d^{(1)}, \ldots, \vv{x}_d^{(m)}$. These classes of model are sometimes known as multi-modal\cite{Virtanen2012a} or multi-field\cite{Salomatin2009} models.
