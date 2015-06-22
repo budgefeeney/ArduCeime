@@ -19,6 +19,8 @@ read -d '' chap3Files <<EOF
 Chap3/Admix-Covariates.tex
 Chap3/MTL-Intro.tex
 Chap3/main.tex
+Chap3/FutureJointDecomp.tex
+Chap3/MTL-GaussScale.tex
 EOF
 
 
