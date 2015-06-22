@@ -1,36 +1,29 @@
 \input{../header.tex}
 
 \subsection{Multi-Task Prediction of Admixture Components for Microtexts}
-Bayesian admixture models have recently proved popular, particularly relative to traditional mixture models, as a means of modelling observations. Admixture models allow large numbers of mixing components without the over-fitting which would typically affect unregularlized mixture models. Moreover they provide an easily interpretable mechanism for dimensionality reduction.
+Taking these two aspects, multi-task learning and admixture models with covariates together, we present a new multi-task model for prediction of admixture components. This is motivated not only by the success of mult-task learning approaches in the literature, but also the success of the correlated topic model (CTM) which learns correlations between topics. CTM has been shown to out-perform LDA -- according to held-out likelihood -- for a fixed number of mixture components, however the resulting topics are often less interpretable\cite{Chang2009}.
 
-While predated by other work\cite{Pritchard2000} the most popular instance of admixture models in use is the Latent Dirichlet Allocation (LDA) algorithm\cite{Blei2003} which is typically applied to textual corpora. In LDA each document is described by a mixture drawn from a Dirichlet distribution, from which per-token mixture assignments are sampled. The individual mixture components are typically referred to as ``topics" in this case, and the family of admixture-models for text typically referred to as ``topic-models"
-
-A disadvantage of LDA is that it does not adequately capture correlations between mixture components. An alternative is the Correlated Topic Model (CTM) where the Dirichlet prior over mixture components is replaced with a Normal distribution, whose covariance captures correlations between components, with a logistic-link function used to translate these mixture-component strengths into a probability distribution.\cite{Blei2006}. CTM has been shown to out-perform LDA -- according to held-out likelihood -- for a fixed number of mixture components, however the resulting topics are less interpretable\cite{Chang2009}. Other approaches to capturing topic-correlation include Supervised LDA\cite{Rubin2011}, which embeds within the LDA framework another LDA model over mixture-components themselves, Pachinko allocation \cite{Li2006} which uses a form of multinomial PCA\cite{Buntine2002} to learn a low-rank representation of ``intermediate" topics, and independent factor models\cite{Putthividhya2009} which learnt a low rank form of the covariance over topics in the CTM model.
-
-Both LDA and CTM rely on token co-occurrences in documents, and so have shown poor performance when applied to micro-texts such as individual tweets from Twitter\cite{DeLaRosa2011} where the document size is very small (e.g. 13 words) and much smaller than the number of topics (e.g. $K=100$) learning to an overparameterised model. More successful approaches have involved grouping tweets a-priori, for example by author\cite{Weng2010}\cite{Xu2011}\cite{Hong2010}\cite{Eisenstein2010} and then applying LDA to that group, an approach referred to a the ``author-topic model"\cite{MacCallum2007}. A disadvantage of this approach however is that that not all tweets' topics may be attributable to a single variable -- in this case, author. A simple approach to this was used in \cite{Xu2011} where a bernoulli switch is used to determine whether a tweet is attributable to an author's long-term interests or not. Inference was performed in the former case, and ignored in the latter case, so as to characterise authors better. 
+Both LDA and CTM rely on token co-occurrences in documents, and so have shown poor performance when applied to micro-texts such as individual tweets from Twitter\cite{DeLaRosa2011} where the document size is very small (e.g. 13 words) and much smaller than the number of topics (e.g. $K=100$) learning to an overparameterised model. More successful approaches have involved grouping tweets a-priori, for example by author\cite{Weng2010}\cite{Xu2011}\cite{Hong2010}\cite{Eisenstein2010} and then applying LDA to that group, an approach referred to a the ``author-topic model"\cite{MacCallum2007}. A disadvantage of this approach however is that that not all tweets' topics may be attributable to a single variable -- in this case, author. A simple approach to this was used in \cite{Xu2011} where a Bernoulli switch is used to determine whether a tweet is attributable to an author's long-term interests or not. Inference was performed in the former case, and ignored in the latter case, as the aim was solely to model authors' interests, and not tweets' words.
 
 Such an approach is unsatisfying when modelling micro-text corpora - clearly an individual tweet's topics depend on a variety of factors: the author's long-term interests; interests globally popular at a particular time, such as news events; the author's location and others. Were one to jointly consider all these features, one might obtain a tighter model fit. There are many special case topic models dealing with documents modelled alongside author\cite{RosenZvi2004}, time\cite{Wang2006}, and geography\cite{Eisenstein2010}; however while one could combine such models, it would be preferable to have a single model which could take any features/words matrix pair and perform inference. Such an approach could be applied to many more use-cases, such as image-labelling.
 
-One such model is Dirichlet Multinomial Regression (DMR)\cite{Mimno2008}. In this model, separate weight vectors are learned for each mixture-component, and then used to predict the individual component-strengths for all topics. These are then combined into a vector used to parameterise the Dirichlet distribution from which the component-mixture for an individual document (or other observation) can be sampled. 
+In the following we present a model for predicting mixture-components in an admixture model. We learn a single matrix which we use to predict all mixture components from a given weight vector, exploiting correlations between mixture components. By use of appropriate matrix-variate priors, we additionally learn a shared covariance matrix over mixture-components and a low-rank covariance over features. We demonstrate the performance of this model on real world dataset of 
 
-A weakness of DMR however is precisely that it predicts each component-strength independently of all other components. Considering the advantages that CTM has over LDA, it seems sensible to view it as a multi-task learning problem, where we capture correlations between features and between individual tasks -- in this case corresponding to component mixture-strengths. By sharing information between these component-prediction tasks one can improve performance over the no-sharing case. Multi-task learning has been shown to provide a better fit compared to learning tasks individually\cite{Archambeau2011}\cite{Argyriou2008}, though only where task or feature correlations exist which can be exploited\cite{Caruana1997}. It should be noted that DMR, if viewed as predicting individual word-counts, is technically a multi-task learning algorithm, as it transfers knowledge between tasks (word-counts) by learning a low-rank representation over the labels -- the topics.
 
-In this paper we present a model for predicting mixture-components in an admixture model. We learn a single matrix which we use to predict all mixture components from a given weight vector, exploiting correlations between mixture components. By use of appropriate matrix-variate priors, we additionally learn a shared covariance matrix over mixture-components and a low-rank covariance over features. We demonstrate the performance of this model on multiple real-world datasets.
+%\subsection{The Matrix-Variate Normal Distribution}
+%A matrix $A \in \MReal{K}{F}$ which has a matrix-normal distribution\cite{Gupta1999} with row-covariance $\Omega \in \MReal{F}{F}$, column covariance $\Sigma \in \MReal{K}{K}$ and mean-matrix $M \in \MReal{K}{F}$ has the density:
+%
+%\begin{equation}
+%p(W) = (2\pi)^{KF}|\Sigma|^{-F}|\Omega|^{-K} \exp\left(\half \inv{\Sigma}\left(A - M\right) \inv{\Omega} \left(A - M \right)\T\right)
+%\end{equation}
+%
+%It is related to the multivariate normal distribution by the identity $\mnor{M}{\Omega}{\Sigma} = \nor{\vecf{M}}{\Sigma \otimes \Omega}$ where $\vecf{\cdot}$ is the function that converts a matrix to a vector by stacking its columns. 
+%
+%The row and column covariances $\Omega$ and $\Sigma$ are unidentifiable as $ A \otimes B = \lambda A \otimes \frac{1}{\lambda}B$ for any scalar $\lambda$. In practice this is resolved by forcing last element on the diagonal of one of the matrices to 1, giving rise to the iterative ``flip-flop" algorithm \cite{Srivastava2009} in the maximum-likelihood setting, or by appropriate selection of priors\cite{Archambeau2011}\cite{Yang2011}.
+%
+%The use of matrix-variate priors for multitask learning has been explored in \cite{Stegle2011}\cite{Bonilla2008} \cite{Archambeau2011}\cite{Yang2011}. Due to the ability to reduce the number of covariance parameters from $(LF)^2$ to $L^2 + F^2$ it has also been explored in other areas such as matrix factorization\cite{Allen2010}.
 
-\subsection{The Matrix-Variate Normal Distribution}
-A matrix $A \in \MReal{K}{F}$ which has a matrix-normal distribution\cite{Gupta1999} with row-covariance $\Omega \in \MReal{F}{F}$, column covariance $\Sigma \in \MReal{K}{K}$ and mean-matrix $M \in \MReal{K}{F}$ has the density:
-
-\begin{equation}
-p(W) = (2\pi)^{KF}|\Sigma|^{-F}|\Omega|^{-K} \exp\left(\half \inv{\Sigma}\left(A - M\right) \inv{\Omega} \left(A - M \right)\T\right)
-\end{equation}
-
-It is related to the multivariate normal distribution by the identity $\mnor{M}{\Omega}{\Sigma} = \nor{\vecf{M}}{\Sigma \otimes \Omega}$ where $\vecf{\cdot}$ is the function that converts a matrix to a vector by stacking its columns. 
-
-The row and column covariances $\Omega$ and $\Sigma$ are unidentifiable as $ A \otimes B = \lambda A \otimes \frac{1}{\lambda}B$ for any scalar $\lambda$. In practice this is resolved by forcing last element on the diagonal of one of the matrices to 1, giving rise to the iterative ``flip-flop" algorithm \cite{Srivastava2009} in the maximum-likelihood setting, or by appropriate selection of priors\cite{Archambeau2011}\cite{Yang2011}.
-
-The use of matrix-variate priors for multitask learning has been explored in \cite{Stegle2011}\cite{Bonilla2008} \cite{Archambeau2011}\cite{Yang2011}. Due to the ability to reduce the number of covariance parameters from $(LF)^2$ to $L^2 + F^2$ it has also been explored in other areas such as matrix factorization\cite{Allen2010}.
-
-\subsection{Multitask Multinomial Regression}
+\subsubsection{Multitask Multinomial Regression}
 Let $D$ be the number of documents and $N_d$ the number of words in document $d\in\{1,\ldots,D\}$. The Correlated Topic Model models the mixture $\thd$ for a document $d$ as follows:
 \begin{align}
 \thd &\sim \nor{\mu}{\Sigma}
@@ -40,7 +33,7 @@ Let $D$ be the number of documents and $N_d$ the number of words in document $d\
 \end{align}
 where $\vv{\sigma}(\thd) = \{\sigma_1(\thd), \ldots, \sigma_k(\thd)\}$; $\sigma_k(\thd) = \exp(\thdk - \lse(\thd))$ is the multivariate softmax function; and $\lse(\thd) = \ln\left(\sum_j \thdj \right)$ is the log-sum-exp function. The latent variable $\zdn$ is the mixture-component assignment for the n-th token in document $d$ stored as a 1-of-K vector. Similarly, the corresponding token is identified by the 1-of-T vector $\wdn$. The mixture distribution for the k-th mixture is given by the vector $\vv{\beta}_k$ which we treat as a parameter.
 
-In our model we specify the mixture-distribution for a document $d$ as a linear combination of the that documents feature-vector $\xd \in \VReal{F}$ by means of a matrix $A \in \MReal{K}{F}$.
+In our model we specify the mixture-distribution for a document $d$ as a linear combination of the that document's feature-vector $\xd \in \VReal{F}$ by means of a matrix $A \in \MReal{K}{F}$.
 \begin{align}
 Y \sim & \mnor{0}{\rho^2 I_P}{\Sigma} & A|Y \sim & \mnor{YV}{\alpha^2 I_F}{\Sigma} \\
 \thd | A \sim & \nor{\axd}{\Sigma}
@@ -51,7 +44,9 @@ where $\Sigma$ is the covariance over topics and the matrix $V \in \MReal{P}{F}$
 A \sim \mnor{0}{\alpha^2 I_F + \rho^2 V\T V}{\Sigma}
 \end{equation}
 
-where the low-rank decomposition of the covariance over features is clear. We refer to this as the \emph{full-covariance model}, as it stores a full-rank representation of the covariance over mixture-components. It should be noted that such marginalisations are only possible if both distributions share one covariance matrix, which is why we tie the component-covariances over the distributions over Y, A and $\thd$
+where the low-rank decomposition of the covariance over features is clear. We refer to this as the \emph{full-covariance model}, as it stores a full-rank representation of the covariance over mixture-components. It should be noted that such marginalisations are only possible if both distributions share one covariance matrix, which is why we tie the component-covariances over the distributions over Y, A and $\thd$. 
+
+The use of matrix-variate priors for multitask learning has been explored in \cite{Stegle2011}\cite{Bonilla2008} \cite{Archambeau2011}\cite{Yang2011}. Due to the ability to reduce the number of covariance parameters from $(LF)^2$ to $L^2 + F^2$ it has also been explored in other areas such as matrix factorization\cite{Allen2010}.
 
 It is interesting to note that were we to use the distribution $A \sim \mnor{0}{\alpha^2 I_F}{\Sigma}$ and then marginalize out A from the distribution of $\thd$ we would obtain the multi-task Gaussian Process regression algorithm of \cite{Bonilla2008}. In this context, the resulting model would provide a correlated-topic analogue to the Kernelised Topic Model \cite{Hennig2012} which makes the LDA assumption of topic independence. Like KTM however, it would be challenge to scale to large corpora with large numbers of topics.
 
