@@ -2,7 +2,8 @@ library("ggplot2")
 library("gridExtra")
 
 # Load and parse file into factors and measures
-expr <- read.csv("/Users/bryanfeeney/Workspace/ArduCeime/Chap2/plots/NIPS-Old.csv")
+#expr <- read.csv("/Users/bryanfeeney/Workspace/ArduCeime/Chap2/plots/NIPS-Old.csv")
+expr <- read.csv("/Users/bryanfeeney/Desktop/NIPS Smoothed/nips-no-feats.csv", sep='\t')
 expr$K = factor(expr$K)
 expr$P = factor(expr$P)
 
