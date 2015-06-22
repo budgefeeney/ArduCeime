@@ -4,9 +4,9 @@
 \subsection{Sparsity Gaussian Scale Mixtures}
 In the two examples given we've used sparse, binary features. Low rank covariance decompositions may not be a good fit for such methods.
 
-With that in mind we may instead choose to sparsify the features.
+With that in mind we may instead choose to sparsify the features, by learning a sparse precision matrix.
 
-In the previous section we described how, essentially, a Laplace prior on a covariance can be used to introduce sparsity. An alternative to a Laplace distribution is the use of a Gaussian scale mixture.
+In the previous section on multi-task learning we described how using either L1 regularisation or a Laplace prior on the a vectorized precision matrix will lead to a preference for sparse solutions. An alternate approach, which is slightly more robust, and encompasses a broader range of distributions is the use of a Gaussian Scale mixture.
 
 For example, if one places a Gaussian-Exponential prior on each dimension of a weight vectors $\vv{w}_f \sim \nor{0}{\alpha_f}$ and places an exponential prior on the variance $\tau_f \sim \mathcal{E}\left(\gamma\right)$ then the marginal distribution over $w_f$ is a zero-mean Laplace distribution, where $\gamma$ controls the degree of sparsity \cite{Figueiredo2003}.
 
@@ -61,6 +61,7 @@ Z & \sim \mnor{Z_0}{\Omega}{\kappa_z I_P} \\
 \end{align}
 which as can be seen, is a prior that assumes W is of low rank, with latent features $P \ll F$. Like the GIG prior of this, depending on the parameterisation, encompasses matrix-variate Student-T, Laplace and Bessel distributions. 
 
+With this in mind, the model could be transformed to use a sparse prior on the features covariance by incorporating a Gauss-Scale mixture prior on the features covariance.
 
 %\fixme{This paper notes you can add a condition that $\tr{\Epsilon} \leq 1$ to avoid it going to infinity, which would have been good to know.}
 

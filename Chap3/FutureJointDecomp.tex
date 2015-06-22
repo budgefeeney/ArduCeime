@@ -1,0 +1,156 @@
+\input{../header.tex}
+
+\newcommand \Vd[0] { { V^{(d)} } }
+
+\subsection{Jointly Decomposing Both Covariances}
+\subsubsection{Low-Rank Covariance}
+To address the performance issue with the Bouchard algorithm variant, and further to handle the issue of rank-deficient matrices when topic-counts are high, we can modify the algorithm, employing a low-rank decomposition of the topic-covariance matrix in addition to the feature-covariance.
+
+To obtain this low-rank covariance we alter the distributions over $Y$, $A|Y$ and $\thd$ as follows:
+
+\begin{align}
+Y \sim & \mnor{0}{\rho^2 I_P}{\tau^2 I_Q} & A|Y \sim & \mnor{UYV}{\alpha^2 I_F}{\sigma^2 I_K} \\
+\thd | A \sim & \nor{\axd}{\sigma^2 I_K}
+\end{align}
+
+Unfortunately, we can no longer obtain a matrix-variate marginal distribution over W, and so must use the multi-variate density to describe the marginal distribution.  
+
+
+\begin{align}
+\vecf{A} \sim \nor{\vv{0}}{\alpha^2 \sigma^2 I_{FK} + \rho^2 V\T V \otimes \tau^2 U U \T}
+\end{align}
+
+We refer to this as the reduced-covariance model.
+
+\subsubsection{Inference for the Reduced-Covariance Model}
+One approach to the reduced covariance model is to attempt to use matrix-variate posteriors with separate covariances -- $q(Y) \sim \mnor{M_Y}{R_Y}{S_Y}$, $q(A) \sim \mnor{M_A}{R_A}{S_A}$ --  despite the non-separability of the marginalized prior. However this immediately leads to a Sylvester equation, indicating that the covariance of the variational posterior is non-separable.
+
+\begin{align}
+S_Y = & \frac{1}{P}\invb{\Tr{\rho^{-2} R_Y}\tau^{-2}I_K + \Tr{\alpha^{-2}V V\T R_Y} \sigma^{-2}U\T U } \\
+R_Y = & \frac{1}{Q}\invb{\Tr{\tau^{-2} S_Y}\rho^{-2}I_P + \Tr{\sigma^{-2} U\T U} \alpha^{-2} V V\T} \\
+\vecf{M_Y} = & \invb{\rho^{-2}\tau^{-2} I_{PQ} + \alpha^{-2}V V\T \otimes \sigma^{-2} U \T U}\vecf{\sigma^{-2}\alpha^{-2} U\T M_A V\T}
+\end{align}
+
+The trick employed previously to eliminate the trace terms from the covariances is clearly not possible in this case as there are different scaling factors for the two summands in each case. Moreover, without employing such a trick, or any other constraints as in the flip-flop algorithm, the updates above fail to specify a single identifiable solution for the covariances and so the two estimates may diverge to extremely small and large values respectively, as has been observed in experiments.
+
+
+%{\color{red}
+%{\bf Viability and Identifiability:}
+%
+%\begin{enumerate}
+%    \item Am I right in saying there is no way of canceling out the traces?
+%    \item When I experimented with this model in October ($Y=UYV$, matrix-variate posteriors) I encountered an identifiability issue with the two covariance matrices, which I finally tracked to the Kronecker product. The trick of fixing the final element of the diagonal is described for MLE in \cite{Srivastava2009} but I'm currently struggling to apply it to the VB case. Some of the matrix identities in \cite{Minka2000a} may also be useful.
+%    \item I think furthermore that the same trick needs to be employed for U and V to avoid identifiability issues with those matrices as well - is this correct?
+%\end{enumerate}}
+
+
+
+Noting that the materialization of a $P^2 \times Q^2$ matrix is unavoidable, we therefore chose to use a multi-variate posterior for Y, $q(\vecf{Y}) = \nor{\vv{m}_y}{S_Y}$ where $\vv{m_y} \in \VReal{P\times Q}$ and $S_Y \in \MReal{(P \times Q)}{(P \times Q)}$, while retaining the matrix-variate prior for A. This formulation, by eschewing the Kronecker product in the covariances, also solves the identifiability issue.
+
+%{\color{red}
+%However now V and U appear in a Kronecker product so I need to presumably constrain these as well.
+%}
+
+This gives rise to the following expectations
+
+\begin{align}
+\ex{p(Y)}{q} = & -\halve{PQ}\left(\ln 2\pi + \ln \rho^2 + \ln \tau^2\right) - \half \left(\rho^{-2}\tau^{-2} \vv{m}_y\T\vv{m}_y + \Tr{\rho^{-2}\tau^{-2} S_Y}\right) \\
+\begin{split}
+\ex{p(A|Y)}{q} = & -\halve{FK}\left(\ln 2\pi + \ln \rho^2 + \ln \tau^2\right) \\
+ & -\half \Tr{\alpha^{-2}\sigma^{-2}(M_A - U M_Y V)(M_A - U M_Y V)\T} \\
+ & -\half \Tr{S_Y \left(\alpha^{-2}V V\T \otimes \sigma^{-2}U \T U\right)} \\
+ & -\half \Tr{\sigma^{-2}S_A\otimes \alpha^{-2}R_A}
+ \label{eqn:free_enery_u_and_v}
+\end{split}
+\end{align}
+
+To determine how the covariance of Y should appear in the PDF of X we used the standard identities for the $\vecf{\cdot}$ and kronecker product operators. These are given in the appendix.
+
+\newcommand \mvy  { \vv{m}_{\vv{y}} }
+\newcommand \sigvy { { S_Y } }
+
+\newcommand \mmy  { M_Y      }
+\newcommand \omy  { \Omega_Y }
+\newcommand \sigy { \Sigma_Y }
+
+\subsubsection*{Matrix Calculus for Kronecker Products}
+Solving for $U$ and $V$ requires the use of the vec-transpose \emph{operator} introduced in \cite{Wandell1992} and the \emph {communtation matrix} introduced in \cite{Magnus1988}. These are described here.
+
+The vec-transpose of an $m \times n$ matrix $X$, denoted by $\vt{X}{p}$ is composed of $n$ submatrices stacked atop one another, where each $p \times ^m/_p$ sub-matrix is generated by a Fortran-order reshaping of each column of X. The matrices are generated from top to bottom from the columns of X read from left to right. It generalizes both the transpose and $\vecf{\cdot}$ operations, as $\vt{X}{1} = X\T$ and $\vt{X}{\text{rows}(X)} = \vecf{X}$.
+
+For an $m \times n$ matrix X, the commutation matrix is the square permutation matrix $T_{mn} \in \{0,1\}^{(m \times n) \times (m \times n)}$ that transforms $\vecf{X}$ into $\vecf{X\T}$ such that:
+\begin{equation}
+T_{mn} \vecf{X} = \vecf{X\T}
+\end{equation}
+
+With these we can define the following identities for the differentiation of terms in both sides of a Kronecker product. For the purpose of these identities only let $A \in \MReal{a}{nl}$, $X \in \MReal{m}{n}$ and $Y \in \MReal{k}{l}$ and thereby define
+
+\begin{align}
+\begin{split}
+\frac{d}{dX} \Tr{A\T(X\T X \otimes Y\T Y)} & = 2X \left(\vt{A}{l}\right)\T (I_{nl} \otimes Y\T Y) \vt{I_nl}{l} \label{eqn:lhs_kro_derivative_symm}
+\end{split} \\
+\begin{split}
+\frac{d}{dY} \Tr{A\T(X\T X \otimes Y\T Y)} & = 2 Y \left(\vt{(T_{ln} A)}{n}\right)\T (I_{nl} \otimes X\T X ) \vt{\left( T_{ln} \right)}{n} \label{eqn:rhs_kro_derivative_B_is_ident}
+\end{split}
+\end{align}
+
+The vec-transpose operator and the commutation matrix and their applications to calculus are explained in more detail in \cite{Minka2000a}. The appendix provides a summary of the key points, and the derivations of \eqref{eqn:lhs_kro_derivative_symm} and \eqref{eqn:rhs_kro_derivative_B_is_ident}.
+
+\subsubsection*{Derivation of the updates for U and V}
+
+Starting first with V, we can use \eqref{eqn:lhs_kro_derivative_symm} to take the derivative of \eqref{eqn:free_enery_u_and_v} and so derive the following solution
+
+\begin{equation}
+V = \invb{\mmy\T U\T U \mmy + \left(\vt{S_Y}{Q}\right)\T (I_{PQ} \otimes U\T U) \vt{I_{PQ}}{Q} } \sigma^{-2} M_A \T U \mmy
+\end{equation}
+
+Next, for U, we employ \eqref{eqn:rhs_kro_derivative_B_is_ident} which provides the solution:
+\begin{equation}
+U = \invb{\mmy V\T V \mmy\T + \left( \vt{(T_{QP} S_Y)}{P} \right)\T (I_{PQ} \otimes V\T V)\vt{T_{QP}}{P}} M_A V \mmy\T
+\end{equation}
+
+Standard matrix calculus provide solutions for $\vv{m}_y $ and $S_Y$
+\begin{align}
+S_Y = & \invb{I_{mn} + V\T V \otimes U\T U}
+& \vv{m}_y = & S_Y \vecf{U\T M_A V}
+\end{align}
+
+The resulting algorithm is given in \ref{alg:uyv}, though that algorithm is still rather complex.
+
+\begin{algorithm}
+\caption{Representing $A=UYV$}
+\label{alg:uyv}
+$\text{ }$\\
+{\bf E-Step}
+    \begin{align*}
+        & S_Y = \invb{I_{mn} + V\T V \otimes U\T U} \quad &
+\vv{m}_y & = \invb{I_{kl} + V\T V \otimes U\T U} \vecf{U\T M_A V} \\
+        & S_A = \sigma^2 I_K \quad R_A = \invb{\alpha^{-2} I_F + \sigma^{-2} X\T X} 
+        & M_A & = \left(\alpha^{-2} YV + \sigma^{-2} \sum_d \md \xd\T\right)R_A
+    \end{align*}
+    \begin{align*}
+         \Vd = & \invb{\sigma^{-2}I_K + N_d \Axi}\\
+         \md = & \invb{\sigma^{-2}I_K + N_d \Axi} \left(\sigma^{-2} M_A \xd  + N_d \bxi + Z^{(d)}\vv{w}_d \right )\\
+        \gamma_{dvk} \propto & \beta_{kv} e^{m_{dk}} 
+\end{align*}
+{\bf M-Step}
+\begin{align*}
+    U = & \invb{\mmy V\T V \mmy\T + \left( \vt{(T_{QP} S_Y)}{P} \right)\T (I_{PQ} \otimes V\T V)\vt{T_{QP}}{P}} M_A V \mmy\T \\
+    V = & \invb{\mmy\T U\T U \mmy + \left(\vt{S_Y}{Q}\right)\T (I_{PQ} \otimes U\T U) \vt{I_{PQ}}{Q} } M_A \T U \mmy \\
+    \beta_{kv} \propto & \sum_d z_{dvk} w_{dv} 
+\end{align*}
+{\bf Bouchard / Bohning Bound M-Step as for algorithm \ref{alg:yv}}\\
+{\emph {Note that in this algorithm the posterior covariance is only used insofar as it helps predict the mean, but has no impact otherwise on $U$, which is meant to capture the topic-covariance}}
+\end{algorithm}
+
+%{\color{red}
+%So, is it worthwhile to dig out that implementation and run it on the real data? Should I do the additional work to fix the identifiabilitiy issues with U and V? The full-covariance model seems rather simplistic.
+%}
+
+%{\color{red}
+%{\bf Alternaties to vec-transpose:} In addition to the MTL-GP references I mentioned earlier, Theodore Tsiligkadis has a number of papers\cite{Tsiligkaridis2013}\cite{Tsiligkaridisb} investigating Kronecker product structure of covariance matrices. Rather than the vec-transpose operator he introduces a permutation matrix (in addition to the commutation matrix). I need to double check his definition to see if the two are equivalent or not, as the definition is presented without derivation.
+%
+%}
+
+\input{../footer.tex}
+
