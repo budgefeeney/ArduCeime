@@ -29,7 +29,7 @@ With regard to synonymy, purely heuristic approaches exist such as ``stemming" w
 A final disadvantage of the bag of words is that by only focussing on a single word at a time, one can lose valuable information supplied by the context. For example, it is much easier to distinguish cities from beer brands when considering the pairs (``San", ``Francisco") and (``San", ``Miguel"), than when simply considering observations of ``San", ``Francisco" and ``Miguel". Paired words like this are known as bigrams, with initialiser and terminal symbols are used to form bigrams at the start and end documents. This can be extended to three-word tuples ``trigrams" or longer tuples of length $n$ known as n-grams. Employing n-grams is essentially a very simple way of using a language model for inference.
 
 
-\subsubsection{Language Models of Text}
+\subsection{Language Models of Text}
 \label{sec:langmodels}
 Language modelling is the problem of predicting the next word in a sequence (e.g a sentence) given all previous words. Common use-cases are predictive keyboards, spell-checkers and speech recognition. Typically one makes the Markov assumption, with first order (``bigram") and second-order (``trigram") Markov models being popular. 
 
