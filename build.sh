@@ -12,15 +12,14 @@ Chap2/Admix-DPs.tex
 Chap2/Admix-OtherLangModels.tex
 Chap2/Admix-Eval.tex
 Chap2/Admix-Inference.tex
-Chap2/Admix-OtherModelLinks.tex
 EOF
 
 read -d '' chap3Files <<EOF
 Chap3/Admix-Covariates.tex
 Chap3/MTL-Intro.tex
 Chap3/main.tex
-Chap3/FutureJointDecomp.tex
 Chap3/MTL-GaussScale.tex
+Chap3/FutureJointDecomp.tex
 EOF
 
 
