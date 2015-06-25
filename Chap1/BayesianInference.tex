@@ -24,10 +24,10 @@ The distribution $p(\xdat|\param)$ is known as the likelihood, and the maximum-l
 \begin{align*}
 \ml{\param} = \arg \max_{\param} \ln p(\xdat | \param)
 \end{align*}
-As the log of a monotonically increasing function of its inputs, the $\param$ that maximises $\ln p(\xdat | \param)$ maximises $p(\xdat | \param)$, however by taking the log, the expression usually simplifies. In particular if we assume that the data are independently and identically distributed, conditional on the parameters, then we can factor the maximum likelihood update into
+As the log of a monotonically increasing function of its inputs, the $\param$ that maximises $\ln p(\xdat | \param)$ maximises $p(\xdat | \param)$, however by taking the log, the expression usually simplifies. In particular if we assume that the data are independently and identically distributed, conditional on the parameters, then we can factor the maximum likelihood update into a sum over every datapoint $\xd$
 
 \begin{align*}
-\ml{\param} = \arg \max_{\param} \sum_n \ln p(x_n | \param)
+\ml{\param} = \arg \max_{\param} \sum_d \ln p(\xd | \param)
 \end{align*}
 
 For prediction we use the approximation
@@ -41,7 +41,7 @@ p(\xnew | \xdat)
 
 As an example, consider a biased, four sided dice, for which we have seen 2, 4, 1 and 1 throws respectively for number 1 to 4. The likelihood distribution for this is the \emph{categorical} distribution, which is equivalent to a multinomial with a single draw (similar to the Bernoulli / Binomial relationship). Its parameter should have four parameters and like on the 3-simplex - i.e. its values should sum to one. 
 
-The likelihood is therefore $p(\param | \xdat) = \prod_n \prod_i \phi_d^{x_{nd}}$, which, by letting $n_i$ be the number of times the $k$-th face turned up, we can simplify to $p(\param | \xdat) = prod_i \phi_i^{n_i}$. To find the maximum we add a Lagrange multiplier to the log-likelihood, to encode the simplex-constraint, take derivatives to find the saddle-point, and solve at zero. The solution has the pleasingly intuitive form $\param_i = \frac{n_i}{\sum_j n_j}$, which in this case is $\param \approx \{0.25, 0.50, 0.063, 0.063\}$. 
+The likelihood is therefore $p(\param | \xdat) = \prod_d \prod_i \phi_i^{x_{di}}$, which, by letting $n_i$ be the number of times the $k$-th face turned up, we can simplify to $p(\param | \xdat) = \prod_i \phi_i^{n_i}$. To find the maximum we add a Lagrange multiplier to the log-likelihood, to encode the simplex-constraint, take derivatives to find the saddle-point, and solve at zero. The solution has the pleasingly intuitive form $\param_i = \frac{n_i}{\sum_j n_j}$, which in this case is $\param \approx \{0.25, 0.50, 0.063, 0.063\}$. 
 
 \subsubsection*{Maximum a Posteriori}
 In MAP estimation we put a prior distribution $p(\param)$ on the parameter, and try to estimate the \emph{mode} of the posterior distribution, given by Bayes rule
@@ -100,10 +100,10 @@ Oftentimes it is appropriate to assume that there is some unobserved, ``latent" 
 p(\xdat|\param) = \int p(\xdat, \zdat|\param) d\zdat
 \end{align*}
 
-As an example consider now that we have a collection of dice supplied by three manufacturers. We suspect each manufacturers dices is biased in a different manner, but can't tell which dice is which. We therefore seek to identify which manufacturer fabricated each die $\zdat$, and what is the distribution over faces for that die $\param_i$ where i identifies the manufacturer. This is simply a mixture model, in this case over multinomials, with $i$ indicating the cluster where, for the $n$-th roll of the die $\vv{x}_n$, $\vv{z}_n$ indicates which of the three manufacturers fabricated that die. Like the distribution over the face $\vv{x}_n$, the latent manufacturer $\vv{z}_n$ has a categorical likelihood. This gives rise to the mixture of multinomials model\cite{Nigam2000}
+As an example consider now that we have a collection of dice supplied by three manufacturers. We suspect each manufacturers dices is biased in a different manner, but can't tell which dice is which. We therefore seek to identify which manufacturer fabricated each die $\zdat$, and what is the distribution over faces for that die $\param_i$ where i identifies the manufacturer. This is simply a mixture model, in this case over multinomials, with $i$ indicating the cluster where, for the $n$-th roll of the die $\vv{x}_d$, $\vv{z}_d$ indicates which of the three manufacturers fabricated that die. Like the distribution over the face $\vv{x}_d$, the latent manufacturer $\vv{z}_d$ has a categorical likelihood. This gives rise to the mixture of multinomials model\cite{Nigam2000}
 \begin{align*}
-\vv{z}_n & \sim \muln{\vv{\theta}}{1} & \vv{\theta} & \sim \dir{\vv{\alpha}} &
-\vv{x}_n & \sim \muln{\param}{1} & \param & \sim \dir{\vv{\beta}}
+\vv{z}_d & \sim \muln{\vv{\theta}}{1} & \vv{\theta} & \sim \dir{\vv{\alpha}} &
+\vv{x}_d & \sim \muln{\param}{1} & \param & \sim \dir{\vv{\beta}}
 \end{align*}
 
 To derive a MAP estimate of $\param$, we need to approximate the log-likelihood using Jensen's inequality which, for any \emph{concave} function $f(x)$, states that $f\left(\ex{x}{}\right) \geq \ex{f(x)}{}$. Thus, if we choose, for now, an arbitrary distribution over the latent variables $q(\zdat)$ we can approximate the log-likelihood as
@@ -120,7 +120,7 @@ where the term $\fqt{q, \param}$ is known as the ``free energy". The resulting m
 \begin{align*}
 \text{E-Step:} & & q^t(\zdat) & = \arg \max_{q(\zdat)} \fqt{q(\zdat), \param^{t-1}} \\
 \text{M-Step:} & & \param^t & = \arg \max_{\param} \fqt{q^t(\zdat), \param} \\
-& & & = \arg \max_{\param} \ex{\ln p(\xdat, \zdat | \param)}{q} + \ln p(\param)
+& & & = \arg \max_{\param} \exlogjoint{q} + \ln p(\param)
 \end{align*}
 where $t$ is the current iteration. To determine how to maximise $q(\zdat)$ we observe that, for a fixed $\param$, the difference between the free energy and the regularised log-likelihood is given by the Kullback Leibler divergence between $q(\zdat)$ and the posterior $p(\zdat|\zdat, \param)$.
 \begin{align*}
@@ -130,14 +130,14 @@ where $t$ is the current iteration. To determine how to maximise $q(\zdat)$ we o
 & = \ln p(\param) + \int q(\zdat) \ln p(\xdat | \param) q\zdat + \int q(\zdat)\frac{p(\zdat|\xdat, \param)}{q(\zdat)} d\zdat \\
 & = \ln p(\param) + \ln p(\xdat | \param) + \kl{q(\zdat)}{p(\zdat|\xdat, \param)}
 \end{align*}
-When $\kl{q(\zdat)}{p(\zdat|\xdat, \param)} = 0$, $\fqt{q, \param} = \ln(p(\xdat | \param)p(\param))$, and so we maximize $q(\zdat) = p(\zdat | \xdat, \param)$.
+When $\kl{q(\zdat)}{p(\zdat|\xdat, \param)} = 0$, $\fqt{q, \param} = \ln(p(\xdat | \param)p(\param))$, from which we conclude the free-energy is maximised for a fixed $\param$ when $q(\zdat) = p(\zdat | \xdat, \param)$.
 
 This is known as the MAP Expectation Maximization (EM) algorithm: if we drop the prior over parameters it is the standard EM algorithm, which was first codified in \cite{Dempster1977}. In the case of the mixture of multinomials model, the updates are
 
 \begin{align*}
-\text{E-Step:} & & q(\zdat) & = \prod_n \muln{\hat{\vv{\theta}}_n}{1}, \qquad
-\hat{\vv{\theta}}_n \propto \exp\left( \alpha_k + \sum_n x_{ni} \ln \phi_{ki} \right) \\
-\text{M-Step:} & & \phi_{ki} & = \frac{\sum_n \ex{z_{nk}}{q} x_{nk} + \beta_k - 1}{\sum_j \sum_n \ex{z_{nj}}{q} x_{nj} + \beta_j - 1}
+\text{E-Step:} & & q(\zdat) & = \prod_d \muln{\hat{\vv{\theta}}_d}{1}, \qquad
+\hat{\vv{\theta}}_d \propto \exp\left( \alpha_k + \sum_d x_{di} \ln \phi_{ki} \right) \\
+\text{M-Step:} & & \phi_{ki} & = \frac{\sum_d \ex{z_{dk}}{q} x_{dk} + \beta_k - 1}{\sum_j \sum_d \ex{z_{dj}}{q} x_{dj} + \beta_j - 1}
 \end{align*}
 where $\ex{z_{nk}}{q} = \theta_{nk}$. The predictive distribution is
 
@@ -152,7 +152,7 @@ A final note on EM is that it is always guaranteed to find a possibly local maxi
 \subsubsection{Variational EM}
 It is not always feasible to evaluate the posterior distribution $p(\zdat|\xdat, \param)$ exactly. In such cases one needs to either approximate the update to the distribution (e.g. by parameterising it and taking a gradient step), or approximate the distribution itself.
 
-We consider the latter approach, where one assumes the true distribution $q(\zdat)$ can be approximated by a family of distributions $\qfam$. A popular, though not the only choice, is the family of factorized distributions $q(\zdat) = \prod_m q(\zdat_m)$. The question then is how to evaluate the variational E-Step
+We consider the latter approach, where one assumes the true distribution $q(\zdat)$ can be approximated by a family of distributions $\qfam$. A popular, though not the only choice, is the family of factorized distributions $q(\zdat) = \prod_m q(\zdat_m)$. Note that this factorization is not derived from the IID principle, as the in prior discussion on EM, rather it is a modelling assumption to be made by the practitioner. The question then is how to evaluate the variational E-Step
 
 \begin{align*}
 \text{Variational E-Step:} & & q(\zdat) = \arg \max_{q(\zdat_1) \ldots q(\zdat_M)} \fqt{\prod_m q(\zdat_m), \param}
@@ -161,9 +161,21 @@ We consider the latter approach, where one assumes the true distribution $q(\zda
 Given this formulation, we can solve independently for each block of latent variables $\zdat_m$ in turn, using the following decomposition.
 
 \begin{align*}
-\fqt{\prod_m q(\zdat_m), \param} = \exlogjoint{\prod_m q(\zdat_m)}
+\fqt{\prod_m q(\zdat_m), \param} 
+& = \exlogjoint{\tinymath{\prod_m q(\zdat_m)}} + \ent{q} \\
+& = \int q(\zdat_n) \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}} d\zdat_n + \ent{q_n} + \sum_{m\neq n} \ent{q_m} \\
+& = -\kl{q(\zdat_n)}{\exp(\exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}})} + \sum_{m\neq n} \ent{q_m}
 \end{align*}
 
+\fixme{This may be wrong}
+As the KL divergence is always non-negative, the bound is maximised when it is set to zero, from which the following update is derived: 
 
+\begin{align*}
+q(\zdat) \propto \exp\left( \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}}  \right)
+\end{align*}
+
+Unlike the case of EM however, setting the KL divergence to zero does not cause the free-energy to become equal to the likelihood for a fixed $\param$. This is because the true posterior $p(\zdat | \xdat, \param)$ may not be in the family of distributions $\qfam$ which we have chosen. Consequently, the variational E-Step is not guaranteed to maximise the bound, and so the algorithm is not guaranteed to converge to a local maximum as with EM. However by optimising the bound will still improve the likelihood, and may therefore find useful parameter values.
+
+\subsection{Stochastic Variational Learning}
 
 \input{../footer.tex}
