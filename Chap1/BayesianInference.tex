@@ -1,5 +1,169 @@
 \input{../header.tex}
 
+\newcommand \qfam { { \mathcal{Q} } }
+\newcommand \xdat { { \mathcal{X} } }
+\newcommand \zdat { { \mathcal{Z} } }
+\newcommand \xnew { { \vv{x}_{\text{new}} } }
+\newcommand \znew { { \vv{z}_{\text{new}} } }
+\newcommand \param { { \vv{\phi} } }
+\newcommand \ml[1] { { {#1}_{\text{ML}} } } 
+\newcommand \map[1] { { {#1}_{\text{MAP}} } } 
+\newcommand \quarter { { \oneover{4} } }
+\newcommand \eighth { { \oneover{8} } }
+\newcommand \fqt[1] { { \mathcal{F}\left( {#1} \right) } }
+\newcommand \joint { { p(\xdat, \zdat | \param) } }
+\newcommand \logjoint { { \ln \joint } }
+\newcommand \exlogjoint[1] { { \ex{\logjoint}{{#1}} } }
+
 \section{Inference in Probabilistic Models}
+In probabilistic inference, we are concerned with two problems: inference is the problem of estimating parameter values $\param$ from a set of observations $\vv{x} \in \xdat$; prediction is the problem of predicting the distribution of a new datapoint from previous datapoints $p(\xnew | \xdat) = \int p(\xnew | \param) p(\param | \xdat) d\param$. Various methods have been proposed for this purpose
+
+\subsubsection*{Maximum Likelihood}
+The distribution $p(\xdat|\param)$ is known as the likelihood, and the maximum-likelihood approach to estimation seeks to find the form of $\param$ that maximises the log of that quantity
+
+\begin{align*}
+\ml{\param} = \arg \max_{\param} \ln p(\xdat | \param)
+\end{align*}
+As the log of a monotonically increasing function of its inputs, the $\param$ that maximises $\ln p(\xdat | \param)$ maximises $p(\xdat | \param)$, however by taking the log, the expression usually simplifies. In particular if we assume that the data are independently and identically distributed, conditional on the parameters, then we can factor the maximum likelihood update into
+
+\begin{align*}
+\ml{\param} = \arg \max_{\param} \sum_n \ln p(x_n | \param)
+\end{align*}
+
+For prediction we use the approximation
+
+\begin{align*}
+p(\xnew | \xdat) 
+&= \int p(\xnew | \param) p(\param | \xdat) d\param \\
+&\approx \int p(\xnew | \ml{\param}) p(\param | \xdat) d\param
+=  p(\xnew | \ml{\param})
+\end{align*}
+
+As an example, consider a biased, four sided dice, for which we have seen 2, 4, 1 and 1 throws respectively for number 1 to 4. The likelihood distribution for this is the \emph{categorical} distribution, which is equivalent to a multinomial with a single draw (similar to the Bernoulli / Binomial relationship). Its parameter should have four parameters and like on the 3-simplex - i.e. its values should sum to one. 
+
+The likelihood is therefore $p(\param | \xdat) = \prod_n \prod_i \phi_d^{x_{nd}}$, which, by letting $n_i$ be the number of times the $k$-th face turned up, we can simplify to $p(\param | \xdat) = prod_i \phi_i^{n_i}$. To find the maximum we add a Lagrange multiplier to the log-likelihood, to encode the simplex-constraint, take derivatives to find the saddle-point, and solve at zero. The solution has the pleasingly intuitive form $\param_i = \frac{n_i}{\sum_j n_j}$, which in this case is $\param \approx \{0.25, 0.50, 0.063, 0.063\}$. 
+
+\subsubsection*{Maximum a Posteriori}
+In MAP estimation we put a prior distribution $p(\param)$ on the parameter, and try to estimate the \emph{mode} of the posterior distribution, given by Bayes rule
+\begin{align*}
+p(\param | \xdat) = \frac{p(\xdat | \param)p(\param)}{p(\xdat)} = \frac{\text{likelihood} \times \text{prior}}{\text{evidence}}
+\end{align*}
+
+The MAP solution is:
+
+\begin{align*}
+\map{\param} = \arg \max_{\param} \frac{p(\xdat | \param)p(\param)}{p(\xdat)}
+& = \arg \max_{\param} p(\xdat | \param)p(\param) \\
+ & = \arg \max_\param \ln p(\xdat | \param) + \ln p(\param)
+\end{align*}
+which is found via differentiation as with maximum likelihood. Prediction also follows the maximum likelihood case example by substituting in the MAP point estimation. $p(\xnew | \xdat) \approx p(\xnew | \map{\param})$. Such an approximation is appropriate if we assume the posterior is tightly distributed around the mode and hence
+
+The incorporation for the prior is motivated by two related reasons: firstly it allows a practitioner to supply some prior knowledge to the inference procedure (e.g. most dice are fair); secondly it prevents a model from overfitting in the presence of limited or noisy data, such as presuming a dice is unfairly biased towards four after only 8 throes.
+
+We can illustrate this using our dice example from above. The distribution most frequently use for vectors on the simplex is the Dirichlet, which has the pdf:
+
+\begin{align*}
+p(\param) & = \oneover{B(\vv{\beta})} \prod_i \phi_i^{(\beta_i - 1)} &
+B(\vv{\beta}) & = \frac{\prod_i \Gamma(\beta_i)}{\Gamma(\sum_i \beta_i)}
+\end{align*}
+where $B(\cdot)$ is the multivariate beta function, Gamma function $\Gamma(\beta)$ is a continuous generalisation of the factorial function from integers to the reals, such that for an integer $\beta$, $\Gamma(\beta + 1) = \beta!$. We encode a reasonably strong preference that the dice is fair by setting $\vv{\beta} = \{ 3, 3, 3, 3 \}$, known as a symmetric prior as $\beta_i = \beta_j$ for all $k, j$. Dropping the terms which don't rely on $\param$ and taking derivatives we arrive at the following
+\begin{align}
+\map{\param} & = \ln p(\xdat|\param) + \ln p(\param) \\
+ &= \arg \max_\param \sum_i n_i \ln \phi_i + \sum_i (\beta-1) \ln \phi_i
+\end{align}
+Adding in the Lagrangian and taking derivatives we see the solution is $\phi_i = \frac{n_i + \beta_i - 1}{\sum_j n_j + \beta_j - 1}$. Thus in this, our estimation is $\param = \{0.3, 0.4, 0.1, 0.1\} $ which is a lot closer to the mean than our ML estimate.
+
+\subsubsection*{Bayesian Inference}
+In Bayeisan inference we solve Bayes rule directly, and so derive a \emph{distribution} over $\param$,  , instead of a single point-estimate. This involves evaluating the evidence $p(\xdat) = \int p(\xdat | \param) p(\param) d\param$. In many cases this is intractable, and so approximations need to be made, but this is not the case in our Dirichlet-Multinomial example, where we find
+
+\begin{align*}
+p(\xdat) & = \frac{1}{B(\beta)} \int \prod_i \phi_i^{n_i} \prod_i \phi_i^{(\beta_i - 1)} d\param  = \frac{1}{B(\beta)} \int \prod_i \phi_i^{n_i + \beta_i - 1} \\
+& = \frac{B(\vv{n} + \vv{\beta})}{B(\vv{\beta})}.
+\end{align*}
+
+Which comes from observing that the integrand is just an unnormalised Dirichlet distribution parameterised by $\vv{n} + \vv{\beta}$ and so evaluates to $B(\vv{n} + \vv{\beta})$. This marginal distribution is sometimes known as the P\'{o}lya distribution. 
+
+The product of the likelihood and evidence is $\frac{1}{B(\vv{\beta})} \prod_i \phi_i^{(n_i + \beta_i - 1)}$ and so the $B(\vv{\beta})$ terms cancel out, and leave us with just a Dirichlet distribution parameterised by $\vv{n} + \vv{\beta}$. In our dice example, we now evaluate the expected value $\ex{\param}{} = \frac{n_i + \beta_i}{\sum_j n_j + \beta_j}$ which, due to the lack of ``minus ones", brings the solution to our dice problem even closer to the prior than the MAP solution.
+
+This neat result, where the prior and posterior have the same functional form, is known as conjugacy, and we say that the Dirichlet is the conjugate prior distribution of the multinomial likelihood. Conjugacy dramatically simplifies inference, and so is preferred. Additionally, conjugacy provides an intuitive understanding of the priors as being just pseudo data-points.
+
+A final advantage of conjugate models is that is is possible to evaluate the predictive distribution $p(\xnew | \xdat)$ exactly as a function of the data and hyper-parameters only.
+
+\begin{align*}
+p(\xnew | \xdat) = \frac{B(\xnew + \vv{n} + \vv{\beta})}{B(\vv{\beta})}
+\end{align*}
+ 
+\subsection{Latent Variable Models}
+Oftentimes it is appropriate to assume that there is some unobserved, ``latent" process which determines the distributions of the observed variables. Denoting the latent variables as $\vv{z}$ this gives rise to the following likelihood
+
+\begin{align*}
+p(\xdat|\param) = \int p(\xdat, \zdat|\param) d\zdat
+\end{align*}
+
+As an example consider now that we have a collection of dice supplied by three manufacturers. We suspect each manufacturers dices is biased in a different manner, but can't tell which dice is which. We therefore seek to identify which manufacturer fabricated each die $\zdat$, and what is the distribution over faces for that die $\param_i$ where i identifies the manufacturer. This is simply a mixture model, in this case over multinomials, with $i$ indicating the cluster where, for the $n$-th roll of the die $\vv{x}_n$, $\vv{z}_n$ indicates which of the three manufacturers fabricated that die. Like the distribution over the face $\vv{x}_n$, the latent manufacturer $\vv{z}_n$ has a categorical likelihood. This gives rise to the mixture of multinomials model\cite{Nigam2000}
+\begin{align*}
+\vv{z}_n & \sim \muln{\vv{\theta}}{1} & \vv{\theta} & \sim \dir{\vv{\alpha}} &
+\vv{x}_n & \sim \muln{\param}{1} & \param & \sim \dir{\vv{\beta}}
+\end{align*}
+
+To derive a MAP estimate of $\param$, we need to approximate the log-likelihood using Jensen's inequality which, for any \emph{concave} function $f(x)$, states that $f\left(\ex{x}{}\right) \geq \ex{f(x)}{}$. Thus, if we choose, for now, an arbitrary distribution over the latent variables $q(\zdat)$ we can approximate the log-likelihood as
+
+\begin{align*}
+\ln p(\xdat|\param) & = \ln \int \joint p(\param) d\zdat 
+ = \ln \int \frac{q(\zdat)}{q(\zdat)} \joint p(\param) d\zdat \\
+& \geq \int  q(\zdat) \left(\logjoint + \ln p(\param)\right) d\zdat
+  -     \int \ln q(\zdat) \ln q(\zdat) d\zdat \\
+& = \exlogjoint{q} + \ln p(\param) + \ent{q} = \fqt{q, \param}
+\end{align*}
+where the term $\fqt{q, \param}$ is known as the ``free energy". The resulting maximisation algorithm requires iteratively alternating between
+
+\begin{align*}
+\text{E-Step:} & & q^t(\zdat) & = \arg \max_{q(\zdat)} \fqt{q(\zdat), \param^{t-1}} \\
+\text{M-Step:} & & \param^t & = \arg \max_{\param} \fqt{q^t(\zdat), \param} \\
+& & & = \arg \max_{\param} \ex{\ln p(\xdat, \zdat | \param)}{q} + \ln p(\param)
+\end{align*}
+where $t$ is the current iteration. To determine how to maximise $q(\zdat)$ we observe that, for a fixed $\param$, the difference between the free energy and the regularised log-likelihood is given by the Kullback Leibler divergence between $q(\zdat)$ and the posterior $p(\zdat|\zdat, \param)$.
+\begin{align*}
+\fqt{q, \param} 
+& = \ln p(\param) + \int q(\zdat) \ln \frac{p(\xdat, \zdat|\param)}{q(\zdat)} d\zdat \\
+& = \ln p(\param) + \int q(\zdat) \ln \frac{p(\zdat|\xdat, \param)p(\xdat | \param)}{q(\zdat)} d\zdat \\
+& = \ln p(\param) + \int q(\zdat) \ln p(\xdat | \param) q\zdat + \int q(\zdat)\frac{p(\zdat|\xdat, \param)}{q(\zdat)} d\zdat \\
+& = \ln p(\param) + \ln p(\xdat | \param) + \kl{q(\zdat)}{p(\zdat|\xdat, \param)}
+\end{align*}
+When $\kl{q(\zdat)}{p(\zdat|\xdat, \param)} = 0$, $\fqt{q, \param} = \ln(p(\xdat | \param)p(\param))$, and so we maximize $q(\zdat) = p(\zdat | \xdat, \param)$.
+
+This is known as the MAP Expectation Maximization (EM) algorithm: if we drop the prior over parameters it is the standard EM algorithm, which was first codified in \cite{Dempster1977}. In the case of the mixture of multinomials model, the updates are
+
+\begin{align*}
+\text{E-Step:} & & q(\zdat) & = \prod_n \muln{\hat{\vv{\theta}}_n}{1}, \qquad
+\hat{\vv{\theta}}_n \propto \exp\left( \alpha_k + \sum_n x_{ni} \ln \phi_{ki} \right) \\
+\text{M-Step:} & & \phi_{ki} & = \frac{\sum_n \ex{z_{nk}}{q} x_{nk} + \beta_k - 1}{\sum_j \sum_n \ex{z_{nj}}{q} x_{nj} + \beta_j - 1}
+\end{align*}
+where $\ex{z_{nk}}{q} = \theta_{nk}$. The predictive distribution is
+
+\begin{align*}
+p(\xnew | \xdat)  = \sum_k p(\xnew, z_{\text{new}} = k | \param) 
+\approx \sum_k p(\xnew | \param^{(k)}_{\text{MAP}})
+\end{align*}
+
+A final note on EM is that it is always guaranteed to find a possibly local maximum in the the bounded likelihood function. In the E-Step, for a fixed parameter value $\param$, we set the KL divergence between the $q(\zdat)$ and the true posterior to zero, increasing the bound such that its value exactly matches the likelihood. In the M-Step, we maximise the free-energy with respect to the parameter, such that it's greater than the previous value of the free-energy, which is less than the likelihood evaluated at that new parameter value, but which will be increased to that value once more in the E-Step.
+
+
+\subsubsection{Variational EM}
+It is not always feasible to evaluate the posterior distribution $p(\zdat|\xdat, \param)$ exactly. In such cases one needs to either approximate the update to the distribution (e.g. by parameterising it and taking a gradient step), or approximate the distribution itself.
+
+We consider the latter approach, where one assumes the true distribution $q(\zdat)$ can be approximated by a family of distributions $\qfam$. A popular, though not the only choice, is the family of factorized distributions $q(\zdat) = \prod_m q(\zdat_m)$. The question then is how to evaluate the variational E-Step
+
+\begin{align*}
+\text{Variational E-Step:} & & q(\zdat) = \arg \max_{q(\zdat_1) \ldots q(\zdat_M)} \fqt{\prod_m q(\zdat_m), \param}
+\end{align*}
+
+Given this formulation, we can solve independently for each block of latent variables $\zdat_m$ in turn, using the following decomposition.
+
+\begin{align*}
+\fqt{\prod_m q(\zdat_m), \param} = \exlogjoint{\prod_m q(\zdat_m)}
+\end{align*}
+
+
 
 \input{../footer.tex}
