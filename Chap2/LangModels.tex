@@ -1,6 +1,12 @@
 \input{../header.tex}
 
 \section{Representations of Text}
+Discounting.
+
+Given a count $r$, let its discounted variant be $d(r) = (r+1) \frac{N(r+1)}{N(r)}$ where $N(r)$ is the number of \emph{distinct} n-grams that occur exactly $r$ time. From the definition we can see that $r* < r$ always. The left over probability mass is $\frac{N(1)}{D}$ where D is the size of the training set. This is assumed to be the joint probability of all unseen event.
+
+% -----------------
+
 In order to perform inference on text, it is necessary to create a representation of text which captures its essential statistical properties in as parsimonious a form as possible, the latter being required to overcome the ``curse of dimensionality"\cite{Bishop2006} in the presence of limited data.
 
 The simplest possible representation of text is the so-called bag of words vector. Given a vocabulary of $T$ words, and a document $d$ containing $\nd$ word observations, a bag of words is a vector $\vv{w}_d \in \VNat{T}$ where each dimension $w_{dt}$ indicates how many times word $t$ was observed in document $d$. This is sometimes known as the ``vector-space model"\cite{Jst2004} of text. 
@@ -26,18 +32,18 @@ The issue of stop-words is addressed in the vector-space model by employing a te
 
 With regard to synonymy, purely heuristic approaches exist such as ``stemming" which identify additions to words imposed by grammar. For example four rules might be to remove ``e", ``ing", ``ed" and ``s" from the end of a word, such that "excite", "exciting", "excited" and ``excites" would all be reduced to that word's stem, ``excit". This still does not handle all cases of synonymy (e.g. ``excited" and ``enthusiastic") nor does it address polysemy.
 
-A final disadvantage of the bag of words is that by only focussing on a single word at a time, one can lose valuable information supplied by the context. For example, it is much easier to distinguish cities from beer brands when considering the pairs (``San", ``Francisco") and (``San", ``Miguel"), than when simply considering observations of ``San", ``Francisco" and ``Miguel". Paired words like this are known as bigrams, with initialiser and terminal symbols are used to form bigrams at the start and end documents. This can be extended to three-word tuples ``trigrams" or longer tuples of length $n$ known as n-grams. Employing n-grams is essentially a very simple way of using a language model for inference.
+A final disadvantage of the bag of words is that by only focussing on a single word at a time, one can lose valuable information supplied by the context. For example, it is much easier to distinguish cities from beer brands when considering the pairs (``San", ``Francisco") and (``San", ``Miguel"), than when simply considering observations of ``San", ``Francisco" and ``Miguel". Paired words like this are known as bigrams; initialiser and terminal symbols are used to form bigrams at the start and end documents. This can be extended to three-word tuples ``trigrams" or longer tuples of length $n$ known as n-grams. Employing n-grams is essentially a very simple way of using a language model for inference.
 
 
 \subsection{Language Models of Text}
 \label{sec:langmodels}
-Language modelling is the problem of predicting the next word in a sequence (e.g a sentence) given all previous words. Common use-cases are predictive keyboards, spell-checkers and speech recognition. Typically one makes the Markov assumption, with first order (``bigram") and second-order (``trigram") Markov models being popular. 
+Language modelling is the problem of predicting the next word in a sequence (e.g a sentence) given all previous words. Common use-cases are predictive keyboards, spell-checkers and speech recognition. Typically one makes the Markov assumption, with first order and second-order Markov models being popular, corresponding to bigrams and trigrams respectively.
 
 As vocabularies are normally quite large (typically of the order of 30,000 terms), raising this to the power of two or three can lead to models that are over-parameterised: simple maximum likelihood estimates therefore will frequently include n-grams whose estimate simply collapses to zero in the absence of training data. The simple solution to this problem  of ``Laplace smoothing", equivalent to a symmetric Dirichlet prior, is unsatisfying in that it does not take into account the information available in the lower-order n-grams.
 
-Most approaches consequently use lower-order n-gram statistics, using information from unigrams when no information exists for bigrams and so forth. Two approaches exist: interpolation and back-off models.
+Most approaches consequently exploit the presence lower-order n-gram statistics, using information from unigrams when no information exists for bigrams and so forth. Two approaches exist: interpolation and back-off models.
 
-In an interpolation model, the probability of an n-gram is a weighted combination of the probabilities of all m-grams for $m \in \{n, (n-1), \ldots, 1\}$. Hence for a bigram we'd say its probability $p(w_i|w_{i-1}) = \lambda p(w_i|w_{i-1}) + (1 - \lambda) p(w_i)$. Ideally a different $\lambda$ is learnt for each distinct context (sequence of words $w^i_{i-n+1}$) however for performance reasons interpolation terms are typically bucketed according to the counts for their respective probabilities. The intuition is that probabilities defined by high counts should have low-variance so so have high weight $\lambda$. This is known as Jelinek-Mercer smoothing.\fixme{Reference}
+In an interpolation model, the probability of an n-gram is a weighted combination of the probabilities of all m-grams for $m \in \{n, (n-1), \ldots, 1\}$. Hence for a bigram we'd say its probability $p(w_i|w_{i-1}) = \lambda p(w_i|w_{i-1}) + (1 - \lambda) p(w_i)$. Ideally a different $\lambda$ is learnt for each distinct context (sequence of words $w^i_{i-n+1}$) however for performance reasons interpolation terms are typically bucketed according to the counts for their respective probabilities. The intuition is that probabilities defined by high counts should have low-variance so so have a high weight, $\lambda$, which is the basis behind Jelinek-Mercer smoothing.\fixme{Reference}
 
 \fixme{I don't understand this, explain it better}
 In ``back-off" models, one ``backs off" to a simpler estimate if no data exists to support a higher order estimate. Back-off models typically use a form of discounting, removing a portion of counts from frequently occurring n-grams and assigning the resultant spare probability mass to lower-order n-grams. The best performing back-off model is Knesser-Ney\fixme{reference}, which defines the probability of a word as 
@@ -48,11 +54,11 @@ p(w_i | w_{i-1}) = \left\{ \begin{array}{lr}
  \end{array}
 \right.
 \end{align}
-where $c(\cdot)$ denotes how often the word sequence was observed in the data and $\lambda(w_{i-1})$ is a normaliser that ensures that the probabilities sum to one (note that the discount $D$ on the left-hand size means that there is some probability mass to be accounted for by the left hand side). $D$ is normally learnt on held-out data via cross-validation.
+where $c(\cdot)$ denotes how often the word sequence was observed in the data. In order to accumulate enough probability mass to assign to the unobserved n-grams, mass is ``skimmed" off the observed n-grams using the discount term $D$. This is then used in the normalisation constant $\lambda(w_{i-1})$ which ensures all probabilities sum to 1. The value of $D$ is normally found using cross validation.
 
 A distinct feature of Knesser-Ney is that the probability of each word is dependent on how many unique contexts precede it, so in the sentence ``He left San Francisco via San Francisco airport" a higher probability would be given to ``San" as it occurs in two contexts (``left" and ``via") rather than "Francisco" which only occurs after ``San"
 
-One can augment back-off models with interpolation. \fixme{Taking Knesser Ney again}. An interpolated variant of Knesser-Ney was derived in\cite{Goodman2001} called ``modified Knesser-Ney" which is one of the best performing language models currently in use. This is naturally defined as
+One can augment back-off models with interpolation. \fixme{Taking Knesser Ney again}. An interpolated variant of Knesser-Ney was derived in\cite{Goodman2001}\fixme{Nope, I have the 1996 and 2001 papers, but not the 1999 paper). called ``modified Knesser-Ney" which is one of the best performing language models currently in use. This is defined as
 
 \begin{align}
 p(w_i | w_{i-1}) = \frac{c(w_i, w_{i-1}) - D}{c(w_i-1)} + \lambda(w_{i-1})\frac{ | \{t | c(t, w_i) > 0\} }{\sum_v \{v | c(v, w_i) > 0\}}
@@ -67,7 +73,7 @@ w_i|w_{i-1} & \sim \dir{\vv{\theta}_{i-1}} & \vv{\theta}_i & \sim \dir{\vv{\alph
 \end{align}
 As described in\cite{MacKay1995} the update for the prior can be written as function of the number of unique contexts the term followed, making it more similar to Knesser-Ney than plain Jelinek interpolation. Notwithstanding this, subsequent comparisons of this to other language models show\cite{Teh} that this performs worse than both interpolated and modified Knesser Ney.
 
-One potential reason for this is that the Dirichlet distribution does not adequately capture the power-law distributions of text. To address this, one use a Pitman Yor process (PYP) instead, which provides for power-law dyanmics through the addition of a discount parameter. For a given context (i.e. a unique sequence of words) $\vv{w}$ of length $n = |\vv{w}|$,let $\pi(\vv{W})$ denote the prefix of length $n-1$ of $\vv{w}$. In that case the PYP language model is recursively defined as\cite{Teh}:
+One potential reason for this is that the Dirichlet distribution does not adequately capture the Zipfian distribution of words in natural languages. To address this, one use a Pitman Yor process (PYP) instead, which provides for power-law dyanmics through the addition of a discount parameter. For a given context (i.e. a unique sequence of words) $\vv{w}$ of length $n = |\vv{w}|$,let $\pi(\vv{W})$ denote the prefix of length $n-1$ of $\vv{w}$. In that case the PYP language model is recursively defined as\cite{Teh}:
 
 \begin{align}
 G_{\vv{w}} & \sim \text{PYP}\left(d_{|\vv{w}|}, \alpha_{|\vv{w}|}, G_{\pi(\vv{w})} \right) \\
@@ -79,13 +85,13 @@ with the the discount parameter $d$ and concentration parameter $\alpha$ being f
 
 The resulting sampling-based inference scheme is a form of nested Chinese restaurant process, sometimes called a ``Chinese restaurant franchise". It can be shown that interpolated Knesser-Ney is equivalent to this model when one ensures that each word is ``served" at only one ``table" in the restaurant.\footnote{As a PYP represents an infinite number of tokens, but there are only a finite number of words in the vocabulary, a single word may be associated with more than one table in any ``restaurant"}. Inference is non-trivial, but algorithmic tricks such as memoization have been shown\cite{Wood2011} to reduce time to convergence.
 
-All these methods arise due to the sparsity that arises when considering all combinations of words in a high-vocabulary where certain words occur infrequently. However if one assumes the existence of synonymy in the vocabulary, one can consider observed words to be a projection from a lower-dimensional canonical vocabulary. This gives rise to the hidden words model\cite{Deschacht2012}. Under such a model, the likelihood of an observed trigram, for example, is therefore:
+All these methods arise due to the sparsity that arises when considering all combinations of words in a high-vocabulary where certain words occur infrequently. However if one assumes the existence of synonymy in the vocabulary, one can consider observed words to be a projection from a lower-dimensional canonical vocabulary. This gives rise to the hidden words model\cite{Deschacht2012}. Under such a model, the likelihood of an observed trigram, for example, is:
 
 \begin{align}
 p(\vv{w}^i_{i-2}|\vv{\phi}) = \sum_{\vv{h}^i_{i-2}} p(\vv{h}^i_{i-2}|\vv{\phi}) \prod_{n=i-2}^i p(w_n | h_n)
 \end{align}
 As the latent vocabulary is small, a simple language model (e.g. a second-order markov model) can be used model the hidden words, while observed words remaining conditionally independent given the hidden words that generated them. 
  
-Moreover, if one assumes, as is likely, that hidden word counts will never reduce to zero, then there is no need for advanced interpolation techniques. In experiments on Reuters and NIPS datasets, this gave better predictive likelihood scores than modified Knesser-Ney.
+Moreover, if one assumes, as is likely, that hidden word counts will never reduce to zero, then there is no need for advanced interpolation techniques. In experiments on Reuters and NIPS datasets, the model's authors claimed that this gave better predictive likelihood scores than modified Knesser-Ney.
 
 \input{../footer.tex}
