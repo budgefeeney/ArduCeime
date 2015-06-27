@@ -4,7 +4,7 @@
 \subsubsection{Evaluation Metrics}
 \label{sec:eval}
 
-A number of methods have been proposed to evaluate admixture models. By far the most popular is perplexity, which is defined as the geometric mean of the reciprocals of token likelihoods. The perplexity for a model $\model$ is defined as
+A number of methods have been proposed to evaluate admixture models. By far the most popular is perplexity, which is defined as the geometric mean of the reciprocals of token likelihoods. Assuming exchangeability of words, the perplexity for a model $\model$ is defined as
 
 \begin{align}
 \perplexity{\model} = \sqrt[n_{d}]{\prod_d \prod_n \frac{1}{p(w_{dn}|\model)}} = \exp \left( \frac{-\sum_d \sum_n \ln p(w_{dn}|\model)}{n_{d\cdot\cdot}} \right) \label{eqn:perp_def}
@@ -20,21 +20,18 @@ To evaluate perplexity, one needs to determine the probability of a query (i.e. 
 p(\WQuery|\WTrain) = \int p(\WQuery|\Phi, \vv{\alpha})p(\Phi,\vv{\alpha} | \WTrain) d\Phi d\vv{\alpha}
 \end{align}
 
-where due to the assumed exchangeability of documents $p(\WQuery|\Phi, \vv{\alpha}) = \prod_ p(\vv{w}_d|\Phi, \vv{\alpha})$. Leaving aside the first term in the integrand, one can approximate this integral either by substituting in point estimates for $\Phi$ and $\vv{\alpha}$ or sampling from the posterior - the latter being particularly easy in cases where the model parameters have been fit using Gibbs sampling.
+where due to the assumed exchangeability of documents $p(\WQuery|\Phi, \vv{\alpha}) = \prod_ p(\vv{w}_d^{q}|\Phi, \vv{\alpha})$. Leaving aside the first term in the integrand, one can approximate this integral either by substituting in point estimates for $\Phi$ and $\vv{\alpha}$ or sampling from the posterior - the latter being particularly easy in cases where the model parameters have been fit using Gibbs sampling.
 
 The issue that remains however is how to evaluate $p(\vv{w}_d|\Phi, \vv{\alpha})$, which is dependant on the latent variables $\zdnk$. There are a number of ways in which this can be evaluated, of which two have been used frequently in the literature.
 
 The harmonic mean method has been used in\cite{Griffiths2004}\cite{Griffiths2005}\cite{Wallach2006}, all of which performed inference using collapsed Gibbs samplers. The approach is defined as
 \begin{align}
 \oneover{p(w)} = \sum_z \frac{p(z|w)}{p(w|z)} \approx \oneover{S} \sum_s \oneover{p(w|\samp{z})}
+=  \text{HM}\left[ \left\{ p(\vv{w}|\samp{\vv{z}}, \Phi \right\}_{s=1}^{S}  \right]
 \end{align}
-where the approximation comes from implementing an importance sampler using the target $p(z|w)$ as the proposal distribution. Implementing this we can see that 
+where HM is the Harmonic Mean and the approximation comes from implementing an importance sampler using the target $p(z|w)$ as the proposal distribution. Implementing this we can see that 
 
-\begin{align}
-p(\vv{w} | \Phi, \vv{\alpha}) \approx \text{HM}\left[ \left\{ p(\vv{w}|\samp{\vv{z}}, \Phi \right\}_{s=1}^{S}  \right]
-\end{align}
-
-where $\text{HM}\left[\cdot\right]$ is the harmonic mean, and the sampling distribution over $\zdnk$ is given by
+The sampling distribution over $\zdnk$ is given by
 
 \begin{align}
 p(z_{dn} = k | \vv{w}_d, \vv{z}_d^{\setminus n}, \Phi, \vv{\alpha}) \propto \phi_{k,{w_{dn}}}\frac{n_{dk\cdot} + \alpha_k}{n_{d\cdot\cdot} + \sum_j \alpha_j}
@@ -70,22 +67,24 @@ p(\vv{w}_d^{(l)}|\vv{w}_d^{(e)}, \Phi, \vv{\alpha}) \approx
 
 In practice, particularly with variational approaches, a single point estimate of $\vv{\theta}_d^{(e)}$ may be used instead\cite{Asuncion2012}, though when evaluating document completion \cite{Wallach2009} found that the topic-estimation method, even when implemented via sampling, compared ``poorly" with left-to-right sampling. 
 
-All this indicates that measures of perplexity are highly dependant on how the held-out likelihood is evaluated, something which is rarely described in the literature. A further issue, is that many implementors choose to use hard-coded symmetric priors for topic models, even though the performance of topic models is highly sensitive to the configuration of hyper-parameters, a result demonstrated in \cite{Asuncion2012}\cite{Wallach2006}. Consequently care should be exercised when comparing measures of perplexity across different publications.
+All this indicates that measures of perplexity are highly dependant on how the held-out likelihood is evaluated, something which is rarely described in the literature. A further issue, is that many implementors choose to use hard-coded symmetric priors for topic models, even though the performance of topic models is highly sensitive to the configuration of hyper-parameters, a result demonstrated in \cite{Asuncion2012}\cite{Wallach2006}. Consequently care should be exercised when comparing measures of perplexity across different models in different publications.
 
 A further argument against perplexity was made in \cite{Chang2009} where human testers were asked to inspect the topic vocabularies generated by different topic models (LDA, CTM and PLSA). Tests included ``word-intrusion" experiments, where, in a list of word belonging to a single topic, testers had to identify the extra word from another topic added by the experimenters; and similarly a ``document-intrustion" experiment which required them to identify the intruded document in a list of document excerpts belonging to a single topic. The CTM model, despite achieving the best perplexity score, faired worst in both of these tasks. Additionally, in \cite{Azzopardi2003} it was shown that when using language-models to aid information retrieval, language models with the best perplexity scores did not always lead to the best precision scores. In light of this, some more recent publications such as \cite{Li2006}\cite{Wang2007}\cite{Lindsey2012} have used similar intrusion tests via Mechanical Turk to test the performance of their models.
 
-Between these two extremes, other metrics exist. The ``topical coherence" metric, which first introduced in \cite{Mimno2011} and additionally used in \cite{Mimno2012a}, directly addresses the word-intrusion problem. One can assume that if a set of words all belong to a single topic, one would see most of them occur in a single document belonging to that topic, and not see occur uniformly across all documents and all topics. Therefore letting $D(t)$ be the number of documents where word $t$ occurs at least once, and $D(t,v)$ be the number of documents containing at least once occurrence each of both $t$ and $v$, the coherence metric is defined as
+Between these two extremes, other metrics exist. The ``topical coherence" metric, which first introduced in \cite{Mimno2011} and additionally used in \cite{Mimno2012a}, directly addresses the word-intrusion problem. One can assume that if a set of words all belong to a single topic, one would see most of them occur in documents belonging to that topic, rather than uniformly across all documents and all topics. Therefore letting $D(t)$ be the number of documents where word $t$ occurs at least once, and $D(t,v)$ be the number of documents containing at least one occurrence each of both $t$ and $v$, the coherence metric is defined as
 \begin{align}
-C(t,V^{(k)}) = \sum_{m=2}^{M} \sum_{l=1}^{m-1} \ln \frac{D(v_{km}, v{kl}) + 1}{D(v_{kl})}
+C(t,V^{(k)}) = \sum_{d=2}^{D} \sum_{p=1}^{d-1} \ln \frac{D(v_{kd}, v_{kp}) + 1}{D(v_{kp})}
 \end{align}
 where $V_k$ is the set of the $M$ most probable words in topic $k$, and the addition of $1$ to the numerator is to avoid taking the log of zero. 
+
+\fixme{This looks wrong}
 
 %\fixme{Read this some more. Also pointwise mutual info}
 
 The \emph{empirical likelihood} of \cite{Li2006} tests the generative ability of a model. For each test document, this involves using the model to generate, say, 1,000 synthetic documents, deriving an empirical (in this case multinomial) distribution from each document, and then evaluating the average of the probabilities of the test document according to each of these empirical distributions. This has additionally been used in \cite{Doyle2009}\cite{Mimno2008}. In \cite{Wallach2009} it was shown that this method is an approximation to $p(\vv{w}_d|\Phi, \vv{\alpha}) = \int p(\vv{w}_d, \thd | \Phi)p(\thd|\vv{\alpha})d\thd$ using importance sampling with true posterior employed as a proposal distribution. Were the synthetic documents infinitely long, the two methods would be identical. This analogy points to a potential deficiency of this method however, which is that one would expect the variance of an estimate derived from importance sampling to be very high when sampling from high-dimensional distributions: consequently for very high topic-counts (cases with over 200-topic are common) this may not be a reliable estimator.
 
 \subsubsection*{Evaluation Against Labelled Data}
-With labelled data, specified with a 1-of-$L$ labelling $\vv{t}_d$, one may choose to evaluate the model by comparing it to the inferred topics, $\thd \in \VReal{K}$, where $K$ need not necessarily equal $L$. Many metrics exist for this purporse, of which the most well known is the F1-Score which is is the harmonic mean of precision, $p$ and recall, $r$, $F_1 = 2 \frac{p \cdot r}{p + r}$ where precision is $p=\frac{TP}{TP+FP}$ and $r=\frac{TP}{TP+FN}$ and $TP, FP, TN, FN$ refer to the true and false positives and negatives respectively.
+With labelled data, specified with a 1-of-$L$ labelling $\vv{t}_d$, one may choose to evaluate the model by comparing it to the inferred topics, $\thd \in \VReal{K}$, where $K$ need not necessarily equal $L$. Many metrics exist for this purpose, of which the most well known is the F1-Score, $F_1 = 2 \frac{p \cdot r}{p + r}$, which is the harmonic mean of precision, $p=\frac{TP}{TP+FP}$ and recall, $r=\frac{TP}{TP+FN}$, and $TP, FP, TN, FN$ refer to the true and false positives and negatives respectively.
 
 In the presence of soft-clustering and multiple labels one can\footnote{See https://facwiki.cs.byu.edu/nlp/images/2/25/ClusterEvaluation.ppt} define an $F_1$ score for a single topic $k$ and a single label $l$ thusly.
 
