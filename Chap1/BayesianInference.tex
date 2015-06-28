@@ -137,7 +137,7 @@ This is known as the MAP Expectation Maximization (EM) algorithm: if we drop the
 
 \begin{align*}
 \text{E-Step:} & & q(\zdat) & = \prod_d \muln{\hat{\vv{\theta}}_d}{1}, \qquad
-\hat{\vv{\theta}}_d \propto \exp\left( \alpha_k + \sum_d x_{di} \ln \phi_{ki} \right) \\
+\hat{\vv{\theta}}_d \propto  \alpha_k + \sum_d x_{di} \ln \phi_{ki}  \\
 \text{M-Step:} & & \phi_{ki} & = \frac{\sum_d \ex{z_{dk}}{q} x_{dk} + \beta_k - 1}{\sum_j \sum_d \ex{z_{dj}}{q} x_{dj} + \beta_j - 1}
 \end{align*}
 where $\ex{z_{nk}}{q} = \theta_{nk}$. The predictive distribution is
@@ -163,9 +163,9 @@ Given this formulation, we can solve independently for each block of latent vari
 
 \begin{align*}
 \fqt{\prod_m q(\zdat_m), \param} 
-& = \exlogjoint{\tinymath{\prod_m q(\zdat_m)}} + \ent{q} \\
-& = \int q(\zdat_n) \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}} d\zdat_n + \ent{q_n} + \sum_{m\neq n} \ent{q_m} \\
-& = -\kl{q(\zdat_n)}{\exp(\exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}})} + \sum_{m\neq n} \ent{q_m}
+ = \exlogjoint{\tinymath{\prod_m q(\zdat_m)}} + \ent{q} \qquad\qquad\qquad\\
+\qquad = \int q(\zdat_n) \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}} d\zdat_n + \ent{q_n} + \sum_{m\neq n} \ent{q_m} \\
+\qquad = -\kl{q(\zdat_n)}{\exp(\exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}})} + \sum_{m\neq n} \ent{q_m}
 \end{align*}
 
 \fixme{This may be wrong}
@@ -175,17 +175,17 @@ As the KL divergence is always non-negative, the bound is maximised when it is s
 q(\zdat) \propto \exp\left( \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}}  \right)
 \end{align*}
 
-Unlike the case of EM however, setting the KL divergence to zero does not cause the free-energy to become equal to the likelihood for a fixed $\param$. This is because the true posterior $p(\zdat | \xdat, \param)$ may not be in the family of distributions $\qfam$ which we have chosen. Consequently, the variational E-Step is not guaranteed to maximise the bound, and so the algorithm is not guaranteed to converge to a local maximum as with EM. However by optimising the bound will still improve the likelihood, and may therefore find useful parameter values.
+Unlike the case of EM however, setting the KL divergence to zero does not cause the free-energy to become equal to the likelihood for a fixed $\param$. This is because the true posterior $p(\zdat | \xdat, \param)$ may not be in the family of distributions $\qfam$ which we have chosen. Consequently, the variational E-Step is not guaranteed to maximise the bound, and so the algorithm is not guaranteed to converge to a local maximum as with EM. However by optimising the bound will still improve the likelihood, and may therefore find useful parameter values. Fuller descriptions of variational learning are given in \cite{Jordan1999a}\cite{Bishop2006}\cite{Tzikas2008}. 
 
 \subsection{Stochastic Variational Learning}
-In many models, in addition to the IID assumption, we can further consider the set of random variables can often be partitioned into two disjoint subsets: one consisting of the ``local" latent variables $\zd$  associated with each datapoint $\xd$, and then ``global" variables $\param$ which are associated with the model overall.
+In many models, in addition to the IID assumption, we can further consider the set of random variables to be partitioned into two disjoint subsets: one consisting of the ``local" latent variables $\zd$  associated with each datapoint $\xd$, and then ``global" variables $\param$ which are associated with the model overall.
 
 In more concrete terms, the joint distribution, including hyperparameters $\alpha$ can be written as
 
 \begin{align*}
 p(\xdat, \zdat, \param) = p(\param | \beta)  \prod_d \prod_n p(\xd, \zd | \param)\end{align*}
 
-Note that compared to the previous sections, $\param$ may be a set of random variables in this setting like $\zdat$ and not just a parameter with no distribution.
+Note that compared to the previous sections, $\param$ may be a set of random variables in this setting like $\zdat$ and not simply a parameter with no distribution.
 
 Inference can of course be carried out using EM or variational inference, however there are two issues that arise:
 
@@ -209,39 +209,99 @@ where $\kappa \in (0.5,1]$ controls the learning rate and $\tau_0 \geq 0$ slows 
 This can be used in machine learning where the objective function $f(x; \param)$ is an error-function, or in the case of probabilistic models, the negative log-likelihood.
 
 \subsubsection*{Stochastic Gradient Descent}
-In order to perform the update in gradient descent one needs to consider the gradient evaluated at the entire dataset, which is still costly. A better approach is to evaluate the gradient at a random function $b(x; \param)$ such that $\ex{b(x; \param)}{} = f(x; \param)$. One can then perform a stochastic gradient descent of the form
+In order to perform the update in gradient descent one needs to consider the gradient evaluated at the entire dataset, which is still costly. A better approach is to evaluate the gradient at a random function $b(\xdat; \param)$ such that $\ex{b(\xdat; \param)}{} = \sum_{x \in \xdat} f(x; \param)$. One can then perform a stochastic gradient descent of the form
 
 \begin{align*}
-\param^{t+1} \leftarrow \param^t - \rho_t \nabla_\param b_t(\param^t)
+\param^{t+1} \leftarrow \param^t - \rho_t \nabla_\param b_t(\xdat; \param^t)
 \end{align*}
 
-Note that in this formula above we sample a different instance of this function at each time step. 
+Note that in this formula above we sample a different instance of this function at each time step. The issue is how to choose $b(\xdat; \param)$.
 
-In the IID case, a trivial was to implement $b(x; \param)$ is to evaluate the error (or likelihood) at a single point, chosen with replacement, from the dataset, and scale the result by $D$, the total number of points in the dataset, so that it approximates the sum of per-datapoint errors / likelihoods. In practice it's more typical to use a ``batch" of $S$ documents, so the scaling factor is $\frac{D}{S}$.
-
-In general terms, stochastic gradient descent can be viewed as estimating $\ex{f(x; \param)}{}$ by taking $S$ samples from an empirical distribution $p(x) = \frac{1}{D} \sum_d \delta(x, x_d)$ giving the result:
+Assume that we are interested in $\ex{f(x)}{}$, the expectation of the given function (a loss function say) across all possible inputs according to the data-generating distribution. Since the data-generating distribution is unknown, we approximate it using the empirical distribution of the dataset
 
 \begin{align*}
-\ex{f(x; \param)}{} \approx \frac{1}{S} \sum_s f(x_s; \param) \frac{1}{1/D} = \frac{D}{S} \sum_s f(x_s; \param)
+p(x) = \frac{1}{D} \sum_d \delta(x, x_d)
 \end{align*}
-
-This then opens the door to implementing \emph{weighted} stochastic gradient descent algorithms, where certain classes of datapoints are prioritised over others without affecting convergence guarantees. An example is an biased binary classification problem where negative examples predominate. The derivation follows as for importance sampling:
+where D is the size of our dataset, and additionally we define $D(x)$ to be the number of copies of input $x$ in the dataset. With this formulation we can write the following.
 
 \begin{align*}
-\ex{f(x; \param)}{} 
-& = \int f(x)p(x)dx = \int f(x;\param) \frac{p(x)}{q(x)} q(x) dx \\
-& = \ex{f(x; \param)  \frac{p(x)}{q(x)}}{q} \approx \oneover{S} \sum_s f(x_s; \param) \frac{p(x_s)}{q(x_s)}
+\ex{\frac{D}{D(x)} f(x)}{}
+& = \sum_d \frac{D}{D(x_d)} f(x_d) p(x_d) \\
+& = \sum_d \frac{D}{D(x_d)} f(x_d) \left(\frac{1}{D} \sum_p \delta(x_d, x_p)\right) \\ 
+& = \sum_d \frac{D}{D(x_d)} f(x_d) \frac{D(x_d)}{D} = \sum_d f(x_d)
 \end{align*}
 
+In the case where we assume all data-points are different, this simplifies to
 
-For example, say our dataset contains $D^-$ negative samples and $D^+$ positive examples. For our sampling distribution we can choose with very small probability to choose a datapoint from the negative set, given the datapoint a probability of $q(x^-_s) = \frac{\epsilon}{D^-}$, or conversely, with high-probability, choose a positive example, which will have a probability of $q(x_s^+) = \frac{1 - \epsilon}{D^+}$. Thus the weighted SGD estimate is
+\begin{align*}
+\ex{D f(x)}{} = \sum_d f(x_d)
+\end{align*}
+
+Thus any approximation of the expectation (e.g. by sampling from the data-distribution) is an approximation of the sum, providing us with a definition for $b(\xdat)$ in the case where $f(\xdat)$ is a sum, as is the case with log-likelihood over IID data:
+
+\begin{align*}
+b(x) = \frac{D}{S} \sum_s f(x_s) \approx \sum_d f(x_d) = f(\xdat)
+\end{align*}
+where S is the number of samples. In theory one could evaluate the gradient a sample at a time, however in practice, to minimise the variance of the gradient estimates, the number of samples (often called the ``batch size") is usually set to a reasonably large number. The resulting stochastic EM algorithm is therefore
+
+\begin{enumerate}
+    \item Initialise latent variables $\zdat$ and parameters $\param$
+    \item Iterate until converged, time-step is $t$:
+    \begin{enumerate}
+        \item Sample a batch of $S$ observations $\{ x_s \}_{s=1}^S$ and infer the (factored\footnote{Note that this is not necessarily a variational mean-field factorization; for example in mixture-models using ordinary EM, the posterior naturally factors over the IID datapoints}) posterior:
+        \begin{align*}
+            q(z_s) = \arg \max_{q_s} \fqt{q_s, \param}
+        \end{align*}
+        \item Use the posteriors to perform a gradient update of the parameters
+        \begin{align*}
+        \param \leftarrow \param + \rho_t \nabla_\param \left(\sum_s \ex{\ln p(x_s, z_s|\param)}{q(z_s)}\right)
+        \end{align*}
+        \end{enumerate}
+\end{enumerate}
+
+While stochastic gradient descent has been motivated thus far as a means to handle datasets too large to fit into memory, and a means update global parameters during rather than after inference of ``local" variables, stochastic gradient descent is also useful in unbalanced classification problems.
+
+Consider a binary recommendation problem where the majority of products have never been consumed by customers, and so the number of negative datapoints $D^-$ vastly outnumbers the number of positive datapoints $D^+$. It is possible to develop a \emph{weighted} stochastic gradient algorithm such that relatively few negative datapoints are visited, without breaking the convergence guarantees. 
+
+Say we define a sampling distribution $q(x)$ such that with some very small probability $\epsilon$ we choose one of the $D^-$ negative datapoints, and with high probability $1 - \epsilon$ we choose one of the $D^+$ positive datapoints. We can re-write our expectation as
+
+\begin{align*}
+\ex{D f(x)}{} \quad
+&= \quad \sum_d D f(x_d) \frac{p(x_d)}{q(x_d)} q(x_d) 
+& = \quad & \ex{D f(x) \frac{p(x)}{q(x)}}{q} \\
+& & \approx & \frac{D}{S} \sum_s f(x_s) \frac{p(x_s)}{q(x_s)} \\
+& & = & \frac{D}{S} \sum_s f(x_s) \frac{1}{D}q(x_s) \\
+& & = & \frac{1}{S} \sum_s f(x_s) q(x_s)
+\end{align*}
+Where samples $x_s$ are drawn from $q$ and we've omitted the detail of $D(x)$ for brevity. If $x_s$ is sampled from the negative samples, its weight will be the large number $\frac{D^-}{\epsilon}$, whereas if it's sampled from the positive group its weight will be the much smaller $\frac{D^+}{1 - \epsilon}$. This method was considerably extended in \cite{Gopalan2013b} (see supplemental material) for the problem of predicting citations within an academic corpus, where the majority of node-pairs had no links between them.
+
+\subsubsection*{The Natural Gradient}
+A final refinement of gradient descent, noted in \cite{Hoffman2012} is to observe that the gradient is the solution to
+
+\begin{align*}
+\lim_{\epsilon \rightarrow 0} \arg \max_{d\param} f(\param + d\param) \qquad \text{where } ||d\param|| < \epsilon
+\end{align*}
+And thus implicitly works on the idea of a Euclidean distance, which is inappropriate in the case of probability distribution parameters. If one were to use the symmetric KL divergence instead of the 2-norm:
+
+\begin{align*}
+\symmkl{\param}{\param'}
+ = \ex{\ln \frac{p(x; \param)}{p(x; \param'}}{\param}
+ + \ex{\ln \frac{p(x; \param')}{p(x; \param}}{\param'}
+\end{align*}
+
+one can obtain a ``natural gradient" instead. In practice one can convert a Euclidean gradient to a natural gradient by premultiplying the former by a Riemannian matrix, which for probability distributions is the Fisher information matrix. As noted in \cite{Bottou2004} so long as the matrix in question is postive semi-definite, this will not affect the convergence guarantees.
+
+However as first observed in \cite{Hoffman2010}, and then fully explained in \cite{Hoffman2012}, for conditionally conjugate models composed of distributions in the exponential family, the formula for the the natural gradient is identical to the formula for the posterior, and so one need not determine the Fisher information. For example, in a variational mixture of multinomials model, where one infers a full posterior $q(\param_k)$ over the parameters instead of a MAP estimate, the batch update is simply
+
+\begin{align*}
+q(\param_k) = \dir{\vv{\beta} + \sum_d z_{dk} \vv{x}_{d}}
+\end{align*}
+
+while the natural gradient update, where we parameterise the posterior $q(\param; \hat{\param})$ by $\hat{\param}$ is 
 
 \begin{align}
-\ex{f(x;\param)}{} \approx \frac{D}{S} \sum_s \frac{f(x_s; \param)}{q(x_s)}
+\hat{\param} \leftarrow \hat{\param} + \rho_t \left(\vv{\beta} + \frac{D}{S} \sum_s z_{sk} \vv{x}_s\right)
 \end{align}
-This method was considerably extended in \cite{Gopalan2013b} (see supplemental material) for the problem of predicting citations between academic corpus, where absent links dominated.
-
-A final refinement of gradient descent is to observe that a unit change according to a Euclidean metric may not be significant for other metrics that may be more appropriate for the objective function: for example if the objective is a likelihood, the KL-divergence may provide a better fit. Euclidean gradients can be transformed into a ``natural gradient" using the Riemannian \fixme{ }, which for probability distributions is the Fisher \fixme { }. While ostensibly complex, it was noted in\cite{Hoffman2012} that for conjugate models, the natural gradient of the log-likelihood with respect to a parameter is identical to the \fixme{ }, so there is no need to infer the Fisher information.
 
 
 \input{../footer.tex}
