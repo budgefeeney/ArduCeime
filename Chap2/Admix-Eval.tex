@@ -47,7 +47,7 @@ it is possible to approximate the likelihood using a variant a sequential Monte-
 
 When the harmonic mean, left-to-right and several other methods including importance sampling and annealed importance sampling where compared in \cite{Wallach2009} it was found that the harmonic mean method tended to ``wildly overestimate" the true likelihood, while the left-to-right method gave the most accurate estimate.
 
-Another method by which perplexity can be evaluated is ``document-completion" which has been used in \cite{Virtanen2012a}\cite{Asuncion2012}\cite{RosenZvi2004}. Each document in the test-set is partitioned into two halves\footnote{Given that words are assumed exchangeable within documents, and that long documents may exhibit structure affecting which topics can be inferred where, one can, and indeed should, permute the word order before splitting each document}: an estimation fragment, $\vv{w}_d^{(e)}$, from which a topic distribution is inferred; and an evaluation document, $\vv{w}_d^{(l)}$, whose likelihood given the inferred topic distribution is calculated. Formally writing this as
+Another method by which perplexity can be evaluated is ``document-completion" which has been used in \cite{Virtanen2012a}\cite{Asuncion2012}\cite{RosenZvi2004} and measure's the model's predictive power. Each document in the test-set is partitioned into two halves\footnote{Given that words are assumed exchangeable within documents, and that long documents may exhibit structure affecting which topics can be inferred where, one can, and indeed should, permute the word order before splitting each document}: an estimation fragment, $\vv{w}_d^{(e)}$, from which a topic distribution is inferred; and an evaluation document, $\vv{w}_d^{(l)}$, whose likelihood given the inferred topic distribution is calculated. Formally writing this as
 \begin{align}
 p(\vv{w}_d^{(l)}|\vv{w}_d^{(e)}, \Phi, \vv{\alpha}) = \frac{p(\vv{w}_d^{(l)},\vv{w}_d^{(e)} |\Phi, \vv{\alpha})}{p(\vv{w}_d^{(e)}|, \Phi, \vv{\alpha})}
 \end{align}
@@ -73,11 +73,9 @@ A further argument against perplexity was made in \cite{Chang2009} where human t
 
 Between these two extremes, other metrics exist. The ``topical coherence" metric, which first introduced in \cite{Mimno2011} and additionally used in \cite{Mimno2012a}, directly addresses the word-intrusion problem. One can assume that if a set of words all belong to a single topic, one would see most of them occur in documents belonging to that topic, rather than uniformly across all documents and all topics. Therefore letting $D(t)$ be the number of documents where word $t$ occurs at least once, and $D(t,v)$ be the number of documents containing at least one occurrence each of both $t$ and $v$, the coherence metric is defined as
 \begin{align}
-C(t,V^{(k)}) = \sum_{d=2}^{D} \sum_{p=1}^{d-1} \ln \frac{D(v_{kd}, v_{kp}) + 1}{D(v_{kp})}
+C(k; V^{(m)}) = \sum_{t \in V^{(m)}_k} \sum_{v \in V^{(m)}_k,  v \neq t} \ln \frac{D(t, v) + 1}{D(v)}
 \end{align}
-where $V_k$ is the set of the $M$ most probable words in topic $k$, and the addition of $1$ to the numerator is to avoid taking the log of zero. 
-
-\fixme{This looks wrong}
+where $V^{(m)}_k$ is the set of the $m$ most probable words in topic $k$, and the addition of $1$ to the numerator is to avoid taking the log of zero. 
 
 %\fixme{Read this some more. Also pointwise mutual info}
 
@@ -93,19 +91,9 @@ Letting \emph{precision} be the ``number of documents in a cluster that belong t
 p_{kl} & = \frac{n_{kl}}{n_k} = \frac{\sum_d \theta_{dk} t_{dl}}{\sum_d \theta_{dk}}  & r_{kl} & = \frac{n_{kl}}{n_l} = \frac{\sum_d \theta_{dk} t_{dl}}{\sum_d t_{dl}} \label{eqn:myrecall}
 \end{align}
 
-where $n_{kl}$ is the number of documents in cluster $k$ which have the label $l$ and $n_k$ is the number of documents in cluster $k$. We can, for a single topic $k$ and a single label $l$ specify the $F_1$ score as
+where $n_{kl}$ is the number of documents in cluster $k$ which have the label $l$ and $n_k$ is the number of documents in cluster $k$. We can, for a single topic $k$ and a single label $l$ specify the $F_1$ score as $F_1^{(k,l)} = 2 \frac{p_{kl} \cdot {r_{kl}}}{p_{kl} + {r_{kl}}}$
 
-\begin{equation}
-F_1^{(k,l)} = 2 \frac{p_{kl} \cdot {r_{kl}}}{p_{kl} + {r_{kl}}}
-\end{equation}
-
-For a single label $l$ one can take the max across topics $F_1^{(l)} = \max_{k \in 1\ldots K} F_1^{(k,l)}$ and then finally describe the entire corpus using a weighted average of label specific $F_1$ scores, with the weights proportional to the number of documents with each label.
-
-\begin{equation}
-F_1 = \sum_l \frac{n_l}{D'} F_1^{(l)}
-\end{equation}
-
-where $D' = \sum_d \sum_l t_{dl}$ is the total number of label instances, to account for the fact that there may be documents with more than one label, and so $D' \geq D$.
+For a single label $l$ one can take the max across topics $F_1^{(l)} = \max_{k \in 1\ldots K} F_1^{(k,l)}$ and then finally describe the entire corpus using a weighted average of label specific $F_1$ scores, with the weights proportional to the number of documents with each label where $D' = \sum_d \sum_l t_{dl}$ is the total number of label instances, to account for the fact that there may be documents with more than one label, and so $D' \geq D$.
 
 
 \begin{figure}
@@ -169,13 +157,7 @@ $\dvi{\TopDist}{\LabDist}$ is a true metric: it is always non-negative, becomes 
 The VI distance has been used to compare topics inferred by LDA with manual labelling of over 20,000 news-stores in \cite{HeinrichEtAl2005}. 
 
 
-A well-known metric from the field of clustering is the rand Rand Index, which determines how similar are two ways of partitioning data. It defines four counts
-\begin{enumerate}[a.]
-    \item The number of document-pairs which are in the same cluster and have the same label
-    \item The number of document-pairs which are in different clusters but share the same label
-    \item The number of document-pairs which are the the same cluster but have different labels
-    \item The number of document pairs which are not in the same cluster and have different labels.
-\end{enumerate}
+A well-known metric from the field of clustering is the rand Rand Index, which determines how similar are two ways of partitioning data. It counts fours classes of document-pairs: (a) those which have the same cluster and have the same label; (b) those which have different clusters but share the same label; (c) those which have the same cluster but have different labels; and (d) those which which are not in the same cluster and have different labels.
 
 Given these definitions the index is then $\text{RI} = \frac{a + d}{a + b + c + d}$. This is broadly similar to the idea of accuracy traditionally defined as being $\frac{TP + TN}{TP + FN + FP + TN}$
 
