@@ -1,13 +1,8 @@
 \input{../header.tex}
 
 \section{Representations of Text}
-Discounting.
 
-Given a count $r$, let its discounted variant be $d(r) = (r+1) \frac{N(r+1)}{N(r)}$ where $N(r)$ is the number of \emph{distinct} n-grams that occur exactly $r$ time. From the definition we can see that $r* < r$ always. The left over probability mass is $\frac{N(1)}{D}$ where D is the size of the training set. This is assumed to be the joint probability of all unseen event.
-
-% -----------------
-
-In order to perform inference on text, it is necessary to create a representation of text which captures its essential statistical properties in as parsimonious a form as possible, the latter being required to overcome the ``curse of dimensionality"\cite{Bishop2006} in the presence of limited data.
+In order to perform inference on text, it is necessary to create a representation of text which captures its essential statistical properties in as parsimonious a form as possible to overcome the ``curse of dimensionality"\cite{Bishop2006} in the presence of limited data.
 
 The simplest possible representation of text is the so-called bag of words vector. Given a vocabulary of $T$ words, and a document $d$ containing $\nd$ word observations, a bag of words is a vector $\vv{w}_d \in \VNat{T}$ where each dimension $w_{dt}$ indicates how many times word $t$ was observed in document $d$. This is sometimes known as the ``vector-space model"\cite{Jst2004} of text. 
 
@@ -26,9 +21,9 @@ where in the penultimate line $\gamma^\nd = (\sum_t \lambda_t)^{\sum_t \wdt} = \
 
 With regard to distribution of the parameter $\vv{\phi}$, the natural choice, due to conjugacy, is the Dirichlet, but other approaches have been considered. For example, one can use a Logistic-Normal distribution if one wants to capture higher order statistics such as the per-word variance, or if one seeks to model the drift (via a Kalman Filter) of a vocabulary over time.\cite{Blei2006a}. With regard to the multinomial likelihood, if one wishes to uses a distribution equivalent to a cosine distance between a sample document $\wdoc$ and the mean $\vv{\phi}$, one can employ a von-Mises Fisher distribution\cite{Reisinger2010}. Unlike the multinomial, where $\{0, 0, 3\}$ and $\{1, 1, 1\}$ are equally probable according to a parameter $\vv{\phi} = \{\oneover{3}, \oneover{3}, \oneover{3}\}$, the von-Mises Fisher likelihood would penalize missing words, and therefore assign a higher probability to the latter of the two samples.
 
-There are a number of issues with the bag-of-words representation. Firstly words with little semantic meaning such as ``the", ``of" and ``a" will dominate: these are known as ``stop-words". Secondly attempts to learn simple naive Bayes classifiers\cite{Nigam2000} will struggle due to synonymy, where different words have the same meaning, and polysemy, where the same word has different meanings. Finally there is the issue of dimensionality: typically $T$ is several tens of thousands of words\footnote{For example for the Reuters-21578 dataset, $T\approx 12,500$ whereas for the large-scale website corpus used in\cite{Smola2010} $T \approx 10^6$}. In particular, issues of synonymy and polysemy affect not only the ability to train models, but also perform information retrieval, where a query phrase may not exist in a document whose words nevertheless match the topic of the query phrase.
+There are a number of issues with the bag-of-words representation. Firstly words with little semantic meaning such as ``the", ``of" and ``a" will dominate: these are known as ``stop-words". Secondly attempts to learn simple classifiers such as Na\"ive Bayes\cite{Nigam2000} will struggle due to synonymy, where different words have the same meaning, and polysemy, where the same word has different meanings. Finally there is the issue of dimensionality: typically $T$ is several tens of thousands of words\footnote{For example for the Reuters-21578 dataset, $T\approx 12,500$ whereas for the large-scale website corpus used in\cite{Smola2010} $T \approx 10^6$}. In particular, issues of synonymy and polysemy affect not only the ability to train models, but also perform information retrieval, where a query phrase may not exist in a document whose words nevertheless match the topic of the query phrase.
 
-The issue of stop-words is addressed in the vector-space model by employing a term-frequency/inverse document-frequency transformation. The term frequency is simply a rescaling of the count matrix by $\frac{1}{||\vv{w}||_1}$, while the $t$-th element of the IDF vector is $\ln N - \ln \sum_d \one_{w_{dt} > 0}$, and the TF-IDF vector is their elementwise product. By counting the number of documents in which a word occurs, the IDF downscales terms which occur across all documents. 
+A simple approach to stop-words is simply to use pre-compiled lists. A more more mathematical approach can be used in in the vector-space model by employing a term-frequency/inverse document-frequency transformation. The term frequency is simply a rescaling of the count matrix by $\frac{1}{||\vv{w}||_1}$, while the $t$-th element of the IDF vector is $\ln N - \ln \sum_d \one_{w_{dt} > 0}$, and the TF-IDF vector is their elementwise product. By counting the number of documents in which a word occurs, the IDF downscales terms which occur across all documents. 
 
 With regard to synonymy, purely heuristic approaches exist such as ``stemming" which identify additions to words imposed by grammar. For example four rules might be to remove ``e", ``ing", ``ed" and ``s" from the end of a word, such that "excite", "exciting", "excited" and ``excites" would all be reduced to that word's stem, ``excit". This still does not handle all cases of synonymy (e.g. ``excited" and ``enthusiastic") nor does it address polysemy.
 
@@ -43,26 +38,28 @@ As vocabularies are normally quite large (typically of the order of 30,000 terms
 
 Most approaches consequently exploit the presence lower-order n-gram statistics, using information from unigrams when no information exists for bigrams and so forth. Two approaches exist: interpolation and back-off models.
 
-In an interpolation model, the probability of an n-gram is a weighted combination of the probabilities of all m-grams for $m \in \{n, (n-1), \ldots, 1\}$. Hence for a bigram we'd say its probability $p(w_i|w_{i-1}) = \lambda p(w_i|w_{i-1}) + (1 - \lambda) p(w_i)$. Ideally a different $\lambda$ is learnt for each distinct context (sequence of words $w^i_{i-n+1}$) however for performance reasons interpolation terms are typically bucketed according to the counts for their respective probabilities. The intuition is that probabilities defined by high counts should have low-variance so so have a high weight, $\lambda$, which is the basis behind Jelinek-Mercer smoothing.\fixme{Reference}
+In an interpolation model, the probability of an n-gram is a weighted combination of the probabilities of all m-grams for $m \in \{n, (n-1), \ldots, 1\}$. Hence for a bigram we'd say its probability $p(w_i|w_{i-1}) = \lambda p(w_i|w_{i-1}) + (1 - \lambda) p(w_i)$. Ideally a different $\lambda$ is learnt for each distinct context (sequence of words $w^i_{i-n+1}$) however for performance reasons interpolation terms are typically bucketed according to the counts for their respective probabilities. The intuition is that probabilities defined by high counts should have low-variance so so have a high weight, $\lambda$, which is the basis behind Jelinek-Mercer smoothing\cite{JelinekMercer1980}.
 
-\fixme{I don't understand this, explain it better}
-In ``back-off" models, one ``backs off" to a simpler estimate if no data exists to support a higher order estimate. Back-off models typically use a form of discounting, removing a portion of counts from frequently occurring n-grams and assigning the resultant spare probability mass to lower-order n-grams. The best performing back-off model is Knesser-Ney\fixme{reference}, which defines the probability of a word as 
+In ``back-off" models, one ``backs off" to a simpler estimate if no data exists to support a higher order estimate, i.e the n-gram count is zero. Back-off models typically use a form of discounting, removing a portion of counts from frequently occurring n-grams and assigning the resultant spare probability mass to lower-order n-grams. The best performing back-off model is Knesser-Ney \cite{Chen1999} , which defines the probability of a word as 
 \begin{align}
-p(w_i | w_{i-1}) = \left\{ \begin{array}{lr}
-     \frac{c(w_i, w_{i-1}) - D}{c(w_i-1)} & \text{if } c(w_i, w_{i-1}) > 0 \\
-     \lambda(w_{i-1})\frac{ | \{t | c(t, w_i) > 0\} }{\sum_v \{v | c(v, w_i) > 0\}} & \text{otherwise}
+p_\text{KN}(w_i | w^{i-1}_{i-n+1}) = \left\{ \begin{array}{lr}
+     \frac{\max\{c(w^i_{i-n+1}) - D, 0\}}{\sum_{w_i} c(w^i_{i-n+1})} & \text{if } c(w_i, w_{i-1}) > 0 \\
+     \lambda(w^{i-1}_{i-n+1}) p_\text{KN}(w_i | w^{i-1}_{i-n+2}) & \text{otherwise}
  \end{array}
 \right.
 \end{align}
-where $c(\cdot)$ denotes how often the word sequence was observed in the data. In order to accumulate enough probability mass to assign to the unobserved n-grams, mass is ``skimmed" off the observed n-grams using the discount term $D$. This is then used in the normalisation constant $\lambda(w_{i-1})$ which ensures all probabilities sum to 1. The value of $D$ is normally found using cross validation.
+where $c(\cdot)$ denotes how often the word sequence was observed in the data. In order to accumulate enough probability mass to assign to the unobserved n-grams, mass is ``skimmed" off the observed n-grams using the discount term $D$. This is then used in the normalisation constant $\lambda(w^{i-1}_{i-n+1}) = \frac{D}{\sum_{w_i} c(w^{i-1}_{i-n+1})}$ which ensures all probabilities sum to 1. The value of $D$ is normally found using cross validation.
 
-A distinct feature of Knesser-Ney is that the probability of each word is dependent on how many unique contexts precede it, so in the sentence ``He left San Francisco via San Francisco airport" a higher probability would be given to ``San" as it occurs in two contexts (``left" and ``via") rather than "Francisco" which only occurs after ``San"
-
-One can augment back-off models with interpolation. \fixme{Taking Knesser Ney again}. An interpolated variant of Knesser-Ney was derived in\cite{Goodman2001}\fixme{Nope, I have the 1996 and 2001 papers, but not the 1999 paper). called ``modified Knesser-Ney" which is one of the best performing language models currently in use. This is defined as
+One can augment back-off models with interpolation. An interpolated variant of Knesser-Ney was derived in\cite{Chen1999} called ``modified Knesser-Ney" which is one of the best performing language models currently in use. This is defined as
 
 \begin{align}
-p(w_i | w_{i-1}) = \frac{c(w_i, w_{i-1}) - D}{c(w_i-1)} + \lambda(w_{i-1})\frac{ | \{t | c(t, w_i) > 0\} }{\sum_v \{v | c(v, w_i) > 0\}}
+\begin{split}
+p_\text{KN}(w_i | w^{i-1}_{i-n+1}) & = 
+\frac{\max\{c(w^i_{i-n+1}) - D, 0\}}{\sum_{w_i} c(w^i_{i-n+1})} \\
+& + \lambda(w^{i-1}_{i-n+1}) N_{1+}(w^{i-1}_{i-n+1}, *) p_\text{KN}(w_i | w^{i-1}_{i-n+2})
+\end{split}
 \end{align}
+where $N_{1+}(w^{i}_{i-n}, *)$ is the number of unique contexts (i.e. prefixes) in which the n-gram $w^{i}_{i-n}$ has occurred.  This is a unique feature of interpolated Knesser-Ney: given the sentence ``He left San Francisco via San Francisco airport" a higher unigram probability will be assigned to ``San" as it occurs in two contexts (``left" and ``via") than "Francisco" which only occurs after ``San"
 
 Many other interpolation and backoff models exist, notably Katz-Smoothing, Witten-Bell Smoothing, Good-Turing Estimation and Absolute Discounting, which are all described in \cite{Goodman2001}
 
