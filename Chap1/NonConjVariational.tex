@@ -1,31 +1,25 @@
 \input{../header.tex}
 
 
-\subsection{Non-Conjugate Inference with the Logit and Probit}
+\subsection{Non-Conjugate Inference Bayesian Inference}
 \label{sec:nonconj}
-We consider the binary case initially, and then build to the multinomial case. Let the dataset be $\mathcal{S} = \{(t_n, \vv{x}_n)\}$ where the target $t_n \in \{0,1\}$ and $\vv{x}_n \in \VReal{D}$ are the features we have extracted from our inputs.
-
-The simplest possible regression model is 
-
-\begin{equation*}
-p(t_n = 1) = y_n = \vv{w}\T\vv{x}_n
-\end{equation*}
-
-where $y_n$ is our predicted target value and $w \in \VReal{D}$ is a vector of weights\footnote{We assume the usual setup where the final element of $\vv{x}$ is fixed at one so the final element of $\vv{w}$ can act as the intercept}. However this model obviously will not work, as $y_n$ is in no way constrained to lie in $[0 \ldots 1]$.
-
-To handle this, we introduce an \emph{activation function} $f(y) : \mathbb{R} \rightarrow [0, 1]$ which maps the real number line onto the interval $[0,1]$.
+In many classes of model, the prior distribution is not conjugate to the likelihood. For example, in logistic regression for classification, one introduces an \emph{activation function} $f(y) : \mathbb{R} \rightarrow [0, 1]$ which maps the real number line onto the interval $[0,1]$.
 \begin{align*}
-p(t_n = 1) = & f(y_n) & y_n  & = \vv{w}\T\vv{x}_n \\
+p(t_n = 1) = & f(y_n) & y_n  & \sim \mathcal{B}ern \left( \vv{w}\T\vv{x}_n\right) & \vv{w} & \sim \nor{0}{\alpha^2 I} \\
 \end{align*}
-
 We consider two sigmoid (i.e. s-shaped) functions for which f(0) = 0.5: the probit $\Phi(a)$ and the logit $\sigma(a)$.
 
-\subsubsection{Logit - Motivation and Interpretation}
-The logit is defined as
+\subsubsection{Inference with the Logit}
+The logit is motivated as a log-odds ratio. Let $y_n = \vv{w}\T\vv{x}_n$. Then:
 
-\begin{equation}
-\sigma(y) = \frac{e^y}{1 + e^{y}} = \frac{1}{1+e^{-y}}
-\end{equation}
+\begin{alignat}{3}
+\ln \frac{p(t_n = 1)}{p(t_n = 0)}  & = y_n  &
+%\implies & \frac{p(t_n = 1)}{p(t_n = 0)}      & = e^{y_n} \\
+\implies & \frac{p(t_n = 1)}{1 - p(t_n = 1)}  & = & e^{y_n} \\
+& & \implies &  p(t_n = 1)                    & = & \frac{e^{y_n}}{1 + e^{y_n}} = \frac{1}{1+e^{-y_n}}
+\end{alignat}
+
+From this we can see the weights in a logistic regression have a very simple interpretation, where $w_d$ indicates how much the log-odds of the positive class are increased.
 
 The following identities are useful when working with the logit:
 \begin{align}
@@ -35,18 +29,6 @@ The following identities are useful when working with the logit:
 \sigma(-y) & = -\sigma(y)
 \end{align}
 
-The logit is motivated as a log-odds ratio. Let $y_n = \vv{w}\T\vv{x}_n$. Then:
-
-\begin{alignat}{3}
-\ln \frac{p(t_n = 1)}{p(t_n = 0)}  & = y_n  &
-%\implies & \frac{p(t_n = 1)}{p(t_n = 0)}      & = e^{y_n} \\
-\implies & \frac{p(t_n = 1)}{1 - p(t_n = 1)}  & = & e^{y_n} \\
-& & \implies &  p(t_n = 1)                    & = & \frac{e^{y_n}}{1 + e^{y_n}}
-\end{alignat}
-
-From this we can see the weights in a logistic regression have a very simple interpretation, where $w_d$ indicates how much the log-odds of the positive class are increased.
-
-\subsubsection{Inference with the Logit}
 
 \subsubsection*{Maximum Likelihood Estimation}
 With a Bernoulli distribution on $t_n$ our log-likelihood has the form
@@ -130,7 +112,7 @@ f(x) & \approx f(\xi) + f'(\xi) (x - \xi) + c \\
 \end{split}
 \end{align}
 
-Where we obtain the traditional equation for a line $y(x, m) = mx - c$ where $m = f'(\xi)$ and $c = f'(\xi)\xi - f(\xi)$. As described in \cite{Jordan1999} this can approach can be taken one step further, where the intercept is defined in terms of the slope such that $y(x, m) = mx - c(m)$ using the following identities
+Where we obtain the traditional equation for a line $y(x, m) = mx - c$ where $m = f'(\xi)$ and $c = f'(\xi)\xi - f(\xi)$. As described in \cite{JordanBook1999} this can approach can be taken one step further, where the intercept is defined in terms of the slope such that $y(x, m) = mx - c(m)$ using the following identities
 
 \begin{align}
 c(m) = & \max _x mx - f(x) & f(x) = & \max _m mx - c(m)
@@ -222,57 +204,57 @@ Returning to our running example of Bayesian logistic regression, we see that $H
 With this definition we see that the approximate posterior over the weights is again a Gaussian distribution.% $q(\vv{w}) \sim \nor{\mu}{\Sigma}$
 
 As in the previous section where we used MAP estimation with global bounds, once we obtain an approximate distribution over our posteriors in the form of a normal distribution we can further approximate the likelihood as a probit and thereby obtain our predictive distribution.
+%
+%\subsubsection{Baysian Logistic Regression with Gaussian Processes}
+%At the core of logistic regression is a linear regression to infer the utility score $y$, which is then transformed into a probability $\sigma(y)$ via the logit.
+%
+%Consequently, a straightforward alternative is to fully replace the linear regression with a Gaussian process, which fully captures our uncertainty around the weight $\vv{w}$. We start with a quick recap of Gaussian Processes for linear regression.
+%
+%The model begins with the usual linear regression setup.
+%\begin{align}
+%\vv{y}|\vv{w} & \sim \nor{X\vv{w}}{0} & \vv{w} & \sim \nor{\vv{0}}{\Lambda}
+%\end{align}
+%Using standard Gaussian identities (see e.g. chapter 2 of \cite{Bishop2006}) we can marginalise out the weights to obtain
+%\begin{align}
+%p(\vv{y}) = \int p(\vv{y}|\vv{w})p(\vv{w}) d\vv{w} = \nor{\vv{0}}{X \Lambda X\T}
+%\end{align}
+%Assuming the prior covariance is isotropic (e.g. $\Lambda = \frac{1}{\alpha} I$) we can employ the kernel trick rewriting $p(\vv{y}) = \nor{\vv{0}}{\frac{1}{\alpha} K}$. Next we add some zero mean Gaussian noise to the $N$ observations $\vv{t} \in \mathbb{R}^N$ and integrate that out to finally obtain
+%\begin{align}
+%\vv{t}|\vv{w} & \sim \nor{\vv{y}}{\frac{1}{\beta}I} \\
+%p(\vv{t}) & = \int p(\vv{t}|\vv{y})p(\vv{y}) = \nor{\vv{0}}{C}
+%\end{align}
+%where $C = \frac{1}{\beta} I + \frac{1}{\alpha}K$. As well as capturing observation errors, on a more practical level the addition of a noise term ensures the covariance is positive definite and therefore invertible (kernel matrices are required to be positive semidefinite only\cite{Jst2004}).
+%
+%Prediction is obtained by augmenting the distribution over $\vv{t}$ with the new value $t_*$ leading to joint distribution from which, again using standard identities, $\vv{t}$ can be marginalised out to derive the predictive distribution.
+%
+%\begin{align}
+%p(\binom{\vv{t}}{t_*}) & = \nor{\vv{0}}{\left(\begin{array}{cc} C & \vv{k} \\ \vv{k} & c\end{array}\right)} \\
+%p(t_*) & = \nor{\vv{k}\T \inv{C} \vv{t}}{c - \vv{k}\T \inv{C} \vv{k}}
+%\end{align}
+%
+%where $c = \frac{1}{\beta} + \kappa (\vv{x}_*, \vv{x}_*)$, $\vv{k} = \{\kappa(\vv{x}_*, \vv{x}_n)\}_{n=1}^{N}$ and $\kappa(\cdot, \cdot)$ is the kernel function.
+%
+%In the case of logistic regression, one can again put a GP prior on the utility scores $\vv{y}$, but the observations $\vv{t}$ now have a multi-variate Bernoulli distribution.
+%
+%\begin{align}
+%p(t_n|y_n) & = \sigma(y_n)^{t_n}(1 - \sigma(a))^{1-t_n} & \vv{y} \sim \nor{\vv{0}}{C}
+%\end{align}
+%There is no noise term in our observations $\vv{t}$, but for numerical tractability we still define $C=\frac{1}{\beta} + \frac{1}{\alpha}K$. For prediction we then need to marginalise out $\vv{y}$ from the augmented vector $\hat{\vv{y}} = \binom{\vv{y}}{y_*}$.
+%
+%\begin{equation}
+%p(t_* | \vv{t}) = \int p(t_* | \hat{\vv{y}}) p (\hat{\vv{y}} | \vv{t}) d\hat{\vv{y}}
+%\end{equation}
+%
+%For the first term in the integrand, one can use the usual transformations (e.g. the probit approximation) used previously with respect to MAP approximation provided the second term is approximated with a Gaussian distribution. With some manipulations, the second term can be decomposed into
+%
+%\begin{equation}
+%p(y_* | \vv{t}) = \int p(y_*, \vv{y} | \vv{t}) d\vv{y}  = \int p(y_* | \vv{y}) p(\vv{y} | \vv{t}) d
+%\end{equation}
+%
+%where the first term in \emph{this} integrand is just the usual GP prediction, and in the case of the latter term we can employ the approximation techniques described previously for the MAP case, such as the Laplace approximation \cite{WilliamsBarber1998} or the local Jaakkola approximation \cite{Gibbs2000}.
 
-\subsubsection{Baysian Logistic Regression with Gaussian Processes}
-At the core of logistic regression is a linear regression to infer the utility score $y$, which is then transformed into a probability $\sigma(y)$ via the logit.
 
-Consequently, a straightforward alternative is to fully replace the linear regression with a Gaussian process, which fully captures our uncertainty around the weight $\vv{w}$. We start with a quick recap of Gaussian Processes for linear regression.
-
-The model begins with the usual linear regression setup.
-\begin{align}
-\vv{y}|\vv{w} & \sim \nor{X\vv{w}}{0} & \vv{w} & \sim \nor{\vv{0}}{\Lambda}
-\end{align}
-Using standard Gaussian identities (see e.g. chapter 2 of \cite{Bishop2006}) we can marginalise out the weights to obtain
-\begin{align}
-p(\vv{y}) = \int p(\vv{y}|\vv{w})p(\vv{w}) d\vv{w} = \nor{\vv{0}}{X \Lambda X\T}
-\end{align}
-Assuming the prior covariance is isotropic (e.g. $\Lambda = \frac{1}{\alpha} I$) we can employ the kernel trick rewriting $p(\vv{y}) = \nor{\vv{0}}{\frac{1}{\alpha} K}$. Next we add some zero mean Gaussian noise to the $N$ observations $\vv{t} \in \mathbb{R}^N$ and integrate that out to finally obtain
-\begin{align}
-\vv{t}|\vv{w} & \sim \nor{\vv{y}}{\frac{1}{\beta}I} \\
-p(\vv{t}) & = \int p(\vv{t}|\vv{y})p(\vv{y}) = \nor{\vv{0}}{C}
-\end{align}
-where $C = \frac{1}{\beta} I + \frac{1}{\alpha}K$. As well as capturing observation errors, on a more practical level the addition of a noise term ensures the covariance is positive definite and therefore invertible (kernel matrices are required to be positive semidefinite only\cite{Jst2004}).
-
-Prediction is obtained by augmenting the distribution over $\vv{t}$ with the new value $t_*$ leading to joint distribution from which, again using standard identities, $\vv{t}$ can be marginalised out to derive the predictive distribution.
-
-\begin{align}
-p(\binom{\vv{t}}{t_*}) & = \nor{\vv{0}}{\left(\begin{array}{cc} C & \vv{k} \\ \vv{k} & c\end{array}\right)} \\
-p(t_*) & = \nor{\vv{k}\T \inv{C} \vv{t}}{c - \vv{k}\T \inv{C} \vv{k}}
-\end{align}
-
-where $c = \frac{1}{\beta} + \kappa (\vv{x}_*, \vv{x}_*)$, $\vv{k} = \{\kappa(\vv{x}_*, \vv{x}_n)\}_{n=1}^{N}$ and $\kappa(\cdot, \cdot)$ is the kernel function.
-
-In the case of logistic regression, one can again put a GP prior on the utility scores $\vv{y}$, but the observations $\vv{t}$ now have a multi-variate Bernoulli distribution.
-
-\begin{align}
-p(t_n|y_n) & = \sigma(y_n)^{t_n}(1 - \sigma(a))^{1-t_n} & \vv{y} \sim \nor{\vv{0}}{C}
-\end{align}
-There is no noise term in our observations $\vv{t}$, but for numerical tractability we still define $C=\frac{1}{\beta} + \frac{1}{\alpha}K$. For prediction we then need to marginalise out $\vv{y}$ from the augmented vector $\hat{\vv{y}} = \binom{\vv{y}}{y_*}$.
-
-\begin{equation}
-p(t_* | \vv{t}) = \int p(t_* | \hat{\vv{y}}) p (\hat{\vv{y}} | \vv{t}) d\hat{\vv{y}}
-\end{equation}
-
-For the first term in the integrand, one can use the usual transformations (e.g. the probit approximation) used previously with respect to MAP approximation provided the second term is approximated with a Gaussian distribution. With some manipulations, the second term can be decomposed into
-
-\begin{equation}
-p(y_* | \vv{t}) = \int p(y_*, \vv{y} | \vv{t}) d\vv{y}  = \int p(y_* | \vv{y}) p(\vv{y} | \vv{t}) d
-\end{equation}
-
-where the first term in \emph{this} integrand is just the usual GP prediction, and in the case of the latter term we can employ the approximation techniques described previously for the MAP case, such as the Laplace approximation \cite{WilliamsBarber1998} or the local Jaakkola approximation \cite{Gibbs2000}.
-
-
-\subsubsection{Extending the Logit to the Multinomial Case}
+\subsubsection*{Extending the Logit to the Multinomial Case}
 In the multinomial case, we replace the scalar $t_n$ with a 1-of-$L$ encoding of labels, $\vv{t}_n$ which has a categorical distribution, and learn a separate weight vector $\vv{w}_l$ for each label which are collected into the $L \times F$ matrix W. 
 
 We replace the logistic function with it's multinomial analogue, the \emph{softmax} function $\sigma_l(\vv{y}) = \frac{e^{y_l}}{\sum_j e^{y_j}}$, and denote the vector of such values as $\vv{\sigma}(\vv{y}) = \{ \sigma_l(\vv{y}) \}_{l=1}^{L}$. An issue with the softmax is that it is non-identifiable: $\sigma_l (\vv{y} + \alpha) = \sigma_l(\vv{y})$ as for any scalar $\alpha$. While in practice this rarely an issue, it can nevertheless be addressed by forcing $y_L = 0$, i.e. $\sigma_L(\vv{y}) = \frac{1}{1 + \sum_l^{L-1} e^{y_l}} = 1 - \frac{\sum_l^{L-1} e^{y_l}}{1 + \sum_l^{L-1} e^{y_l}}$, from which the correspondence to the binary logit becomes clear. For reasons of brevity, we will ignore this detail in the following presentation.
@@ -328,7 +310,7 @@ We can then derive a unified update for the posterior distribution over weights 
 
 \newcommand \C { \mathcal{C} }
 
-There are other approaches to extending logistic bounds to the multinomial case. One is the stick-breaking construction of Khan et al \cite{Khan2012stick}, where we iteratively divide up the the unassigned probability mass according to each class specific probability.
+There are other approaches to extending logistic bounds to the multinomial case. One is the stick-breaking construction of Khan et al \cite{Khan2012stick}, where one iteratively divides up the the unassigned probability mass according to each class specific probability.
 \begin{align}
 \begin{split}
 p(t = 0 | \vv{y}) = & \sigma(y_0) \\
@@ -363,7 +345,7 @@ A multivariate ``tilted bound" for the $\lse(\cdot)$ function was proposed by Mi
 \end{equation}
 where $m_l$ and $v_l$ are the posterior mean and variance of $y_l$. Maximisation of $a_l$ can be achieved using the fixed form update $\vv{a} \leftarrow \sigma(\vv{m} + \half(1 - 2 \vv{a})\vv{v})$ where $\sigma(y) = \frac{1}{1 + e^{-y}}$, however the updates for the means and variances have to be estimated using iterative schemes. 
 
-\subsubsection{Probit - Motivation and Interpretation}
+\subsubsection{Inference with the Probit}
 The probit is the CDF of a standard normal distribution:
 
 \begin{align}
@@ -440,7 +422,6 @@ This metric provides the amount by which probability of the positive class is in
 
 %\fixme{See http://stats.stackexchange.com/questions/42956/how-do-i-interpret-a-probit-model-in-stata}
 
-\subsubsection{Inference with the Probit}
 \subsubsection*{Maximum Likelihood Estimation}
 With a Bernoulli distribution on $t_n$ our log-likelihood has the form
 
@@ -534,7 +515,7 @@ p(t_* = 1| X, \vv{t}, x_*) & = \int_{\vv{w}} p(t_* | \vv{w})\int_{\vv{y}} p(\vv{
 %As with the Logit
 
 
-\subsubsection{Extending the Probit to the Multinomial Case}
+\subsubsection*{Extending the Probit to the Multinomial Case}
 In case of the multinomial probit case, as with the multinomial logit, one learns $L$ independent weight vectors $\vv{w}_l$ from which we define the auxiliary variable $\vv{y} \sim \nor{W\vv{x}}{1}$ where $W = \{ \vv{w}_l\T \}_{l=1}^L$. The prediction rule also necessarily changes, becoming:
 
 \begin{align}
