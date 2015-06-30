@@ -1,6 +1,15 @@
 \input{../header.tex}
 
 \section{Statement of Research}
-This Phd is concerned with the 
+This body of research is concerned with the use of admixture models for heterogeneous features. In particular it focuses on the case where text is paired with other observations, and seeks to either use those observations to better explain the text, model those observations alongside text, in particular the case where such features are partially observed, and combinations of the two.
+
+Admixture models of text, more commonly known as topic-models, have been the dominant method for modelling textual corpora since the publication of the Latent Dirichlet Analysis algorithm\cite{BleiNgJordan2003}, however with the exception of Supervised LDA\cite{Blei2008} and Dirichlet Multinomial Regression\cite{Mimno2008}, most methods for dealing with hetereogenous datasets have been ad hoc and not generalisable.
+
+We seek to extend this, by deriving novel methods for the incorporation of additional observations into topic models in a generic, widely applicable form. In particular, we seek to use techniques from the field of multi-task learning to improve the predictive power of these methods. We focus on the use of matrix-variate priors, and non-conjugate Bayesian Inference, to derive Bayesian methods for the incorporation of observed features in topic models which can capture task, i.e. topic, correlations.
+
+The first contribution arising from this focus is a method for modelling very ``micro-texts", i.e. documents whose average length is ten or so words. By incorporating additional metadata, and capturing correlations between topics (or tasks) we deal with the issues of over-parameterisation that inevitably occurs with such texts, without making assumptions about the generative process. We consider a dataset of tweets, and hypothesise that such tweets are generated both from authors' general interests, and from global interests that are popular at particular points in time.
+
+In future work, we consider the case of document networks, where observations can be used both to generate topics, and be generated according to topics. In particular, we consider the case of document networks, where citations give rise to a partially observed document network, and each document has associated with it words, and metadata such as author, venue and year of publication.
+\clearpage
 
 \input{../footer.tex}
