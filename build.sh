@@ -1,7 +1,7 @@
 #!/bin/bash
 
 read -d '' chap0Files <<EOF
-research-stmt.tex
+Chap0/research-stmt.tex
 EOF
 
 read -d '' chap1Files <<EOF
