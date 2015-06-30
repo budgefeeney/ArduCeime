@@ -1,0 +1,146 @@
+\input{../header.tex}
+
+\newcommand \ld { \vv{l}_d }
+\newcommand \thod {{ \vv{\theta}_{\cdot d} }}
+\newcommand \thko {{ \vv{\theta}_{k \cdot} }}
+
+\subsection{Incorporating Downstream Features}
+The division of ``upstream" and ``downstream" models is somewhat artificial, as it is entirely possible to combine the approaches to derive a model predicting $p(\wdoc, \ld | \xd) = \int p(\wdoc, \ld|\thd,\Phi) p(\thd | \xd) d\thd d\Phi$.
+
+One such example is a model for predicting both the words and citations (or ``out-links") of academic papers given certain metadata, such as author, journal or year.
+
+Many approaches involve learning the topics for the words of documetns in the corpus, and then predicting the existence of an (undirected) link between two documents as a function of their topic-distributions. In the relational topic-model\cite{Chang2009a}\cite{Chang2010a}, topics are inferred broadly as for LDA, however, the probability of a links between documents $d$ and $p$ is predicted as
+
+\begin{align*}
+y_{dp} & = \sigma(\vv{\eta}\T (\bar{\vv{z}_d} .* \bar{\vv{z}_p}) + \nu) &
+\bar{\vv{z}_d} & = \frac{1}{N_d} \vv{z}_{dn}
+\end{align*}
+This utility is a weighted distance metric, where the extra factor $\nu$ is added to account for the fact that link structure doesn't always match document content\footnote{Documents typically contain substantial content about prior work, but are typically cited due to their contribution only.}. The best results are given when the activation function is the probit. This in turn creates a dependency of the posterior $q(z_{dn})$ on links:
+
+\begin{align*}
+q(z_{dn}) \propto \exp\left(
+\mathbb{E}_q\left[ \ln \theta_d \right]
++ \mathbb{E}_q\left[ \ln \beta{\cdot w_{dn}} \right]
++ \sum_{p \neq d} \nabla_{\ex{z_p}{q}} \mathcal{F}(q)
+\right)
+\end{align*}
+where $\mathcal{F}(q)$ is the bound on the log-likelihood.
+
+This is very similar to the supervised LDA model \cite{Blei2008} and a variant of this model was additionally published in\cite{Neiswanger2014}. In our experiments however, the ability of RTM to rank papers adequately (e.g. as a recommender) has been poor.
+
+A different approach to the problem of link prediction where the content of all papers is available is the LDA/PLSA model\cite{Nallapati2008}\cite{Nallapati2008a} in that the topics used to generate links differ to those used to generate words, though both share the same Dirichlet prior. In the LDA/PLSA model, the $K \times L$ matrix distribution of per-topic link-distributions used in LDA can be used as $L \times K$ matrix of per-link topic-distributions used in PLSA to model the linked documents' words. Sharing the parameter allows a transfer of learning from the words of the linked documents to the generation of links in linking documents.
+
+Other approaches to link prediction have ignored the document content and focussed on network structure instead, modelling the network as a partially observed admixture of network cliques. Known as mixed-membership stochastic block-models, the general approach\cite{Blei2009} considers all edges to be undirected, and assume that each edge has a topic from the originating and destination nodes.
+
+\begin{align*}
+\thd & \sim \dir{\vv{\alpha}} &
+z_{dp} & \sim \muln{\vv{\thd}}{1} &
+z_{pd} & \sim \muln{\vv{\theta}_p}{1} \\
+y_{dp} & = \epsilon + \sum_k z^k_{dp} z^k_{pd} \left( \beta_k - \epsilon\right) 
+\end{align*}
+
+Variants of this have incorporated node popularity for each node\cite{Gopalan2013a} such that $y_{dp} = \pi_d + \pi_p + \sum_k z^k_{dp} z^k_{pd} \beta_k$, where $\pi_d \sim \nor{0}{\alpha^2}$ is the $d$-th node's popularity, and the $\beta_k$ is the community strength, a beta-distributed measure of how densely nodes within community $k$ are linked.
+
+Link prediction is an unbalanced prediction problem, with very few positive examples in the dataset. In the RTM model\cite{Chang2009a}\cite{Chang2010a} a single-class classifier was trained, regularised by using a combination of Gaussian priors and the addition of a number of pseudo-documents for the negative case drawn from the posterior, their number indicated by means of a parameter $\rho$. In the case of stochastic block-models, weighted stochastic graident ascent methods have been used, notably in \cite{Gopalan2013a}\cite{Gopalan2013b}.
+
+With this in mind, one could derive a self-referential topic model, extending the idea of LDA-PLDA, where the $K \times D$ matrix of topic distributions is given by: 
+
+\begin{equation}
+\ln p(\Theta) = -\halve{DK}\ln 2\pi 
+- \halve{K}\ln |\Omega|
+- \halve{D}\ln |\Sigma|
+- \half \Tr{\inv{\Sigma}(\Theta - M)\inv{\Omega}(\Theta - M)\T}
+\end{equation}
+
+We can use this to generate topics for every possible document, and then slice it column-wise to get a distribution $\thod$ over topics for every document $d$, or row-wise to get a distribution $\thko$ over documents -- i.e. out-links -- for every topic $k$.
+
+As the covariance over documents would be prohibitively large, we use a low-rank approximation, while retaining a full covariance $\Sigma$ over topics.\footnote{I've looked into joint low-rank factorisations before: it's tricky as the result of marginalizing a doubly-transformed latent space $V$ from a matrix-variate distribution $\Theta|V \sim \mnor{QVU\T}{I}{I}$ is not itself a matrix-variate distribution, and so the resulting updates require some unusual transforms like the commutation-matrix and the vec-transpose operator}.
+
+
+\begin{align}
+V & \sim \mnor{0}{I}{I} & 
+\Theta|V & \sim \mnor{VU\T + M}{I_D}{\Sigma} & \implies
+\Theta & \sim \mnor{M}{I_D + UU\T}{\Sigma}
+\end{align}
+
+The generation of words and links then follow
+\begin{align}
+z_{dn} & \sim \muln{1}{\vv{\sigma}(\thod)} &
+w_{dn} & \sim \muln{1}{\pk_{z_{dn}}} &
+\pk    & \sim \dir{\vv{\phi}_0} \\
+y_{dm} & \sim \muln{1}{\vv{\sigma}(\thod)} &
+l_{dm} & \sim \muln{1}{\vv{\sigma}(\vv{\theta}_{y_{dm}\cdot})}
+\end{align}
+
+where the logistic sigmoid is $\sigma_k(\thod) = \frac{\exp(\thdk)}{\sum_j \exp(\theta_{dj})}$ and $\vv{\sigma}(\thod)$ is the vector of such values for all $k$.
+
+The updates $Z$, $Y$ and $W$ all follow the standard CTM model. Taking derivatives, the row and column covariances, $R$ and $S$, of the matrix-variate posterior over the topic-document matrix are given by
+\begin{align}
+\inv{R} & = \Tr{S \inv{\Sigma}}I_D + (N^w + N^l)\Tr{SA^k} + \Tr{S N^i}A^D \label{eqn:post-row-cov}\\
+\inv{S} & = \Tr{R I_D}\inv{\Sigma} + \Tr{R (N^w + N^l)}A^K + \Tr{R A^D} N^i \label{eqn:post-col-cov}
+\end{align}
+while the posterior mean $M_\Theta$ is given by the solution to the following equation
+%\begin{align*}
+%\begin{split}
+%\inv{\Sigma}M_\Theta &+ A^K M_\Theta (N^w + N^l) + N^i M_\Theta A^D  \\
+%& = \inv{\Sigma}(UV\T + M) + \hat{Z} - N^w B + \hat{Y} - N^l B + \hat{P}\T - (N^i D)\T
+%\end{split}
+%\end{align*}
+
+The usual approach to this, a form of the Sylvester equation, is to employ $AXB = (B\T \otimes A)\vecf{X}$, but this involves materialising a prohibitively large $DK \times DK$ matrix. 
+
+\begin{align*}
+(\Sigma \otimes I_D & + A^K \otimes (N^w + N^l) + N^i \otimes A^D) \text{ }\vecf{M_\Theta}\\
+& = \vecf{\inv{\Sigma}(UV\T + M) + \hat{Z} - N^w B + \hat{Y} - N^l B + \hat{P}\T - (N^i D)\T}
+\end{align*}
+
+The non-separability of the covariances indicates that the posterior is not a valid matrix-variate normal distribution.
+
+In the absence of a neat solution, an alternative is to rotate back the traces involved in $\ex{\ln p(L|Y,\Theta)}{q}$ into an equation in terms of $\thod$ instead of $\thko$, and then solve individually for $\thod$ a document at a time. Re-written in these terms, the expected log-probability is:
+
+\begin{align}
+\ex{\ln p(L|Y,\Theta)}{q} \propto & \sum_d \hat{P}_{d,\cdot}\T \vv{\theta}_{\cdotd}
+-  \sum_d \left(\half \sum_p A^D_{dp} \vv{\theta}_{\cdot d}\T  N^i_{kk} \vv{\theta}_{\cdot p}\right)    
+    + D_{\cdot d} \T N^i_{kk} \vv{\theta_{\cdot d}}
+\end{align}
+
+In this regime, the update for each $\vv{\theta}_d$ can be calculated as
+
+\begin{align}
+\hat{\thd} & = \invb{\inv{\Sigma} + (N^w_{dd} + N^l_{dd})A^K + A^D_{dd} N^i}\\
+& \qquad
+\left( 
+    \inv{\Sigma}(V \vv{u}_d + \vv{m}_d) + Z_d - (N^w_{dd} + N^l_{dd}) \vv{b}_d + P_d - \half \sum_{p \neq d} A^D_{pd} N^i \hat{\vv{\theta}}_p - N^i D_{\cdot, d}
+\right) \label{eqn:monster-thd}
+\end{align}
+where $\vv{u}_d$ is the d-th column of the $P \times D$ matrix U. In this case we can see how row covariance terms $(N^w_{dd} + N^l_{dd})$, $A^D_{dd}$ (and implicitly $I_D$) are being used to modify the column covariances in the posterior covariance.
+
+This fact that the the topic distributions of other documents occur only in a single sum means they need not be stored explicitly, but rather used to modify that sum, making inference tractable, and stochastic variational inference (SVI) possible.
+
+Using quadratic boudns again, the final inference procedure is given in algorithm \ref{alg:sra_generic}.
+
+\begin{algorithm}
+\caption{Self-Referential Algorithm}
+\label{alg:sra_generic}
+    \begin{align*}
+        V & = (M_\Theta U - M U)\invb{I_P + U\T U} \\
+        U & = \invb{I_D + V V\T}(V\T M_\Theta - V\T M) \\
+        S_d & = \invb{\inv{\Sigma} + (N^w_{dd} + N^l_{dd})A^K + A^D_{dd} N^i} \qquad \text{(Not a model parameter)}\\
+        \vv{\rho}_d & = \diag{S_d} \\
+        \hat{\thd} & = S_d
+\left( 
+    \inv{\Sigma}(V \vv{u}_d + \vv{m}_d) + Z_d - (N^w_{dd} + N^l_{dd}) \vv{b}_d + P_d - \half \sum_{p \neq d} A^D_{pd} N^i \hat{\vv{\theta}}_p - N^i F_{\cdot, d}
+\right) \\
+        \hat{z}_{dnk} & \propto \exp\left(\Psi(\hat{\theta}_{dk}) - \Psi(\sum_j \hat{\theta}_{dj}) + \Psi(\hat{\phi}_{kw_{dn}}) - \Psi(\sum_j \hat{\phi}_{jw_{dn}})\right) \\
+        \hat{y}_{dmk} & \propto \exp\left(\Psi(\hat{\theta}_{dk}) - \Psi(\sum_j \hat{\theta}_{dj}) + \Psi(\hat{\theta}_{l_{dm}k}) - \Psi(\sum_j \hat{\theta}_{l_{dm}j})\right) \\
+        \hat{\phi}_{kt} & = \phi_{0v} + \sum_d \sum_n \hat{z}_{dnk} w_{dnt} \\
+        \qquad & \qquad \\
+        \Sigma & = \sum_d \diag{\vv{\rho}_d} + (\thod - V \vv{u}_d - \vv{m}_d)(\thod - V \vv{u}_d - \vv{m}_d)\T
+    \end{align*}
+\end{algorithm}
+
+This could be extended to use upstream features by replacing the prior mean $M$ with a function of the features $W X\T$ where $W \sim \mnor{0}{I_F}{\Sigma}$.
+
+
+
+\input{../footer.tex}
