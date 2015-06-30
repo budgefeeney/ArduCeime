@@ -1,0 +1,34 @@
+\input{../header.tex}
+
+\section{Plan and Timetable for Remaining Work}
+
+The plan for future work is:
+\begin{description}
+\item[July to September 2015] $\text{ } $\\
+Work is currently underway on the academic paper recommendation algorithm mentioned in the future work section. A dataset, ACL, has already been processed and cleaned, and a basic implementation of the model, without features or low-rank covariances, has been created with some interim results. The results thus far are competitive with respect to RTM, but suggest that using a single distribution over $\Theta$ is not sufficient for good recommendations, and so needs to be permuted for the two use-cases. The remaining work to be done is
+\begin{enumerate}
+    \item Amend the algorithm in light of the results thus far, incorporating an extra parameter for paper recommendations to account for inherent paper popularity.
+    \item Process a second database, such as CoraKB
+    \item Write up a possble paper for for submission to AI Stats, if feasible, for the November 25, 2015 deadline
+\end{enumerate}
+\item[September 2015] $\text{ } $\\
+\begin{enumerate}
+    \item Enter `continuing research-student status.
+\end{enumerate}
+\item[October 2015 - December 2015] $\text{ } $\\
+Return to the multi-task admixture model. 
+\begin{enumerate}
+    \item Investigate the use of sparsity, and see if it can give competitive results. 
+    \item Implement a Dirichlet Multinomial Regression (DMR) baseline model. 
+    \item Add an additional dataset, the current candidate is the IAPR TC-12 image labelling dataset for which the LEAR group at Inria, Grenoble, has extracted features and made them available at \url{http://lear.inrialpes.fr/people/guillaumin/data.php}.
+    \item The AI-Stats deadline for submission of the recommendation project is November 25, 2015
+\end{enumerate}
+\item[January to March 2016] $\text{ }$\\
+    \begin{enumerate}
+        \item Write and submit a final thesis
+        \item Submit the micro-text prediction work, if competitive, to SIGKDD. The deadline is March 6, 2016. 
+    \end{enumerate}
+\end{description}
+
+
+\input{../footer.tex}

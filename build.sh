@@ -26,6 +26,7 @@ Chap3/main.tex
 Chap3/MTL-GaussScale.tex
 Chap3/FutureJointDecomp.tex
 Chap3/FuturePaperRec.tex
+Chap3/FinalPlan.tex
 EOF
 
 
