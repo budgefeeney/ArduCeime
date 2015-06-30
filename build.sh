@@ -23,10 +23,13 @@ Chap3/Admix-Covariates.tex
 Chap3/MTL-Intro.tex
 Chap3/MTL-Kro.tex
 Chap3/main.tex
-Chap3/MTL-GaussScale.tex
-Chap3/FutureJointDecomp.tex
-Chap3/FuturePaperRec.tex
-Chap3/FinalPlan.tex
+EOF
+
+read -d '' chap4Files <<EOF
+Chap4/MTL-GaussScale.tex
+Chap4/FutureJointDecomp.tex
+Chap4/FuturePaperRec.tex
+Chap4/FinalPlan.tex
 EOF
 
 
@@ -46,10 +49,10 @@ echo "\\clearpage" >> $outfile
 #echo "\\section{Literature Review}" >> $outfile
 
 
-for chap0File in $chap1Files;
+for chap0File in $chap0Files;
 do
         echo $chap0File
-        tail -n +2 $chap0File | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap1\/plots\//g" >> $outfile
+        tail -n +2 $chap0File | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap0\/plots\//g" >> $outfile
 done
 for chap1File in $chap1Files;
 do
@@ -65,6 +68,11 @@ for chap3File in $chap3Files;
 do
 	echo $chap3File
 	tail -n +2 $chap3File | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap3\/plots\//g" >> $outfile
+done
+for chap4File in $chap4Files;
+do
+	echo $chap4File
+	tail -n +2 $chap4File | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap4\/plots\//g" >> $outfile
 done
 
 echo "\input{footer.tex}" >> $outfile
