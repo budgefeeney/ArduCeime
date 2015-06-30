@@ -1,5 +1,9 @@
 #!/bin/bash
 
+read -d '' chap0Files <<EOF
+research-stmt.tex
+EOF
+
 read -d '' chap1Files <<EOF
 Chap1/BayesianInference.tex	
 Chap1/NonConjVariational.tex
@@ -17,9 +21,11 @@ EOF
 read -d '' chap3Files <<EOF
 Chap3/Admix-Covariates.tex
 Chap3/MTL-Intro.tex
+Chap3/MTL-Kro.tex
 Chap3/main.tex
 Chap3/MTL-GaussScale.tex
 Chap3/FutureJointDecomp.tex
+Chap3/FuturePaperRec.tex
 EOF
 
 
@@ -38,6 +44,12 @@ echo "\\clearpage" >> $outfile
 
 #echo "\\section{Literature Review}" >> $outfile
 
+
+for chap0File in $chap1Files;
+do
+        echo $chap0File
+        tail -n +2 $chap0File | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap1\/plots\//g" >> $outfile
+done
 for chap1File in $chap1Files;
 do
 	echo $chap1File
