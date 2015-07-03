@@ -297,9 +297,9 @@ In the case of the Bouchard bound, these values, for the logistic regression mod
 \end{align}
 whereas for the Bohning bound the definitions are
 \begin{align}
-\Axi & = I_F - \frac{1}{L} \one \one \T \\
-\bxi & = \{ \sigma_l(\vv{xi}) + \frac{1}{2L} \vv{xi}\T\one - \xi_l \}_{l=1}^{L} \\
-\cxi & = \lse(\vv{\xi}) - \frac{1}{K}(\vv{\xi}\T\one)^2 + \vv{\xi}\T\vv{\xi} + \vv{\xi}\T\vv{\sigma}(\vv{\xi})
+\Axi & = \half (I_F - \frac{1}{L} \one \one \T) \\
+\bxi & = A \vv{\xi} - \sigma(\vv{\xi})\\
+\cxi & = \half \vv{\xi}\T A \vv{\xi} + \sigma(\vv{\xi})\T\vv{\xi} + \lse(\vv{\xi})
 \end{align}
 
 We can then derive a unified update for the posterior distribution over weights $q(\vv{w}_l) \sim \nor{\vv{\mu}_l}{\Sigma_l}$. To simplify the presentaiton we use matrix-variate notation, where the prior over $W \in \MReal{L}{F}$ is $p(W) \sim \mnor{0}{S_0}{I_L}$ and the posterior $q(W) \sim \mnor{M}{\Sigma}{I_L}$
