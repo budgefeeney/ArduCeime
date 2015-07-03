@@ -132,7 +132,7 @@ We consider two possible quadratic bounds. First we consider the Bouchard bound\
 Next we consider the Bohning bound\cite{Bohning1988}, which takes a second-order Taylor approximation of the log-sum-exp function around a point $\Ed$, then replaces the Hessian $H(\Ed)$ with a matrix $\Lambda$ such that $\Lambda - H(\Ed)$ is positive-definite for all $\Ed$, resulting in the bound below:
 
 \begin{align}
-\Axi & = \half \left(I_K - \mathbf{1}_K\mathbf{1}_K\T / K  \right) \\
+\Axi & = \half \left(I_K - \frac{1}{K+1}\mathbf{1}_K\mathbf{1}_K\T   \right) \\
 \bxi & = A \Ed  - \sigmoid{\Ed} \\
 \cxi & = \half \Ed\T A \Ed - \sigmoid{\Ed}\T\Ed + \ln(\sum_k e^{\Edk}))
 \end{align} 
@@ -159,15 +159,12 @@ In the case of the Bouchard bound, the bound parameters $\Ed, s_d$ are trivially
 \end{align}
 which has a minimum at $\Ed = \md$.
 
-There are other approaches to dealing with non-conjugacy. One approach is to take a Taylor approximation of the posterior around a particular point. If that point is arbitrary, one obtains the method used in the original CTM paper\cite{Blei2003}, if it's around the true mean one obtains the delta-method, as employed in\cite{Teh2007}, and if it's taken around the mode one obtains the usual Laplace approximation\cite{Bishop2006}. These three methods were examined in the case of CTM in\cite{Wang2013a} where the best results were obtained with the Laplace approximation. However all approaches required complex nested inference schemes, with gradient descent and/or Newton-Raphson employed for some variable updates in the overall inference loop.
 
-Equally other bounds to the log-sum-exp function have also been proposed, such as the piece-wise quadratic bound of \cite{Marlin2011} or the ``tilted" bound of \cite{MinkaKnowles} but these too do not admit fast, closed-form inference.
-
-In practice we adapt the model to a back of word-counts $\vv{w}_d \in \VReal{T}$ instead of a list of $N_d$ word observations, and with a matching change from $Z^{(d)} \in \MReal{N_d}{K}$ to $Z^{(d)} \in \MReal{T}{K}$ we use these updates to obtain algorithm \ref{alg:yv}. As it is impossible to store $Z \in \mathbb{R}^{D\times T \times K}$ in memory for any non-trivial problem, we substitute the update for Z into those expressions that employ it and recalculate.
+In our implementation we adapt the model to a bag of word-counts $\vv{w}_d \in \VReal{T}$ instead of a list of $N_d$ word observations, and with a matching change from $Z^{(d)} \in \MReal{N_d}{K}$ to $Z^{(d)} \in \MReal{T}{K}$ we use these updates to obtain algorithm \ref{alg:yv}. As it is impossible to store $Z \in \mathbb{R}^{D\times T \times K}$ in memory for any non-trivial problem, we substitute the update for Z into those expressions that employ it and recalculate.
 
 Even with this change, the performance of this algorithm is still quite slow, due to the need to invert a function of the covariance matrix for every update of the posterior mean $\md$. This is particularly problematic for the micro-text example where a small corpus may easily contain millions of ``documents". 
 
-In the case of micro-texts, and the Bohning bound implementation, a simple optimisation is possible. As the matrix $\Axi$ is constant for all documents, the only term that differs from document to document is the document length, $N_d$. For micro-texts, the number of distinct document-lengths is much smaller than the number of documents themselves: indeed in the Twitter corpus introduced in the next section, amongst 750,000 tweets there are less than 50 unique document lengths, distributed as a Poission distribution with mean 10. Therefore the number of matrix inversions can be kept small by pre-generating the posterior-variance for each distinct document length.
+In the case of micro-texts, and the Bohning bound implementation, a simple optimisation is possible. As the matrix $\Axi$ is constant for all documents, the only term that differs from document to document is the document length, $N_d$. For micro-texts, the number of distinct document-lengths is much smaller than the number of documents themselves: indeed in the Twitter corpus introduced in the next section, amongst 730,000 tweets there are fewer than 50 unique document lengths. Therefore the number of matrix inversions can be kept small by pre-generating the posterior-variance for each distinct document length.
 
 This optimisation will not work for standard corpora however, where the number of distinct document lengths may well approach the number of documents; neither will it work in the case of the Bouchard bound, as the $\Axi$ term will differ from document to document. %To address this, we consider a modification of the model in the next section.
 
@@ -375,8 +372,6 @@ The metric we use to evaluate our model is perplexity, a metric popular in langu
 
 where smaller values indicate a better fit. 
 
-Perplexity can be shown to be a special case of the cross-entropy function $\text{H}[p,q]$ where $p(w_{dv})$ is the empirical distribution of the word, $q(w_{dv})$ is the distribution we've inferred (confusingly denoted $p(w_{dv})$ in \eqref{eqn:perp_def}), and we use $e$ as the base and the natural log in the exponent. Thus the natural logarithm of the perplexity scores we report would provide a measure of the ``nats" per token under out model.
-
 In order to evaluate perplexity, one needs an estimate of the marginal likelihood of the held-out documents. Following \cite{Asuncion2012}\cite{Wallach2009b} we use the document-completion metric, where one half of a documents words are used to derive an estimate of the topic distribution for the whole document, and the likelihood is then evaluating using a point estimate of that distribution on the remaining words.
 
 In the case of our micro-text model, topics are directly predicted as a function of the features, without reference to the words, and so we evaluate the likelihood on \emph{all} words using the inferred topic distribution.
@@ -384,23 +379,26 @@ In the case of our micro-text model, topics are directly predicted as a function
 
 \subsubsection{Datasets}
 \subsubsection*{Twitter Dataset}
-The Twitter dataset is consists of 735,868 tweets, comprising 7,272,228 individual tokens, posted by 572 users. It was collected by manually selecting certain ``seed" users with interests in different sports, political affiliations, or life-style activities and then proceeding recursively in a breadth-first fashion through users lists of users they follow in turn, until we had several thousand users. From these, we selected those users with the highest rate of posts, as measured by the shortness of the interval between their most recent and twentieth most recent posts. We then followed these users over a five month period from May 1st 2013 to September 30th, 2013. 
+The Twitter dataset consists of 735,868 tweets, comprising 7,272,228 individual tokens, posted by 572 users. It was collected by manually selecting certain ``seed" users with interests in different sports, political affiliations, or life-style activities and then proceeding recursively in a breadth-first fashion through users lists of users they follow in turn, until we had several thousand users. From these, we selected those users with the highest rate of posts, as measured by the shortness of the interval between their most recent and twentieth most recent posts. We then followed these users over a five month period from May 1st 2013 to September 30th, 2013. 
 
 This dataset is not necessarily characteristic of common Twitter use: while earlier studies of Twitter users suggested a reasonable degree of reciprocity\cite{Java2007}, more recent surveys of Twitter usage has suggested that the reciprocity of Twitter links is nowadays quite low, with a majority quietly listening to an active minority\cite{Kwak2010}. It does however provide a large dataset of ``microtexts".
 
 The features we extract from these tweets are author ID, month of year, week of year; under the hypothesis that a tweet may reflect either an author's core long-term interests, or else be in relation to an event of global interest at that point in time. Additionally \cite{Preot2012} showed that there may be recurrent trends in hash-tags usage (e.g. related to television shows, Monday morning greetings, etc.) and so we also include overlapping hour of week trigrams in our features. 
 
 
-Within the text itself, tokens were divided into six categories: addressees, hashtags, URLs, stock-tickers, emoticons (including supplemental unicode characters) and normal words. All with the exception of URLs were lower-cased; normal words were additionally stemmed. We only considered tokens that appeared a minimum of 100 times. This resulted in a total vocabulary size of 79,800 tokens. 
+Within the text itself, tokens are divided into six categories: addressees, hashtags, URLs, stock-tickers, emoticons (including supplemental unicode characters) and normal words. All with the exception of URLs are lower-cased; normal words are additionally stemmed. We only considered tokens that appeared a minimum of 100 times. This resulted in a total vocabulary size of 79,800 tokens. 
 
-Unlike \cite{Wu2010} and \cite{Han2011} we did not use query-expansion techniques such as spell-checkers or slang dictionaries to undo abbreviations, as abbreviated vocabularies might be a distinct mixture-component in its own right. URLs were included based on the results published in \cite{Michelson2010} which showed they were associated with distinct topics, though use of URL-shorteners makes it impossible to detect what the true URL was post-hoc.
+Unlike \cite{Wu2010} and \cite{Han2011} we do not use query-expansion techniques such as spell-checkers or slang dictionaries to undo abbreviations, as abbreviated vocabularies may be a distinct mixture-component in its own right. URLs are included based on the results published in \cite{Michelson2010} which showed they were associated with distinct topics, though use of URL-shorteners makes it impossible to detect what the true URL was post-hoc.
 
-\subsubsection*{NIPS Dataset}
-The next dataset we consider is a the familiar NIPS dataset prepared by Sam Roweis and Yann Lecun consisting of papers published between 1987 and 1999. The full dataset contains 1,740 documents from 2,037 authors comprising 2,301,375 tokens. We limited this to a corpus consisting only those documents for which all authors and at least one reference occurred at least three other times in that same corpus. This (much reduced) corpus then consisted of 682 documents comprising 1,075,323 tokens, with 133 authors and 232 references. References in this case were identified only by the alphabetically ordered list of surnames and a year, so may not map one-to-one with the true references. 80\% of papers had one author only. With regard to references, approximately 32\% of documents had one reference only, 24\% had two references, 15\% had three references and 30\% had more than three references. Note that within each document many references would have been excluded as they did not occur with sufficient frequency across the entire corpus.
+\subsubsection*{ACL Dataset}
+The second dataset we consider is the ACL corpus consisting of academic papers published between 1965 and 2013. The full dataset contains 20,298 non-empty documents from 2,513 authors comprising 50,142,142 tokens drawn from a vocabulary of 25,477 distinct terms. 
 
+We limit this to a corpus consisting only those documents with a hundred words or more, which have at least one author and year (venue is optional), and for which all associated authors, years and venues had at least 10 documents associated with them in the corpus. With this adjustment, we arrived at a corpus of 13,554 documents comprising 41,009,480 words, associated with 1,060 authors, 41 distinct years and 70 distinct venues. 55\% of papers have one author only, 30\% have two authors, and 10\% three authors. The maximum number of authors for a paper was 13 authors. Conversely, 25\% of authors published at most 13 or fewer papers, 50\% published 15 or fewer papers, and 75\% published 24 or fewer papers. The most prolific author published 251 papers.
+
+This is not a micro-text dataset, but does allow us to check the model scales up to larger data.
 
 \subsubsection{Baseline Model}
-As a baseline model, we use the correlated topic model, implemented using the Bouchard and Bohning bounds, and LDA, implementing using variational inference as in \cite{BleiNgJordan2003}. In the case of NIPS, we use this to infer mixture distributions for each individual document in the usual manner. In the case of Tweets we aggregate tweets by author into single ``documents", creating author-topic models of tweets.
+As a baseline model, we use the correlated topic model, implemented using the Bouchard and Bohning bounds, and LDA, implementing using variational inference as in \cite{BleiNgJordan2003}. In the case of ACL, we use this to infer mixture distributions for each individual document in the usual manner. In the case of Tweets we aggregate tweets by author into single ``documents", creating correlated author-topic models of tweets.
 
 For CTM and LDA, we cross-validate the data, and train a model on the training set. We then partition the words in each document in the test set into estimation words and evaluation words as described perviously. Holding the inferred component-distributions (i.e. vocabularies) fixed, we infer mixture-distributions over each document using the estimation words, then use those distribution with the evaluation words to determine likelihood, and so perplexity, of the test-set.
 
@@ -488,10 +486,43 @@ In the NIPS datasets the size of the latent dimension does have an effect on per
 
 \begin{figure}
 \centering     %%% not \center
-\subfigure[NIPS]{\label{fig:a}\includegraphics[width=60mm]{plots/nips-cov-k50-k50-boh.pdf}}
-\subfigure[Tweets]{\label{fig:b}\includegraphics[width=60mm]{plots/tweets-cov-k50-k50-boh.pdf}}
+\subfigure[ACL]{\label{fig:a}\includegraphics[width=60mm]{plots/acl-cov-k25-k50-boh.pdf}}
+\subfigure[Tweets]{\label{fig:b}\includegraphics[width=60mm]{plots/tweets-cov-k25-k50-boh.pdf}}
 \caption{Covariances over topics inferred using the Bohning implementation of the STM/YV model}
 \end{figure}
+
+\begin{table}
+\begin{tabular}{| l | l | l | l | l | l | l | l |}
+\hline
+\specialcell{Machine \\ Translation} &
+\specialcell{Parsing} &
+\specialcell{Probabilistic \\ Inference} &
+\specialcell{Grammar} &
+\specialcell{Information \\ Retrieval} &
+\specialcell{Parts Of \\ Speech (POS)}\\
+\hline
+{\small translat} & 	{\small pars} & 	{\small model} & 	{\small rule} & 	{\small document} & 	{\small tag} \\{\small align} & 	{\small tree} & 	{\small word} & 	{\small grammar} & 	{\small term} & 	{\small word} \\{\small english} & 	{\small parser} & 	{\small us} & 	{\small tree} & 	{\small queri} & 	{\small us} \\{\small languag} & 	{\small us} & 	{\small probabl} & 	{\small can} & 	{\small us} & 	{\small error} \\{\small us} & 	{\small model} & 	{\small train} & 	{\small set} & 	{\small text} & 	{\small po} \\{\small word} & 	{\small sentenc} & 	{\small set} & 	{\small which} & 	{\small retriev} & 	{\small corpu} \\{\small sentenc} & 	{\small depend} & 	{\small data} & 	{\small node} & 	{\small from} & 	{\small languag} \\{\small pair} & 	{\small from} & 	{\small can} & 	{\small string} & 	{\small result} & 	{\small morpholog} \\
+\hline
+\end{tabular}
+\caption{Sample vocabularies for the ACL dataset from the the STM/YV model using the Bohning bound for $K=25$ and $P=50$. The unusual spelling is due to word-stemming}
+\end{table}
+
+\begin{table}
+\begin{tabular}{| l | l | l | l | l | l |}
+\hline
+\specialcell{US Politics} &
+\specialcell{Tennis \\ (Informal)} &
+\specialcell{Tennis} &
+\specialcell{Middle-East \\ News} &
+\specialcell{Markets} &
+\specialcell{Beer \\ Enthusiasts} \\
+\hline
+{\small obama} & 	{\small plai} & 	{\small she} & 	{\small sai} & 	{\small market} & 	{\small via} \\{\small hous} & 	{\small top} & 	{\small her} & 	{\small live} & 	{\small bui} & 	{\small beer} \\{\small mt} & 	{\small win} & 	{\small lol} & 	{\small kill} & 	{\small bank} & 	{\small new} \\{\small vote} & 	{\small :-)} & 	{\small match} & 	{\small syria} & 	{\small updat} & 	{\small trend} \\{\small state} & 	{\small last} & 	{\small win} & 	{\small \#syria} & 	{\small \#news} & 	{\small from} \\{\small bill} & 	{\small ha} & 	{\small plai} & 	{\small \#egypt} & 	{\small report} & 	{\small ad} \\{\small american} & 	{\small he} & 	{\small tenni} & 	{\small via} & 	{\small rate} & 	{\small free} \\{\small senat} & 	{\small seed} & 	{\small serv} & 	{\small attack} & 	{\small announc} & 	{\small 2013} \\{\small discuss} & 	{\small up} & 	{\small point} & 	{\small video} & 	{\small expect} & 	{\small \#craftbeer} \\{\small law} & 	{\small week} & 	{\small break} & 	{\small polic} & 	{\small share} & 	{\small brew} \\{\small polit} & 	{\small set} & 	{\small set} & 	{\small report} & 	{\small price} & 	{\small review} \\{\small boston} & 	{\small 1st} & 	{\small serena} & 	{\small egypt} & 	{\small year} & 	{\small drink} \\
+\hline
+\end{tabular}
+\caption{Sample vocabularies for the Twitter dataset from the the STM/YV model using the Bohning bound for $K=25$ and $P=50$}
+\end{table}
+
 
 \subsection{Conclusion}
 We have introduced a method employing multi-task learning to predict admixture-components, using quadratic bounds to overcome the non-conjugacy of the model. We have successfully applied this method in the case of a dataset of tweets demonstrating better model fit versus a simple author topic model, and the ability to generate additional text that may help in query expansion. Our method is not specific to any particularly dataset, and so can be applied to any dataset where features may be associated with observations which can be fit using an admixture model.

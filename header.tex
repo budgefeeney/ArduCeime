@@ -29,9 +29,11 @@
 \usepackage{graphicx,xcolor}
 \usepackage{pifont,mdframed}
 \usepackage{tikz}
-\usepackage{bm}
 \usetikzlibrary{fit,positioning}
 
+
+\newcommand{\specialcell}[2][c]{%
+  \begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}
 
 \newcommand \etr[0] {
     \text{etr}
