@@ -73,7 +73,7 @@ The evidence $p(\xdat)$ for a Categorical-Dirichlet mixture is therefore:
 p(\xdat) & = \frac{1}{B(\beta)} \int \prod_i \phi_i^{n_i} \prod_i \phi_i^{(\beta_i - 1)} d\param  = \frac{1}{B(\beta)} \int \prod_i \phi_i^{n_i + \beta_i - 1} \\
 & = \frac{B(\vv{n} + \vv{\beta})}{B(\vv{\beta})}.
 \end{align*}
-The analytic solution arises from observing that the integrand is an unnormalised Dirichlet distribution parameterised by $\vv{n} + \vv{\beta}$. This marginal distribution is sometimes known as the P\'{o}lya distribution, or the Dirichlet-compound-Multinomial distribution \cite{Madsen2005}. 
+The analytic solution arises from observing that the integrand is an unnormalised Dirichlet distribution parameterised by $\vv{n} + \vv{\beta}$. This marginal distribution is sometimes known as the P\'{o}lya distribution, or the Dirichlet-compound-Multinomial distribution \cite{Madsen2005}.\label{polya}
 
 The product of the likelihood and evidence is $\frac{1}{B(\vv{\beta})} \prod_i \phi_i^{(n_i + \beta_i - 1)}$ and so the $B(\vv{\beta})$ terms cancel out, and leave us with just a Dirichlet distribution parameterised by $\vv{n} + \vv{\beta}$.
 

@@ -1,10 +1,9 @@
 \input{../header.tex}
 
 \subsection{Admixture Models of Text}
-The Hidden Words language mode is an example of a projection of a vocabulary into a latent space, to simplify inference, and also address the issues of synonymy and polysemy. There has been considerable research into the derivation of such projections.. Typically these have involved the idea of projecting words into some low-dimensional space, where each dimension corresponds to some semantic meaning, or ``topic". 
+The Hidden Words language mode is an example of a projection of words into a latent space, to address the issues of synonymy and polysemy, and also dimensionality. There has been considerable research into the inference of such projections, typically with a view to finding latent dimensions corresponding to semantic meaning, or ``topics".
 
-The earliest approach is latent semantic analysis\footnote{Sometimes the term latent semantic indexing (LSI) is used, due to the original application to document retrieval. Similarly pLSA is sometimes referred to as pLSI} (LSA)\cite{Deerwester1990} which takes a $D\times T$ document-term matrix $W$ using TF-IDF encodings of words, and decomposes it using a singular value decomposition $W = USV\T$. By ranking the singular values one can identify the subspaces which account for most of the variance, which it is assumed correspond to semantically meaningful topics. A peculiarity of LSA however is that documents exhibit ``negative" scores for topics, which seems counter-intuitive. While one can imagine that a document for which the golf topic has a high score will feature golfing terms, and that a document for which the golf topic has a score of zero will feature no such terms, it's difficult to conceive of a document having a strongly \emph{negative} score for the golf topic.
-
+The earliest approach is latent semantic analysis\footnote{Sometimes the term latent semantic indexing (LSI) is used, due to the original application to document retrieval. Similarly pLSA is sometimes referred to as pLSI} (LSA)\cite{Deerwester1990} which takes a $D\times T$ document-term matrix $W$ using TF-IDF encodings of words, and decomposes it using a singular value decomposition $W = USV\T$. By ranking the singular values one can identify the subspaces which account for most of the variance, which it is assumed correspond to semantically meaningful topics. However LSA gives rise to documents exhibiting ``negative" scores for topics, which seems counter-intuitive: while it is easy to see how a document might be affected by the addition or absence of a topic, how the subtraction of an absent topic would affect it is not obvious.
 
 %
 %An alternate approach, the Hyperspace Analogue to Language\cite{Lund1996} represents a corpus by means of a matrix denoting how often two words co-occur within a sliding window which is moved one word at a time throughout all words in the corpus. Word counts are scaled inversely by the number of words between them such that an entry in the matrix is given by 
@@ -49,24 +48,24 @@ The earliest approach is latent semantic analysis\footnote{Sometimes the term la
 \label{fig:plates}
 \end{figure}
 
-In the field of Bayesian inference, this does not arise, as topics are all given a non-zero probability. The simplest model of text is a mixture of multinomial distributions\cite{Nigam2000}:
+In the field of Bayesian inference, this does not arise, as topics are all given a non-zero probability. The simplest model is a mixture of multinomials\cite{Nigam2000}:
 
 \begin{align}
-p(W) = p(\vv{\theta}|\vv{\alpha}) \prod_d \sum_{z_d} p(z_d|\vv{\theta})\prod_n p(w_{dn} | z_d, \Phi)
+p(W) = p(\vv{\theta}|\vv{\alpha})p(\Theta|\vv{\beta}) \prod_d \sum_{z_d} p(z_d|\vv{\theta})\prod_n p(w_{dn} | z_d, \Phi)
 \end{align}
-where $\vv{\theta}$ is the corpus-wide distribution over topics, $z_d$ is the single topic with which the whole of document $d$ is modelled, and $\Phi$ is the $K \times T$ matrix of $K$ topic-specific $T$-dimensional word-distributions. In practice the assumption that each document can be described by a single topic is often too restrictive. Further, it precludes better fit by increasing the number of topics, K, as topics defined by fewer training examples will have more elements of vocabulary with zero (or near-zero) probability.
+where $\vv{\theta}$ is the corpus-wide distribution over topics, $z_d$ is the single topic with which the whole of document $d$ is modelled, and $\Phi$ is the $K \times T$ matrix of $K$ topic-specific word-distributions. In practice the assumption that each document can be described by a single topic is often too restrictive. Further, it precludes better fit by increasing the number of topics, K, as topics defined by fewer training examples will have more elements of vocabulary with zero (or near-zero) probability.
 
 Probabilistic latent semantic analysis\cite{Hofmann1999a} addresses this by enabling each word in a document to have its own topic, allowing for many topics per document, and thereby allowing better fit with greater numbers of topics:
 
 \begin{align}
 p(W) = \prod_d p(d) \prod_n \sum_{z_{dn}} p(w_{dn}|z_{dn})p(z_{dn}|d)
 \end{align}
-The number of parameters - the $K$ topic assignments per document - grows linearly with the size of the training set $W$, and so this model suffers severely from overfitting. In the original presentation, this was addressed by using a variant of EM known as ``tempered" EM which raises the likelihood to the power of some temperature parameter when evaluating the posterior over topic-assignments in the E-Step. Unlike the mixture of multinomials, this is not a generative model, as the topic is sampled based on $d$, an index into the training set, which makings the handling of unseen data difficult. The suggested approach is to use the fold-in heuristic which evaluates the likelihood of a new document $\vv{w}^*$ as
+The number of parameters grows linearly with the size of the training set $W$, and so this model suffers severely from overfitting. Originally this was controlled using ``tempered" EM, where the likelihood was raised to the power of a temperature parameter when evaluating the posterior over topic-assignments. Unlike the mixture of multinomials, this is not a generative model, as the topics are sampled based on $d$, an index into the training set, which makings the handling of unseen data difficult. The suggested approach is to use the fold-in heuristic which evaluates the likelihood of a new document $\vv{w}^*$ as
 
 \begin{align}
 p(\vv{w}^*|\Phi) = \sum_d p(d) \prod_n \sum_{z_{dn}} p(w_{dn}^*|z_{dn}, \Phi) p(z_{dn}|d)
 \end{align}
-An issue with this heuristic is that is necessarily requires that at least one document in the training set have the same topic proportions as the query document, otherwise the probability will collapse to zero, and as with the mixture of multinomials, such pathological cases will become more likely as K increases.
+Unfortuntately this heuristic requires that at least one document in the training set have the same topic proportions as the query document, otherwise the probability will collapse to zero, and as with the mixture of multinomials, such pathological cases will become more likely as K increases.
 
 The Latent Dirichlet Allocation model\cite{BleiNgJordan2003} (LDA) addresses by creating a fully generative model, exploiting the exchangeability assumptions not only of words, but also documents.
 
@@ -80,32 +79,31 @@ For each document LDA samples a distribution $\thd$ over topics, then samples $n
 p(W | \vv{\alpha}, \vv{\beta}) = \prod_d \int \prod_n \sum_{z_{dn}} p(w_{dn}|z_{dn}, \Phi)p(z_{dn}|\thd)p(\thd|\vv{\alpha})p(\Phi|\vv{\beta}) d\thd d\Phi
 \end{align}
 
-By defining a complete generative model, LDA can make predictions on unseen documents. As shown in \cite{BleiNgJordan2003} it outperformed pLSA and mixtures of multinomials on held-out likelihood and also in prediction experiments where the inferred document-level topic distributions were used as features instead of bag-of-word vectors.
+By defining a complete generative model, LDA can make predictions on unseen documents. As shown in \cite{BleiNgJordan2003} it outperforms pLSA and mixtures of multinomials on held-out likelihood and also in prediction experiments where the inferred document-level topic distributions are used as features instead of bag-of-word vectors.
 
 It worth nothing that in practice, the main difference between the two is regularisation: given symmetric Dirichlet priors parameterised by $\vv{\alpha} = \vv{\beta} = \vv{1}$ LDA simply defines a proper Bayesian estimator for the pLSA model\cite{GiKa2003}.
 
 \subsubsection{Comparison with other Models}
 More precisely, LDA can be described as an admixture of multinomials, in that it models a corpus as a mixture of document-level mixtures. In fact \cite{BleiNgJordan2003} was not the first time such a model had been presented,  admixtures of multinomials had been used in Bioinformatics previously\cite{Pritchard2000} though that result was little known in machine learning fields. 
 
-The Multinomial PCA algorithm\cite{Buntine2002} is also an independent invention of the LDA model published in advance of \cite{BleiNgJordan2003} It is a word-level mixture, if one treats $\Phi$ as a parameter with no distribution one can equivalently rewrite the model as
+The Multinomial PCA algorithm\cite{Buntine2002} is also an independent invention of the LDA model published in advance of \cite{BleiNgJordan2003} It is a word-level mixture, where if one treats $\Phi$ as a parameter with no distribution one can equivalently rewrite the model as
 \begin{align}
 \wdoc & \sim \muln{\Phi\T\thd}{n_{d\cdot\cdot}} & \thd & \sim \dir{\vv{\alpha}}
 \end{align}
-from which the connection with PCA, where one typically write $x \sim \nor{W\T\vv{z}}{\sigma^2 I}$ for $\vv{z} \sim \nor{\vv{0}}{I}$, becomes clear.
+from which the connection with PCA, where one typically write $x \sim \nor{W\T\vv{z}}{\sigma^2 I}$ for $\vv{z} \sim \nor{\vv{0}}{I}$, becomes clear. This was fully explored by means of re-writing the updates in the exponential family distribution in \cite{Buntine2002}.
 
-Finally it is worth noting that while the presentation has used text as a motivating example, LDA can be applied to any case where an admixture of multinomials is an appropriate distribution for the observed data. In the original presentation\cite{BleiNgJordan2003} one example given was that of collaborative filtering, where users and the movie scores corresponded to documents and word-counts. Given that in an LDA model $W = \Theta \Phi$ one can see the correspondence between LDA and matrix factorization, a popular method of implementing recommender systems\cite{Salakhutdinov2007}, and indeed this correspondence has been investigated further in\cite{Agarwal2010}. In particular LDA can be seen to be a probabilistic form of non-negative matrix factorisation\cite{Lin2007}
+LDA can be applied to any case where an admixture of multinomials is an appropriate distribution for the observed data, not just text. It has been used for collaborative filtering\cite{BleiNgJordan2003}, where users and the movie-ratings corresponded to documents and word-counts; interactions between users on social networks where users, social-links and cliques correspond to documents, words and topics\cite{Zhang2007}, or applied to discrete features, or ``visual words" derived from images\cite{Philbin2008}. In particular the link between LDA and probabilistic matrix factorization\cite{Salakhutdinov2007} has been investigated further in\cite{Agarwal2010}. In particular LDA can be seen to be a probabilistic form of non-negative matrix factorisation\cite{Lin2007}, where $W = \Theta \Phi$
 
-Other examples have included interactions between users on social networks  according to certain latent communities, analoguous to words, documents and latent-topics respectively\cite{Zhang2007}, or applied to features derived from images, i.e. ``visual words", to infer latent image topics.\cite{Philbin2008}
 
 \subsubsection{Capturing Correlation between Admixture Components}
 
 As the Dirichlet prior assumes its components are near-independent\footnote{But not fully independent due to the requirement that samples exist on the simplex}, it does not capture correlations between topics, and so other priors have been suggested.
 
-The correlated topic model\cite{Blei2006} (CTM) replaces the Dirichlet distribution with a logistic-normal distribution.  The logistic-normal distribution is a standard Gaussian, whose samples are mapped onto the simplex by a softmax transformation. The model therefore samples document-level mixture distributions according to
+The correlated topic model\cite{Blei2006} (CTM) replaces the Dirichlet distribution with a logistic-normal distribution.  The logistic-normal distribution is a standard Gaussian, whose samples are mapped onto the simplex by a softmax transformation. The model samples topic-distributions as:
 \begin{align}
 \etd & \sim \nor{\vv{\mu}}{\Sigma} & \thd = \vv{\sigma}\left(\etd\right) = \left\{\frac{e^{\eta_{dk}}}{\sum_j e^{\eta_{dj}}}\right\}_{k=1}^K
 \end{align}
-after which the model follows as for LDA. Unlike LDA, where many implementers choose not to learn the hyper-parameters, in CTM it is essential in order to capture topic correlations. The non-conjugacy of the multinomial likelihood with the Gaussian prior makes inference complex and typically requires approximations, discussed in section \ref{sec:nonconj}
+and continues as with LDA. By learning the parameters of the prior, one can infer topic correlations. The non-conjugacy of the multinomial likelihood with the Gaussian prior makes inference complex and typically requires approximations, discussed in section \ref{sec:nonconj}
 
 An issue with learning correlated topic-model is the quadratic growth in covariance parameters as the number of topics increase: given large numbers of topics. A straightfoward way to address this is to learnt a low-rank projection of the covariance, giving rise to the prior over topics:\cite{Putthividhya2009}:
 
@@ -122,6 +120,6 @@ z^{(2)}_{dn} \sim & \muln{\vv{\theta}^{(2)}_{d, z^{(1)}_{dn}}}{1} & \ldots \quad
 z^{(m)}_{dn} \sim & \muln{\vv{\theta}^{(m)}_{d, z^{(m-1)}_{dn}}}{1} \\
 w_{dn} \sim & \muln{\vv{\phi}_{z^{(m)}_{dn}}}{1}
 \end{align}
-Clearly $w_{dn}$ can be viewed as the $(m+1)$-th instance of $z_{dn}$, particularly since all values of $\vv{\theta}$ and $\vv{\phi}_k$ all share Dirichlet priors. An advantage of this approach over CTM is that it is not limited to capturing pairwise correlations via a covariance matrix, instead it can be thought of as learning a low-rank topic-space using multinomial PCA. A disadvantage is the increase in parameters that can be learnt for each document.
+Clearly $w_{dn}$ can be viewed as the $(m+1)$-th instance of $z_{dn}$, particularly since all values of $\vv{\theta}$ and $\vv{\phi}_k$ all share Dirichlet priors. An advantage of this approach over CTM is that it is not limited to capturing pairwise correlations via a covariance matrix but this comes at the cost of increases the number of parameters to be estimated for each document.
 
 \input{../footer.tex}
