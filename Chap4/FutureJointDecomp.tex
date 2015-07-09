@@ -152,5 +152,12 @@ $\text{ }$\\
 %
 %}
 
+
+\subsection{Scaling to Large Datasets}
+The model for Twitter relies on identity features such as username, and so will struggle to scale up to very large users. However other datasets with more generalisable features associated with ``micro-texts" exist, most notably the case of image captioning. Given such as dataset, one could learn a more generalisable function using features manually extracted from images such as those described in \cite{Guillaumin2009} and \cite{Guillaumin2010a}
+
+With the dimensionality of the associated feature-space now independent of the dataset size, one could then presume to scale to millions of images using stochastic gradient ascent with natural\cite{Hoffman2012} rather than batch variational Bayes. In this case the individual document topics and token assignment $\thd, \zdnk$ would be the ``local" parameters estimated a document (or, to minimise variable, a batch of documents) at a time, while all other parmaeters would be considered ``global" and therefore updated using a gradient step.
+
+
 \input{../footer.tex}
 

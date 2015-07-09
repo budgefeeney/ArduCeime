@@ -26,7 +26,7 @@ Chap3/main.tex
 EOF
 
 read -d '' chap4Files <<EOF
-Chap4/MTL-GaussScale.tex
+Chap4/FutureSGD.tex
 Chap4/FutureJointDecomp.tex
 Chap4/FuturePaperRec.tex
 Chap4/FinalPlan.tex
