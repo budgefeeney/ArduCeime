@@ -1,13 +1,13 @@
 \input{../header.tex}
 
 \subsection{Multi-Task Prediction of Admixture Components for Microtexts}
-Taking these two aspects, multi-task learning and admixture models with covariates together, we present a new multi-task model for prediction of admixture components. This is motivated not only by the success of mult-task learning approaches in the literature, but also the success of the correlated topic model (CTM) which learns correlations between topics. CTM has been shown to out-perform LDA -- according to held-out likelihood -- for a fixed number of mixture components, however the resulting topics are often less interpretable\cite{Chang2009}.
+Taking these two aspects, multi-task learning and admixture models with covariates together, we present a new multi-task model for prediction of admixture components.
 
-Both LDA and CTM rely on token co-occurrences in documents, and so have shown poor performance when applied to micro-texts such as individual tweets from Twitter\cite{DeLaRosa2011} where the document size is very small (e.g. 13 words) and much smaller than the number of topics (e.g. $K=100$) learning to an overparameterised model. More successful approaches have involved grouping tweets a-priori, for example by author\cite{Weng2010}\cite{Xu2011}\cite{Hong2010}\cite{Eisenstein2010} and then applying LDA to that group, an approach referred to a the ``author-topic model"\cite{MacCallum2007}. A disadvantage of this approach however is that that not all tweets' topics may be attributable to a single variable -- in this case, author. A simple approach to this was used in \cite{Xu2011} where a Bernoulli switch is used to determine whether a tweet is attributable to an author's long-term interests or not. Inference was performed in the former case, and ignored in the latter case, as the aim was solely to model authors' interests, and not tweets' words.
+Both LDA and CTM rely on token co-occurrences in documents, and so have shown poor performance when applied to micro-texts such as individual tweets from Twitter\cite{DeLaRosa2011} where the document size is very small (e.g. 13 words) and much smaller than the number of topics (e.g. $K=100$) learning to an overparameterised model. More successful approaches have involved grouping tweets a-priori, for example by author\cite{Weng2010}\cite{Xu2011}\cite{Hong2010}\cite{Eisenstein2010} and then applying LDA to that group, which is essentially the author-topic model\cite{MacCallum2007}. A disadvantage of this approach is that that not all tweets' topics may be attributable to a single variable -- in this case, author. A simple approach to this was used in \cite{Xu2011} where a Bernoulli switch is used to determine whether a tweet is attributable to an author's long-term interests or not. Inference was performed in the former case, and ignored in the latter case, as the aim was solely to model authors' interests, and not tweets' words.
 
 Such an approach is unsatisfying when modelling micro-text corpora - clearly an individual tweet's topics depend on a variety of factors: the author's long-term interests; interests globally popular at a particular time, such as news events; the author's location and others. Were one to jointly consider all these features, one might obtain a tighter model fit. There are many special case topic models dealing with documents modelled alongside author\cite{RosenZvi2004}, time\cite{Wang2006}, and geography\cite{Eisenstein2010}; however while one could combine such models, it would be preferable to have a single model which could take any features/words matrix pair and perform inference. Such an approach could be applied to many more use-cases, such as image-labelling.
 
-In the following we present a model for predicting mixture-components in an admixture model. We learn a single matrix which we use to predict all mixture components from a given weight vector, exploiting correlations between mixture components. By use of appropriate matrix-variate priors, we additionally learn a shared covariance matrix over mixture-components and a low-rank covariance over features. We demonstrate the performance of this model on real world dataset of 
+In the following we present a model for predicting component-probabilities in an admixture model. We learn a single matrix which we use to predict all mixture components from a given weight vector, exploiting correlations between mixture components. By use of appropriate matrix-variate priors, we additionally learn a shared covariance matrix over mixture-components and a low-rank covariance over features. We demonstrate the performance of this model on real world dataset of tweets, and -- as a control -- academic papers.
 
 
 %\subsection{The Matrix-Variate Normal Distribution}
@@ -74,7 +74,7 @@ q(\Theta) = & \prod_d \nor{\md}{\Vd} & q(Z) = & \prod_d \prod_n \muln{\vv{\gamma
 \end{align}
 
 
-Where $\Vd$ is a diagonal matrix in all our experiments.
+Where $\Vd$ is a diagonal matrix in all our experiments. Using Jensen's bound, and this approximate posterior, we can approximate the marginal likelihood $p(W | X) \geq \ex{\ln p(W,A,\Theta,Z,\Phi,A,Y| X}{q}$ with a tractable approximation, the ``free energy".
 
 \subsubsection{Resolving Identifiability in the Matrix-Variate Posterior}
 Taking derivatives of the free-energy and setting to zero in the usual manner initially leads to the following updates for $R_Y$ and $S_Y$.
@@ -158,7 +158,6 @@ In the case of the Bouchard bound, the bound parameters $\Ed, s_d$ are trivially
 \mbeq 0
 \end{align}
 which has a minimum at $\Ed = \md$.
-
 
 In our implementation we adapt the model to a bag of word-counts $\vv{w}_d \in \VReal{T}$ instead of a list of $N_d$ word observations, and with a matching change from $Z^{(d)} \in \MReal{N_d}{K}$ to $Z^{(d)} \in \MReal{T}{K}$ we use these updates to obtain algorithm \ref{alg:yv}. As it is impossible to store $Z \in \mathbb{R}^{D\times T \times K}$ in memory for any non-trivial problem, we substitute the update for Z into those expressions that employ it and recalculate.
 
