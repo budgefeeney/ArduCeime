@@ -115,7 +115,7 @@ S_Y = & \invb{I_{mn} + V\T V \otimes U\T U}
 & \vv{m}_y = & S_Y \vecf{U\T M_A V}
 \end{align}
 
-The resulting algorithm is given in \ref{alg:uyv}, though that algorithm is still rather complex.
+The resulting algorithm is given in \ref{alg:uyv}, though that algorithm is still rather complex, and the need to invert the $(K \times F) \times (K \times F)$ matrix $S_Y$ makes it prohibitive in cases where identity features are used. Therefore further work is needed to attempt to find a computationally tractable way of achieving this decomposition.
 
 \begin{algorithm}
 \caption{Representing $A=UYV$}
