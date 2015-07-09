@@ -10,11 +10,11 @@ A number of methods have been proposed to evaluate admixture models. By far the 
 \perplexity{\model} = \sqrt[n_{d}]{\prod_d \prod_n \frac{1}{p(w_{dn}|\model)}} = \exp \left( \frac{-\sum_d \sum_n \ln p(w_{dn}|\model)}{n_{d\cdot\cdot}} \right) \label{eqn:perp_def}
 \end{align}
 
-To get some intuition about perplexity, a example cited by \cite{Goodman2001} is that a model that assigned equal probability to 100 words would have a perplexity score of 100. The perplexity of the true distribution would be significantly \emph{lower} than this, and indeed lower perplexity scores are always preferable. This preference can also be motivated from information theory: the log of a perplexity score gives the entropy of the word likelihoods, and as the entropy (base 2) specifies the average number of bits required to encode each word according to Shannon's source-coding theorem, lower perplexity values indicate better compression schemes.
+As explained n \cite{Goodman2001} one can consider that a simple model that assigned uniform probability to 100 words would have a perplexity score of 100. The actual distribution, being non-uniform would be significantly \emph{lower}. Perplexity can also be linked to information theory: the log of a perplexity score gives the entropy of the word likelihoods, and as the entropy (base 2) specifies the average number of bits required to encode each word according to Shannon's source-coding theorem, lower perplexity values indicate better compression schemes.
 
 Taking this further, perplexity can be shown to be a special case of the cross-entropy function $\text{H}[p,q]$ where $p(w_{dv})$ is the empirical distribution of the word, $q(w_{dv})$ is the distribution we've inferred (confusingly denoted $p(w_{dn})$ in \eqref{eqn:perp_def}), and we use $e$ as the base and the natural log in the exponent. 
 
-To evaluate perplexity, one needs to determine the probability of a query (i.e. test) set $\WQuery$ given the training set $\WTrain$. To simplify the notation, and make it clear which are the learnt parameters, we assume an LDA model in which the document-level topic distributions $\thd$ have been marginalised out, leaving a Polya distribution over the latent per-token topic-assignments $\zdn$, parameterised by a prior $\vv{\alpha}$.
+To evaluate perplexity, one needs to determine the probability of a query (i.e. test) set $\WQuery$ given the training set $\WTrain$. Consider an LDA model in which the document-level topic distributions $\thd$ have been marginalised out, leaving a Polya distribution over the latent per-token topic-assignments $\zdn$, parameterised by a prior $\vv{\alpha}$.
 
 \begin{align}
 p(\WQuery|\WTrain) = \int p(\WQuery|\Phi, \vv{\alpha})p(\Phi,\vv{\alpha} | \WTrain) d\Phi d\vv{\alpha}
@@ -47,7 +47,7 @@ it is possible to approximate the likelihood using a variant a sequential Monte-
 
 When the harmonic mean, left-to-right and several other methods including importance sampling and annealed importance sampling where compared in \cite{Wallach2009} it was found that the harmonic mean method tended to ``wildly overestimate" the true likelihood, while the left-to-right method gave the most accurate estimate.
 
-Another method by which perplexity can be evaluated is ``document-completion" which has been used in \cite{Virtanen2012a}\cite{Asuncion2012}\cite{RosenZvi2004} and measure's the model's predictive power. Each document in the test-set is partitioned into two halves\footnote{Given that words are assumed exchangeable within documents, and that long documents may exhibit structure affecting which topics can be inferred where, one can, and indeed should, permute the word order before splitting each document}: an estimation fragment, $\vv{w}_d^{(e)}$, from which a topic distribution is inferred; and an evaluation document, $\vv{w}_d^{(l)}$, whose likelihood given the inferred topic distribution is calculated. Formally writing this as
+A method of evaluating perplexity which tests the model's predictive power is ``document-completion" which has been used in \cite{Virtanen2012a}\cite{Asuncion2012}\cite{RosenZvi2004} and measure's the model's predictive power. Each document in the test-set is partitioned into two halves\footnote{Given that words are assumed exchangeable within documents, and that long documents may exhibit structure affecting which topics can be inferred where, one can, and indeed should, permute the word order before splitting each document}: an estimation fragment, $\vv{w}_d^{(e)}$, from which a topic distribution is inferred; and an evaluation document, $\vv{w}_d^{(l)}$, whose likelihood given the inferred topic distribution is calculated. Formally writing this as
 \begin{align}
 p(\vv{w}_d^{(l)}|\vv{w}_d^{(e)}, \Phi, \vv{\alpha}) = \frac{p(\vv{w}_d^{(l)},\vv{w}_d^{(e)} |\Phi, \vv{\alpha})}{p(\vv{w}_d^{(e)}|, \Phi, \vv{\alpha})}
 \end{align}
@@ -65,13 +65,17 @@ p(\vv{w}_d^{(l)}|\vv{w}_d^{(e)}, \Phi, \vv{\alpha}) \approx
 \oneover{S} \sum_s \prod_n \sum_k \phi_{k,w^{(l)}_{dn}}\theta_{dk}^{(e,s)}
 \end{align}
 
-In practice, particularly with variational approaches, a single point estimate of $\vv{\theta}_d^{(e)}$ may be used instead\cite{Asuncion2012}, though when evaluating document completion \cite{Wallach2009} found that the topic-estimation method, even when implemented via sampling, compared ``poorly" with left-to-right sampling. 
+In practice, particularly with variational approaches, a single point estimate of $\vv{\theta}_d^{(e)}$ is often used instead\cite{Asuncion2012}, though when evaluating document completion \cite{Wallach2009} found that the topic-estimation method, even when implemented via sampling, compared ``poorly" with left-to-right sampling. 
 
-All this indicates that measures of perplexity are highly dependant on how the held-out likelihood is evaluated, something which is rarely described in the literature. A further issue, is that many implementors choose to use hard-coded symmetric priors for topic models, even though the performance of topic models is highly sensitive to the configuration of hyper-parameters, a result demonstrated in \cite{Asuncion2012}\cite{Wallach2006}. Consequently care should be exercised when comparing measures of perplexity across different models in different publications.
+Thus measures of perplexity are highly dependant on how the held-out likelihood is evaluated, which is rarely described well in the literature. Furthermore, many implementors tuse hard-coded symmetric priors for baseline topic models, even though the performance of topic models is highly sensitive to the configuration of hyper-parameters\cite{Asuncion2012}\cite{Wallach2006}. Consequently is is difficult to compare different measures of perplexity across different models in different publications.
 
-A further argument against perplexity was made in \cite{Chang2009} where human testers were asked to inspect the topic vocabularies generated by different topic models (LDA, CTM and PLSA). Tests included ``word-intrusion" experiments, where, in a list of word belonging to a single topic, testers had to identify the extra word from another topic added by the experimenters; and similarly a ``document-intrustion" experiment which required them to identify the intruded document in a list of document excerpts belonging to a single topic. The CTM model, despite achieving the best perplexity score, faired worst in both of these tasks. Additionally, in \cite{Azzopardi2003} it was shown that when using language-models to aid information retrieval, language models with the best perplexity scores did not always lead to the best precision scores. In light of this, some more recent publications such as \cite{Li2006}\cite{Wang2007}\cite{Lindsey2012} have used similar intrusion tests via Mechanical Turk to test the performance of their models.
+Models with low perplexity scores are not always interpretable. In\cite{Chang2009} human testers were asked to inspect the topic vocabularies generated by different topic models (LDA, CTM and PLSA). In a ``word-intrusion" test they were asked which word, in a list of words belonging to a single topic, was the wrong word from another topic added by the experimenters. In a ``document-intrustion" they were similarly asked to identify the intruded document in a list of document excerpts belonging to a single topic. The CTM model, despite achieving the best perplexity score, faired worst in both of these tasks. 
 
-Between these two extremes, other metrics exist. The ``topical coherence" metric, which first introduced in \cite{Mimno2011} and additionally used in \cite{Mimno2012a}, directly addresses the word-intrusion problem. One can assume that if a set of words all belong to a single topic, one would see most of them occur in documents belonging to that topic, rather than uniformly across all documents and all topics. Therefore letting $D(t)$ be the number of documents where word $t$ occurs at least once, and $D(t,v)$ be the number of documents containing at least one occurrence each of both $t$ and $v$, the coherence metric is defined as
+%In   \cite{Azzopardi2003} it was shown that when using language-models to aid information retrieval, language models with the best perplexity scores did not always lead to the best precision scores. 
+
+In light of this, some more recent publications such as \cite{Li2006}\cite{Wang2007}\cite{Lindsey2012} have used similar intrusion tests via Mechanical Turk to test the performance of their models.
+
+There are metrics which don't rely on the likelihood. The ``topical coherence" metric, introduced in \cite{Mimno2011} and additionally used in \cite{Mimno2012a} addresses the word-intrusion problem. Assume that if a set of words all belong to a single topic, one would them concentrated in documents belonging to that topic, rather than distributed uniformly across all documents and all topics. Therefore letting $D(t)$ be the number of documents where word $t$ occurs at least once, and $D(t,v)$ be the number of documents containing at least one occurrence each of both $t$ and $v$, the coherence metric is defined as
 \begin{align}
 C(k; V^{(m)}) = \sum_{t \in V^{(m)}_k} \sum_{v \in V^{(m)}_k,  v \neq t} \ln \frac{D(t, v) + 1}{D(v)}
 \end{align}
@@ -84,7 +88,7 @@ The \emph{empirical likelihood} of \cite{Li2006} tests the generative ability of
 \subsubsection*{Evaluation Against Labelled Data}
 With labelled data, specified with a 1-of-$L$ labelling $\vv{t}_d$, one may choose to evaluate the model by comparing it to the inferred topics, $\thd \in \VReal{K}$, where $K$ need not necessarily equal $L$. Many metrics exist for this purpose, of which the most well known is the F1-Score, $F_1 = 2 \frac{p \cdot r}{p + r}$, which is the harmonic mean of precision, $p=\frac{TP}{TP+FP}$ and recall, $r=\frac{TP}{TP+FN}$, and $TP, FP, TN, FN$ refer to the true and false positives and negatives respectively.
 
-In the presence of soft-clustering and multiple labels one can\footnote{See https://facwiki.cs.byu.edu/nlp/images/2/25/ClusterEvaluation.ppt} define an $F_1$ score for a single topic $k$ and a single label $l$ thusly.
+%In the presence of soft-clustering and multiple labels one can\footnote{See https://facwiki.cs.byu.edu/nlp/images/2/25/ClusterEvaluation.ppt} define an $F_1$ score for a single topic $k$ and a single label $l$ thusly.
 
 Letting \emph{precision} be the ``number of documents in a cluster that belong there", and recall be be ``did all the documents that should be in this cluster make it in" we derive the following:
 \begin{align}
@@ -110,20 +114,13 @@ A different approach to comes from the intuition that given two equivalent label
 \newcommand{\LabDist}{\mathbb{C}}
 \newcommand{\NMI}{\text{NMI}}
 
-Given a corpus-wide distribution over topics $\TopDist$ and a corpus wide distribution over labels $\LabDist$ the NMI is defined as:
+Given a corpus-wide distribution over topics $\TopDist$ and a corpus wide distribution over labels $\LabDist$ the NMI is defined as a function of the mutual informaiton $\mut{\TopDist}{\LabDist}$
 
-\begin{equation}
-\NMI = \frac{\mut{\TopDist}{\LabDist}}{1/2(\ent{\TopDist} + \ent{\LabDist})}
-\end{equation}
-
-where the mutual information is defined as
-
-\begin{equation}
-\mut{\TopDist}{\LabDist} = \sum_k \sum_l p(\theta_{\cdot k}, t_{\cdot l}) \ln \frac{p(\theta_{\cdot k}, t_{\cdot l})}{p(\theta_{\cdot k})p(t_{\cdot l})}
-\end{equation}
-
+\begin{align}
+\NMI & = \frac{\mut{\TopDist}{\LabDist}}{1/2(\ent{\TopDist} + \ent{\LabDist})} &
+\mut{\TopDist}{\LabDist} & = \sum_k \sum_l p(\theta_{\cdot k}, t_{\cdot l}) \ln \frac{p(\theta_{\cdot k}, t_{\cdot l})}{p(\theta_{\cdot k})p(t_{\cdot l})}
+\end{align}
 and the entropies are defined as
-
 \begin{align}
 \ent{\TopDist} & = - \sum_k p(\theta_{\cdot k}) \ln (\theta_{\cdot k}) &
 \ent{\LabDist} & = - \sum_l p(t_{\cdot l}) \ln p(t_{\cdot l})
@@ -139,7 +136,6 @@ where again $D' = \sum_d \sum_l t_{dl}$ is the total number of label instances, 
 
 
 The VI distance\cite{Meila2003} is another information-theoretic measure defined over a topic distribution $\TopDist$ and labelling distribution $\LabDist$ as:
-
 \begin{equation}
 \dvi{\TopDist}{\LabDist} = \ent{\LabDist} + \ent{\TopDist} - 2 \mut{\LabDist}{\TopDist}.
 \end{equation}
@@ -162,12 +158,14 @@ A well-known metric from the field of clustering is the rand Rand Index, which d
 Given these definitions the index is then $\text{RI} = \frac{a + d}{a + b + c + d}$. This is broadly similar to the idea of accuracy traditionally defined as being $\frac{TP + TN}{TP + FN + FP + TN}$
 
 For the kind of soft-clustering featured in LDA, one would define these counts as
-\begin{align}
+\begin{equation}
+\begin{aligned}
 a & = \sum_k \sum_{d, {p>d}} \theta_{dk} \theta_{pk} \sum_l t_{dl}t_{pl} & \quad
 b & = \sum_k \sum_{d, {p>d}} \theta_{dk} (1 -\theta_{pk}) \sum_l t_{dl}t_{pl}\\
 c & = \sum_k \sum_{d, {p>d}} \theta_{dk} \theta_{pk} \sum_{l,m \neq l} t_{dl}t_{ml} & \quad
 d & = \sum_k \sum_{d, {p>d}} \theta_{dk} (1- \theta_{pk}) \sum_{l,m \neq l} t_{dl}t_{ml}
-\end{align}
+\end{aligned}
+\end{equation}
 
 Plots of all these metrics, for different topic counts, are given in figure \ref{fig:eval-metrics-shootout} for documents taken from four very different newsgroups from the overall 20-newsgroups dataset.
 
