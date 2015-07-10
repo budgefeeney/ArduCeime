@@ -163,7 +163,7 @@ In our implementation we adapt the model to a bag of word-counts $\vv{w}_d \in \
 
 Even with this change, the performance of this algorithm is still quite slow, due to the need to invert a function of the covariance matrix for every update of the posterior mean $\md$. This is particularly problematic for the micro-text example where a small corpus may easily contain millions of ``documents". 
 
-In the case of micro-texts, and the Bohning bound implementation, a simple optimisation is possible. As the matrix $\Axi$ is constant for all documents, the only term that differs from document to document is the document length, $N_d$. For micro-texts, the number of distinct document-lengths is much smaller than the number of documents themselves: indeed in the Twitter corpus introduced in the next section, amongst 730,000 tweets there are fewer than 50 unique document lengths. Therefore the number of matrix inversions can be kept small by pre-generating the posterior-variance for each distinct document length.
+In the case of micro-texts, and the Bohning bound implementation, a simple optimisation is possible. As the matrix $\Axi$ is constant for all documents, the only term that differs from document to document is the document length, $N_d$. For micro-texts, the number of distinct document-lengths is much smaller than the number of documents themselves: indeed in the Twitter corpus introduced in the next section, amongst 578,408 tweets there are fewer than 32 unique document lengths. Therefore the number of matrix inversions can be kept small by pre-generating the posterior-variance for each distinct document length.
 
 This optimisation will not work for standard corpora however, where the number of distinct document lengths may well approach the number of documents; neither will it work in the case of the Bouchard bound, as the $\Axi$ term will differ from document to document. %To address this, we consider a modification of the model in the next section.
 
@@ -358,7 +358,7 @@ $\text{ }$\\
 %}
 
 \subsection{Experiments}
-We empirically tested out model on two very different datasets. The first is the classic ``microtext" dataset: several hundred thousand tweets from twitter; the second is the NIPS academic papers corpus.
+We empirically tested out model on two very different datasets. The first is the classic ``microtext" dataset: several hundred thousand tweets from twitter; the second is the Association for Computational Linguistics (ACL) corpus of academic papers from 1967 to 2010.
 
 \subsubsection*{Evaluation Methodology}
 The metric we use to evaluate our model is perplexity, a metric popular in language and topic models, which is simply the geometric mean of the reciprocal of the per-token likelihoods. This normalizes for document length when comparing model runs. Using logs, this becomes:
@@ -378,14 +378,14 @@ In the case of our micro-text model, topics are directly predicted as a function
 
 \subsubsection{Datasets}
 \subsubsection*{Twitter Dataset}
-The Twitter dataset consists of 735,868 tweets, comprising 7,272,228 individual tokens, posted by 572 users. It was collected by manually selecting certain ``seed" users with interests in different sports, political affiliations, or life-style activities and then proceeding recursively in a breadth-first fashion through users lists of users they follow in turn, until we had several thousand users. From these, we selected those users with the highest rate of posts, as measured by the shortness of the interval between their most recent and twentieth most recent posts. We then followed these users over a five month period from May 1st 2013 to September 30th, 2013. 
+The Twitter dataset consists of 578,408 tweets, comprising 5,313,438 individual tokens, posted by 363 users. It was collected by manually selecting certain ``seed" users with interests in different sports, political affiliations, or life-style activities and then proceeding recursively in a breadth-first fashion through users lists of users they follow in turn, until we had several thousand users. From these, we selected those users with the highest rate of posts, as measured by the shortness of the interval between their most recent and twentieth most recent posts. We then followed these users over a five month period from May 1st 2013 to September 30th, 2013. 
 
 This dataset is not necessarily characteristic of common Twitter use: while earlier studies of Twitter users suggested a reasonable degree of reciprocity\cite{Java2007}, more recent surveys of Twitter usage has suggested that the reciprocity of Twitter links is nowadays quite low, with a majority quietly listening to an active minority\cite{Kwak2010}. It does however provide a large dataset of ``microtexts".
 
 The features we extract from these tweets are author ID, month of year, week of year; under the hypothesis that a tweet may reflect either an author's core long-term interests, or else be in relation to an event of global interest at that point in time. Additionally \cite{Preot2012} showed that there may be recurrent trends in hash-tags usage (e.g. related to television shows, Monday morning greetings, etc.) and so we also include overlapping hour of week trigrams in our features. 
 
 
-Within the text itself, tokens are divided into six categories: addressees, hashtags, URLs, stock-tickers, emoticons (including supplemental unicode characters) and normal words. All with the exception of URLs are lower-cased; normal words are additionally stemmed. We only considered tokens that appeared a minimum of 100 times. This resulted in a total vocabulary size of 79,800 tokens. 
+Within the text itself, tokens are divided into six categories: addressees, hashtags, URLs, stock-tickers, emoticons (including supplemental unicode characters) and normal words. All with the exception of URLs are lower-cased; normal words are additionally stemmed. We only considered tokens that appeared a minimum of 10 times. This resulted in a total vocabulary size of 21,366 tokens. With regard to vocabulary size, this is a subset of a much larger dataset of 33 million tweets, in which dataset a threshold of 100 leads to a vocabulary size in excess of 70,000 terms, indicating a high use of neologisms (notably hashtags) and proper nouns.
 
 Unlike \cite{Wu2010} and \cite{Han2011} we do not use query-expansion techniques such as spell-checkers or slang dictionaries to undo abbreviations, as abbreviated vocabularies may be a distinct mixture-component in its own right. URLs are included based on the results published in \cite{Michelson2010} which showed they were associated with distinct topics, though use of URL-shorteners makes it impossible to detect what the true URL was post-hoc.
 
@@ -394,7 +394,7 @@ The second dataset we consider is the ACL corpus consisting of academic papers p
 
 We limit this to a corpus consisting only those documents with a hundred words or more, which have at least one author and year (venue is optional), and for which all associated authors, years and venues had at least 10 documents associated with them in the corpus. With this adjustment, we arrived at a corpus of 13,554 documents comprising 41,009,480 words, associated with 1,060 authors, 41 distinct years and 70 distinct venues. 55\% of papers have one author only, 30\% have two authors, and 10\% three authors. The maximum number of authors for a paper was 13 authors. Conversely, 25\% of authors published at most 13 or fewer papers, 50\% published 15 or fewer papers, and 75\% published 24 or fewer papers. The most prolific author published 251 papers.
 
-This is not a micro-text dataset, but does allow us to check the model scales up to larger data.
+This is not a micro-text dataset, but does allow us to check how the model performs with larger volumes of text, and how it scales to larger word-counts.
 
 \subsubsection{Baseline Model}
 As a baseline model, we use the correlated topic model, implemented using the Bouchard and Bohning bounds, and LDA, implementing using variational inference as in \cite{BleiNgJordan2003}. In the case of ACL, we use this to infer mixture distributions for each individual document in the usual manner. In the case of Tweets we aggregate tweets by author into single ``documents", creating correlated author-topic models of tweets.
@@ -479,8 +479,8 @@ Regardless of the algorithm chosen however, one issue which standards out is tha
 
 
 
-\subsubsection*{NIPS}
-In the NIPS datasets the size of the latent dimension does have an effect on perplexity, though only in the case of the Bouchard bound (compare figure \ref{fig:nips-stm-bou-p-all} with figure \ref{fig:nips-stm-boh-p-all}). Looking at the training data in figure, we can see that as the number of topics increases, P also needs to increase as well to minimise perplexity, but only for the Bouchard bound (which again is essentially a mixture model).
+\subsubsection*{ACL}
+In the ACL datasets the size of the latent dimension does have an effect on perplexity, though only in the case of the Bouchard bound (compare figure \ref{fig:nips-stm-bou-p-all} with figure \ref{fig:nips-stm-boh-p-all}). Looking at the training data in figure, we can see that as the number of topics increases, P also needs to increase as well to minimise perplexity, but only for the Bouchard bound (which again is essentially a mixture model).
 
 
 \begin{figure}
@@ -524,7 +524,7 @@ In the NIPS datasets the size of the latent dimension does have an effect on per
 
 
 \subsection{Conclusion}
-We have introduced a method employing multi-task learning to predict admixture-components, using quadratic bounds to overcome the non-conjugacy of the model. We have successfully applied this method in the case of a dataset of tweets demonstrating better model fit versus a simple author topic model, and the ability to generate additional text that may help in query expansion. Our method is not specific to any particularly dataset, and so can be applied to any dataset where features may be associated with observations which can be fit using an admixture model.
+We have introduced a method employing multi-task learning to predict admixture-components, using quadratic bounds to overcome the non-conjugacy of the model. We have successfully applied this method in the case of a dataset of tweets demonstrating better model fit versus a simple author topic model, and the ability to to employ this model as a query-expansion method for document retrieval. Our method is not specific to any particularly dataset, and so can be applied to any dataset where features may be associated with observations which can be fit using an admixture model.
 
 
 %\begin{appendices}
