@@ -403,26 +403,34 @@ For CTM and LDA, we cross-validate the data, and train a model on the training s
 
 \subsection{Results}
 \subsubsection*{Twitter}
-The results of the correlated author-topic model of tweets, for both Bouchard and Bohning bounds, and for LDA is given in figure \ref{fig:tweet-ctm-lda}. The results are very peculiar, as, with the exception of LDA, they show perplexity \emph{increasing} as $K$ increases. For larger number of topics, LDA obtains a better model fit.
+The results of the correlated author-topic model of tweets, for both Bouchard and Bohning bounds, and for LDA is given in figure \ref{fig:tweet-all} alongside the results for our model ("STM"). 
 
+With regard to our model firstly, we can see that increasing the size of the latent feature-space does indeed have an effect, up to a dimension of 50 (note the true feature space has a dimension of \fixme{true dim}. Our results consistently beat using a simple author topic model, whether correlated or not.
 
-The results for the side-information model are given in figure \ref{fig:stm-p-all}. As with CTM, perplexity \emph{increases} as K increases. However it should be noted that for all values of K, our model outperforms the baseline author-topic model whether implemented using LDA or CTM. Of considerable concern however, is the fact that the selection of features appears to have no effect on model performance.
+One could argue, given the different evaluation methodologies, that our results overfits the data, since it uses ID features which are the same in training and query datasets, and indeed the perplexity scores falling below 500 is peculiarly good. However even so, the query perplexity results for our model beat the absolutely overfit perplexity scores of the vanilla author-topic models.
 
-In table \ref{tbl:generative} we show the ability of the model to generate data: specifically we show the ability to generate tweets for hashtags. As Twitter users often launch searches using hashtags this is of considerable benefit.
+With regard to the performance of the author topics models, and in particular the uptick of LDA after 75 topics, it should be noted that the author topic models had to work with 363 ``documents", corresponding to the 363 authors, which was presumably insufficient to infer more than 75 topics with twenty-thousand words each. A similar phenomenon is exhibited by the CTM algorithm with the Bouchard bound, though the CTM algorithm with the Bohning bound does not exhibit this uptick. The poor performance of CTM (Bohning) versus LDA can be explained by the difficulty of inferring a $K \times K$ covariance matrix, even for $K=10$, with just 363 samples.
 
+The CTM (Bouchard) algorithm is noticeably unstable. In practice, the utility scores all became large numbers, leading to a diagonal matrix with values, and consequently a very large determinant. Efforts to address this by fixing the translation term in the bound, $s_d$ to zero had little effect.
+
+A reason for including the Bouchard bound was due to its rapid convergence, in the early stages, versus the Bohning bound. We experimented with using a small number of iterations of the Bouchard variants of both CTM and STM algorithms, and then completing inference with the Bohning bound. However in both cases, convergence was typically hindered, not expedited, by this approach, as the Bouchard bound algorithms seemed to provide estimates lost in plateaus.
+
+The learnt covariance is provided in figure \ref{fig:acl-and-tweet-cov}, but as this is the sum of the variances over topics, matrix and latent space, it is much less interpretable than a covariance learnt directly over topics.
+
+A motivation for this project is document-expansion for information retrieval. Accordingly we investigated the ability to use the inferred, \emph{per-tweet} topic-assignments to assign to missing hash-tags to tweets. In \ref{tbl:generative} we show, for selected, popular hash-tags, those tweets which have the highest probability of having that hash-tag, which do not contain it in their content. An issue with this approach is that if two hash-tags belong to the same topic, with similar probability, then the most likely tweets for one hash-tag will match those of another. In cases where a topics are over-fit to individual users' interests, this may cause two ostensibly unrelated hash-tags to be associated with the same tweets in much the same order.
 
 \begin{figure}
 \centering
-    \includegraphics[width=0.7\textwidth]{plots/TweetCtmLda.pdf}
-    \caption{Performance of LDA and CTM (implemented with Bohning and Bouchard bounds) on tweets aggregated by author}
-    \label{fig:tweet-ctm-lda}
+    \includegraphics[width=0.95\textwidth]{plots/tweet-all.eps}
+    \caption{Performance of our model (STM), CTM, and LDA on the Tweets dataset, broken down by size of latent dimension, which is {\tt NA} for the CTM and LDA Author topic-model}
+    \label{fig:tweet-all}
 \end{figure}
 
 \begin{figure}
 \centering
-    \includegraphics[width=0.8\textwidth]{plots/TweetStmQueryFeatures.pdf}
-    \caption{Performance of the STM models depending on the chosen features, which were author only, author and time features, time features only}
-    \label{fig:stm-p-all}
+    \includegraphics[width=0.95\textwidth]{plots/acl-all.eps}
+    \caption{Performance of our model (STM), CTM, and LDA on the ACL dataset, broken down by size of latent dimension, which is {\tt NA} for the CTM and LDA topic-models}
+    \label{fig:acl-all}
 \end{figure}
 
 \begin{table}
@@ -449,82 +457,58 @@ In table \ref{tbl:generative} we show the ability of the model to generate data:
     \label{tbl:generative}
 \end{table}
 
-\begin{figure}
-\centering
-    \includegraphics[width=0.8\textwidth]{plots/nips-stm-bou-kp.pdf}
-    \caption{Performance of the STM models on NIPS datasets, using references and authors as features, implemented with the Bouchard bound}
-    \label{fig:nips-stm-bou-p-all}
-\end{figure}
-
-\begin{figure}
-\centering
-    \includegraphics[width=0.8\textwidth]{plots/nips-stm-boh-kp.pdf}
-    \caption{Performance of the STM models on NIPS datasets, using references and authors as features, implemented with the Bohning bound}
-    \label{fig:nips-stm-boh-p-all}
-\end{figure}
-
-\begin{figure}
-\centering
-    \includegraphics[width=0.8\textwidth]{plots/nips-lda-ctm.pdf}
-    \caption{Performance of the CTM and LDA models on NIPS datasets}
-    \label{fig:nips-lda-ctm}
-\end{figure}
-
-
-
-With regards to the choice of bound for the full-covariance model, the Bohning implementation is superior. One explanation of this could be that the Bohning approach allows us to calculate a full covariance matrix. However if we look at the results for individual users (see figure \ref{fig:bohing-bouchard-assignments}) we can see that when using the Bouchard bound, the algorithm essentially degenerates into a mixture model, as the posterior variances around the topic means approaches zero. 
-
-
-Regardless of the algorithm chosen however, one issue which standards out is that the choice of the dimension of the latent feature-space, $P$, does not appear to affect results, suggesting that there is no correlation between features which can be exploited.
-
-
 
 \subsubsection*{ACL}
-In the ACL datasets the size of the latent dimension does have an effect on perplexity, though only in the case of the Bouchard bound (compare figure \ref{fig:nips-stm-bou-p-all} with figure \ref{fig:nips-stm-boh-p-all}). Looking at the training data in figure, we can see that as the number of topics increases, P also needs to increase as well to minimise perplexity, but only for the Bouchard bound (which again is essentially a mixture model).
+The results of running our model, and the CTM, and LDA topic models, on the ACL dataset are given in figure \ref{fig:acl-all}. The CTM (Bouchard) algorithm behaves similarly. In this case however, LDA out-performs not only CTM, but also our model, in both training and query.
+
+With such large documents (typically 3,000 words), the use of associated features such as author and year of publication evidently does not help, and merely hinders the inference of meaningful topics, compared to simply inferring topics directly from documents' words. Interestingly, the use of a correlated topic model also shows no benefit, even though there clearly is a sufficient number of documents to reliably infer a covariance matrix for the lower values of $K$. Inspection of the covariance matrix returned by the CTM (Bohning) model does show meaningful links between, for example, topics corresponding to different aspects of machine translation, but this information evidently does not aid model fit.
+
+Clearly, in the presence of large documents, where all words associated with a topic occur in large numbers, there is no need for any ``transfer" of learning via a learnt covariance matrix, and features confer little advantage. Consequently, it is not surprising that the degree of rank of the feature-covariance, $P$, has little observable effect on the perplexity achieved by the STM models.
 
 
 \begin{figure}
 \centering     %%% not \center
 \subfigure[ACL]{\label{fig:a}\includegraphics[width=60mm]{plots/acl-cov-k25-k50-boh.pdf}}
 \subfigure[Tweets]{\label{fig:b}\includegraphics[width=60mm]{plots/tweets-cov-k25-k50-boh.pdf}}
-\caption{Covariances over topics inferred using the Bohning implementation of the STM/YV model}
+\caption{Covariances over topics inferred using the Bohning implementation of the STM/YV model with $K=25$ and $P=50$}
+\label{fig:acl-and-tweet-cov}
 \end{figure}
 
 \begin{table}
 \begin{tabular}{| l | l | l | l | l | l | l | l |}
 \hline
-\specialcell{Machine \\ Translation} &
-\specialcell{Parsing} &
-\specialcell{Probabilistic \\ Inference} &
-\specialcell{Grammar} &
-\specialcell{Information \\ Retrieval} &
-\specialcell{Parts Of \\ Speech (POS)}\\
+\specialcell{\small Parsing} &
+\specialcell{\small Topic \\ Models} &
+\specialcell{\small Machine \\ Translation} &
+\specialcell{\small Kernel \\ Methods} &
+\specialcell{\small Parts Of \\ Speech (POS)} &
+\specialcell{\small Word-Sense \\ Disambiguation}\\
 \hline
-{\small translat} & 	{\small pars} & 	{\small model} & 	{\small rule} & 	{\small document} & 	{\small tag} \\{\small align} & 	{\small tree} & 	{\small word} & 	{\small grammar} & 	{\small term} & 	{\small word} \\{\small english} & 	{\small parser} & 	{\small us} & 	{\small tree} & 	{\small queri} & 	{\small us} \\{\small languag} & 	{\small us} & 	{\small probabl} & 	{\small can} & 	{\small us} & 	{\small error} \\{\small us} & 	{\small model} & 	{\small train} & 	{\small set} & 	{\small text} & 	{\small po} \\{\small word} & 	{\small sentenc} & 	{\small set} & 	{\small which} & 	{\small retriev} & 	{\small corpu} \\{\small sentenc} & 	{\small depend} & 	{\small data} & 	{\small node} & 	{\small from} & 	{\small languag} \\{\small pair} & 	{\small from} & 	{\small can} & 	{\small string} & 	{\small result} & 	{\small morpholog} \\
+{\small pars} & 	{\small topic} & 	{\small align} & 	{\small kernel} & 	{\small tag} & 	{\small sens} \\{\small grammar} & 	{\small model} & 	{\small word} & 	{\small tree} & 	{\small word} & 	{\small word} \\{\small rule} & 	{\small word} & 	{\small model} & 	{\small featur} & 	{\small morpholog} & 	{\small us} \\{\small tree} & 	{\small document} & 	{\small translat} & 	{\small us} & 	{\small us} & 	{\small disambigu} \\{\small can} & 	{\small distribut} & 	{\small sentenc} & 	{\small structur} & 	{\small po} & 	{\small wordnet} \\{\small parser} & 	{\small each} & 	{\small pair} & 	{\small can} & 	{\small languag} & 	{\small system} \\{\small algorithm} & 	{\small us} & 	{\small english} & 	{\small svm} & 	{\small arab} & 	{\small wsd} \\{\small from} & 	{\small our} & 	{\small us} & 	{\small learn} & 	{\small morphem} & 	{\small from} \\{\small which} & 	{\small from} & 	{\small parallel} & 	{\small base} & 	{\small form} & 	{\small context} \\
 \hline
 \end{tabular}
-\caption{Sample vocabularies for the ACL dataset from the the STM/YV model using the Bohning bound for $K=25$ and $P=50$. The unusual spelling is due to word-stemming}
+\caption{Sample vocabularies for the ACL dataset from the the STM/YV model using the Bohning bound for $K=100$ and $P=50$. The unusual spelling is due to word-stemming}
 \end{table}
 
 \begin{table}
 \begin{tabular}{| l | l | l | l | l | l |}
 \hline
-\specialcell{US Politics} &
-\specialcell{Tennis \\ (Informal)} &
-\specialcell{Tennis} &
-\specialcell{Middle-East \\ News} &
-\specialcell{Markets} &
-\specialcell{Beer \\ Enthusiasts} \\
+\specialcell{Tenns \\ {\small (US Open)}} &
+\specialcell{Tennis \\ {\small (Wimbledon)}} &
+\specialcell{US Politics \\ {\small(Liberal)}} &
+\specialcell{US Politics \\ {\small(Republican)}} &
+\specialcell{Beer \\ Enthusiasts} &
+\specialcell{Markets} \\
 \hline
-{\small obama} & 	{\small plai} & 	{\small she} & 	{\small sai} & 	{\small market} & 	{\small via} \\{\small hous} & 	{\small top} & 	{\small her} & 	{\small live} & 	{\small bui} & 	{\small beer} \\{\small mt} & 	{\small win} & 	{\small lol} & 	{\small kill} & 	{\small bank} & 	{\small new} \\{\small vote} & 	{\small :-)} & 	{\small match} & 	{\small syria} & 	{\small updat} & 	{\small trend} \\{\small state} & 	{\small last} & 	{\small win} & 	{\small \#syria} & 	{\small \#news} & 	{\small from} \\{\small bill} & 	{\small ha} & 	{\small plai} & 	{\small \#egypt} & 	{\small report} & 	{\small ad} \\{\small american} & 	{\small he} & 	{\small tenni} & 	{\small via} & 	{\small rate} & 	{\small free} \\{\small senat} & 	{\small seed} & 	{\small serv} & 	{\small attack} & 	{\small announc} & 	{\small 2013} \\{\small discuss} & 	{\small up} & 	{\small point} & 	{\small video} & 	{\small expect} & 	{\small \#craftbeer} \\{\small law} & 	{\small week} & 	{\small break} & 	{\small polic} & 	{\small share} & 	{\small brew} \\{\small polit} & 	{\small set} & 	{\small set} & 	{\small report} & 	{\small price} & 	{\small review} \\{\small boston} & 	{\small 1st} & 	{\small serena} & 	{\small egypt} & 	{\small year} & 	{\small drink} \\
+{\small set} & 	{\small murrai} & 	{\small bill} & 	{\small obama} & 	{\small beer} & 	{\small morn} \\{\small break} & 	{\small andi} & 	{\small white} & 	{\small fine} & 	{\small man} & 	{\small bui} \\{\small point} & 	{\small draw} & 	{\small hous} & 	{\small gop} & 	{\small video} & 	{\small updat} \\{\small serv} & 	{\small down} & 	{\small obama} & 	{\small listen} & 	{\small \#craftbeer} & 	{\small pleas} \\{\small match} & 	{\small fact} & 	{\small american} & 	{\small hous} & 	{\small \#beer} & 	{\small sign} \\{\small second} & 	{\small line} & 	{\small presid} & 	{\small experi} & 	{\small review} & 	{\small bank} \\{\small up} & 	{\small set} & 	{\small program} & 	{\small republican} & 	{\small brew} & 	{\small perfect} \\{\small winner} & 	{\small note} & 	{\small abort} & 	{\small senat} & 	{\small breweri} & 	{\small rais} \\{\small hold} & 	{\small \#wimbledon} & 	{\small arriv} & 	{\small congrat} & 	{\small al} & 	{\small million} \\{\small doubl} & 	{\small surpris} & 	{\small former} & 	{\small obamacar} & 	{\small nation} & 	{\small pt} \\{\small \#rg13} & 	{\small tough} & 	{\small snowden} & 	{\small \#tcot} & 	{\small releas} & 	{\small initi} \\{\small first} & 	{\small hewitt} & 	{\small west} & 	{\small stupid} & 	{\small fox} & 	{\small upgrad} \\{\small from} & 	{\small 1st} & 	{\small nsa} & 	{\small immigr} & 	{\small craft} & 	{\small weather} \\
 \hline
 \end{tabular}
-\caption{Sample vocabularies for the Twitter dataset from the the STM/YV model using the Bohning bound for $K=25$ and $P=50$}
+\caption{Sample vocabularies for the Twitter dataset from the the STM/YV model using the Bohning bound for $K=100$ and $P=50$. A peculiarity of Tweets is that we inferred several topics corresponding to different view-points of the same subject.}
 \end{table}
 
 
 \subsection{Conclusion}
-We have introduced a method employing multi-task learning to predict admixture-components, using quadratic bounds to overcome the non-conjugacy of the model. We have successfully applied this method in the case of a dataset of tweets demonstrating better model fit versus a simple author topic model, and the ability to to employ this model as a query-expansion method for document retrieval. Our method is not specific to any particularly dataset, and so can be applied to any dataset where features may be associated with observations which can be fit using an admixture model.
+We have introduced a method employing multi-task learning to predict admixture-components, using quadratic bounds to overcome the non-conjugacy of the model. We have successfully applied this method in the case of a dataset of tweets demonstrating better model fit versus a simple author topic model, and the ability to to employ this model as a query-expansion method for document retrieval. The use of the Bouchard bound failed to deliver any advantage in quality of model fit, and its rapid convergence in the early stages is not useful for priming the slower Bohning bound algorithm.  Our method is not specific to any particularly dataset, and so can be applied to any dataset where features may be associated with observations which can be fit using an admixture model, though experiments suggest that, as outlined in the introduction, it is better suited to short and micro-texts where the use of a learnt prior can be motivated by a scarcity of topic-words in each document.
 
 
 %\begin{appendices}
