@@ -405,19 +405,22 @@ For CTM and LDA, we cross-validate the data, and train a model on the training s
 \subsubsection*{Twitter}
 The results of the correlated author-topic model of tweets, for both Bouchard and Bohning bounds, and for LDA is given in figure \ref{fig:tweet-all} alongside the results for our model ("STM"). 
 
-With regard to our model firstly, we can see that increasing the size of the latent feature-space does indeed have an effect, up to a dimension of 50 (note the true feature space has a dimension of \fixme{true dim}. Our results consistently beat using a simple author topic model, whether correlated or not.
+With regard to our model firstly, we can see that increasing the size of the latent feature-space does indeed have an effect, up to a dimension of 50 (note the true feature space has a dimension of 594. Our results consistently beat using a simple author topic model, whether correlated or not.
 
-One could argue, given the different evaluation methodologies, that our results overfits the data, since it uses ID features which are the same in training and query datasets, and indeed the perplexity scores falling below 500 is peculiarly good. However even so, the query perplexity results for our model beat the absolutely overfit perplexity scores of the vanilla author-topic models.
+One could argue, given the different evaluation methodologies, that our results overfits the data, since it uses ID features which are the same in training and query datasets, and indeed it is remarkable that perplexity falls below 500. However even so, the query perplexity results for our model beat the training perplexity results for vanilla author-topic models, which absolutely are overfit.
 
 With regard to the performance of the author topics models, and in particular the uptick of LDA after 75 topics, it should be noted that the author topic models had to work with 363 ``documents", corresponding to the 363 authors, which was presumably insufficient to infer more than 75 topics with twenty-thousand words each. A similar phenomenon is exhibited by the CTM algorithm with the Bouchard bound, though the CTM algorithm with the Bohning bound does not exhibit this uptick. The poor performance of CTM (Bohning) versus LDA can be explained by the difficulty of inferring a $K \times K$ covariance matrix, even for $K=10$, with just 363 samples.
 
 The CTM (Bouchard) algorithm is noticeably unstable. In practice, the utility scores all became large numbers, leading to a diagonal matrix with values, and consequently a very large determinant. Efforts to address this by fixing the translation term in the bound, $s_d$ to zero had little effect.
 
-A reason for including the Bouchard bound was due to its rapid convergence, in the early stages, versus the Bohning bound. We experimented with using a small number of iterations of the Bouchard variants of both CTM and STM algorithms, and then completing inference with the Bohning bound. However in both cases, convergence was typically hindered, not expedited, by this approach, as the Bouchard bound algorithms seemed to provide estimates lost in plateaus.
+A reason for including the Bouchard bound was due to its rapid convergence, in the early stages, versus the Bohning bound. We experimented with using a small number of iterations of the Bouchard variants of both CTM and STM algorithms, and then completing inference with the Bohning bound. However in both cases, convergence was typically hindered, not expedited, by this approach, as the Bouchard bound algorithms seemed to converge to plateaus in the likelihood surface, from which the Bohning variant took many steps to escape.
 
 The learnt covariance is provided in figure \ref{fig:acl-and-tweet-cov}, but as this is the sum of the variances over topics, matrix and latent space, it is much less interpretable than a covariance learnt directly over topics.
 
-A motivation for this project is document-expansion for information retrieval. Accordingly we investigated the ability to use the inferred, \emph{per-tweet} topic-assignments to assign to missing hash-tags to tweets. In \ref{tbl:generative} we show, for selected, popular hash-tags, those tweets which have the highest probability of having that hash-tag, which do not contain it in their content. An issue with this approach is that if two hash-tags belong to the same topic, with similar probability, then the most likely tweets for one hash-tag will match those of another. In cases where a topics are over-fit to individual users' interests, this may cause two ostensibly unrelated hash-tags to be associated with the same tweets in much the same order.
+A motivation for this project is document-expansion for information retrieval. Accordingly we investigated the ability to use the inferred, \emph{per-tweet} topic-assignments to assign to missing hash-tags to tweets. We could infer a distribution over words for each individual tweet as the dot-product of its topic distribution and the topic-specific word distributions. 
+In table \ref{tbl:generative} we show, for selected, popular hash-tags, those tweets which have the highest probability of having that hash-tag, which do not contain it in their content. In our experiments reasonable results were returned with a threshold probability of 0.03.
+
+An issue with this approach is that if two hash-tags belong to the same topic, with similar probability, then the most likely tweets for one hash-tag will match those of another. In cases where a topics are over-fit to individual users' interests, this may cause two ostensibly unrelated hash-tags to be associated with the same tweets in much the same order.
 
 \begin{figure}
 \centering
@@ -438,22 +441,18 @@ A motivation for this project is document-expansion for information retrieval. A
     \begin{tabular}{| l || p{9cm} | } \hline 
         \bf{Hashtag} & %\bf{User (Internal)} & 
         \bf{Tweet Words} \\ \hline
-        $\#$\tt{usopen} & %BreakPointBR & 
-        Essa foi apenas a 2a vitoria de Gasquet nas oitavas de um Grand Slam. O frances alcanca sua primeira QFs em GS desde Wimbledon 2007 | \\ \hline
-        $\#$\tt{f1} & %AustinGrandPrix & 
-         MT @f1paddockpass: ...a big shout out to the marshalls \& volunteers here in Singapore. To all of you, heartfelt thanks @F1NightRace \\ \hline
-        $\#$\tt{tcot} & %CraryAP & 
-        $\#$Delaware Senate rejects bill to keep guns away from unstable people deemed danger to others http://hrld.us/110xnGt $\#$guncontrol $\#$NRA \\ \hline
-        $\#$\tt{beer} & %Beer\_Disciples & 
-        No-Li Brewhouse on track for 150\% growth, expanding annual capacity to 10,000 barrels ... \\ \hline
-        $\#$\tt{obamacare} & %AFPhq & 
-        @michellemalkin $\#$feded supporters simply believe you won't challenge them. $\#$stopcommoncore @afpne \\ \hline
-        $\#$\tt{stones50} & %RollingStones & 
-        Sweet Summer Sun - Hyde Park Live full length trailer! What do you think? http://www.youtube.com/watch?v=jgIXgYFUErE ... $\#$StonesHydePark \\ \hline
-        $\#$\tt{eurozone} & %Annika\_Reuters & 
-        $\#$German finmin $\#$Schaeuble argues $\#$Karlsruhe may have no jurisdiction over $\#$ECB measures.1st question by court's judges also focuses on this. \\ \hline
+{\small \tt \#egypt} & 	{\small Egyptian street party \#tamarod \#june30 http://instagram.com/p/bU51EcHEBx/} \\ \hline
+{\small \tt \#egypt} & 	{\small \#BREAKING: Clashes erupt between pro- and anti-Morsi crowds in Cairo http://f24.my/1cZMakS} \\ \hline
+%{\small \tt \#syria} & 	{\small Gunfire and explosion heard from \#Nairobi \#WestgateMall as security forces push to end siege - http://aje.me/1dBkvsx} \\ \hline
+{\small \tt \#news} &     {\small Cargill Invests \$200M in Volgograd Sunflower Oil Factory http://tmt-go.ru/484191 \#business} \\ \hline
+{\small \tt \#syria} & 	{\small Syrian official blames rebels for purported chemical weapons attack near Damascus: http://apne.ws/19MMurk -DC} \\ \hline
+{\small \tt \#news} & 	{\small Disgraced politician Bo Xilai hints at love triangle as trial ends in China: http://apne.ws/19IRzNQ -KH} \\ \hline
+{\small \tt \#syria} & 	{\small UK-based watchdog says Syrian rebels shot down a fighter jet in \#Aleppo http://aje.me/11hGLG6} \\ \hline
+{\small \tt \#syria} & 	{\small French intel says regime launched CW attack because it feared rebel offensive in Damas suburbs, wanted to protect Mezze military airport.} \\ \hline
+{\small \tt \#craftbeer} & 	{\small Enjoying Southern Tier Brewing Co. Pumking Imperial Pumpkin Ale - 2013 using @brewvault. pic.twitter.com/yxJE7nBkcF} \\ \hline
+{\small \tt \#gp3} & 	{\small Free Practice Results: http://www.gp2series.com/Results/ \#GP2 \#KeepCalmAndWin} \\ \hline
     \end{tabular}
-    \caption{This table shows, for each hashtag, the tweet where that hashtag has the highest probability according to our model. The ``tcot" hashtag refers to ``true conservatives on twitter".}
+    \caption{This table shows, for each hashtag, select tweets where that hashtag probability is above a threshold of 0.04 and the tweet itself lacks that hashtag. The preponderance of \hashtag{egypt} and \hashtag{syria} reflects active interests in 2013 (the ``Arab Spring").  }
     \label{tbl:generative}
 \end{table}
 
