@@ -34,7 +34,7 @@ EOF
 
 
 
-outfile="upgrade-auto.tex"
+outfile="upgrade-bryan.tex"
 rm -f $outfile
 
 echo "\\input{header.tex}" >> $outfile
