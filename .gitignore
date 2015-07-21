@@ -20,3 +20,11 @@ upgrade-auto.tex
 Chap2/plots/NIPS-Old.numbers/*
 
 upgrade-bryan.tex
+
+.texpadtmp/presentation-draft.nav
+
+.texpadtmp/presentation-draft.snm
+
+pres/.texpadtmp/presentation-draft.nav
+
+pres/.texpadtmp/presentation-draft.snm
