@@ -266,6 +266,10 @@
 \newcommand \lse { \text{lse} }
 %\newcommand \lse[0] { \mathrm{lse} }
 
+\newcommand \Axi { { \Lambda_{\xi} } }
+\newcommand \bxi { { \vv{b}_{\xi} } }
+\newcommand \cxi { { c_{\xi} } }
+
 % Conditional independence 
 \def\ci{\perp\!\!\!\perp} % from Wikipedia
 
@@ -691,8 +695,75 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
     \end{itemize}
 }
 
+\end{frame}
+
+\begin{frame}{Variational Inference}
+\only<1-> {
+    Learn a posterior $q(V,A,\Theta,Z,\Phi)$ and parameters $\Sigma, U$. \\
+    \medskip
+}\only<2> {
+    For concave functions $f(x)$ Jensen's inequality states that
+    \begin{align*}
+    f \left( \ex{X}{q} \right) \geq \ex{f(X)}{q}
+    \end{align*}
+}
+\only<3-> {
+    Using Jensen's bound, we derive a bound (the ``free-energy") on the marginal log-likelihood
+    \begin{align*}
+    \ln p(W,X) \geq \ex{\ln p(W,X,V,A,\Theta,Z,\Phi | \Sigma, U}{q} + \ent{q}
+    \end{align*}
+}
+\only<4-> {
+    As the posterior is not tractable, we use the ``mean-field factorization"
+    \begin{align*}
+    q(V,A,\Theta,Z,\Phi) = q(V)q(A)\prod_d q(\thd)\prod_n q(z_dn) \prod_k q(\vv{phi}_k)
+    \end{align*}
+}
+\only<5-> {
+    Most posteriors follow the usual mean-field form, e.g.
+    \begin{align*}
+    \ln q(A) \propto \ex{\ln p(W,X,V,A,\Theta,Z,\Phi}{q(W,X,V,\Theta,Z,\Phi)}
+    \end{align*}
+}
+\end{frame}
+
+
+%--- Non-Conjugate Bounds -------------%
+
+\begin{frame}{Non-Conjugate Inference with Quadratic Bounds}
+\only<1-> {
+    \begin{align*}
+    \ln \sigma(\thd) & = \thd - \lse(\thd) & \lse(\thd) = \ln \sum_k \theta_{dk}
+    \end{align*}
+}
+
+\only<2-> {
+    \begin{align*}
+    \lse(\vv{y}) & \leq \half \vv{y}\T \Axi \vv{y} - \bxi\T\vv{y} + \cxi
+    \end{align*}
+}
+
+\only<3-> {
+    Bouchard Bound\cite{Bouchard2007}
+    \begin{align*}
+    \Axi & = \half (I_F - \frac{1}{L} \one \one \T) \\
+%    \bxi & = A \vv{\xi} - \sigma(\vv{\xi})\\
+%    \cxi & = \half \vv{\xi}\T A \vv{\xi} - \sigma(\vv{\xi})\T\vv{\xi} + \lse(\vv{\xi})
+    \end{align*}
+}
+
+%\only<4-> {
+%    Bohing Bound\cite{Bohning1988a}
+%    \begin{align*}
+%    \Axi & = \diag{\frac{1}{2\xi_l} \left( \frac{1}{1 + e^{-\xi_l}} - \half\right) }_{l=1}^L  \\
+%    \bxi & = \half - 2 s \text{ }\diag{\Axi} \\
+%    \cxi & = s - \half (s + \vv{\xi})\T\one + s^2\Axi \one\T\one + \vv{\xi}\Axi\vv{\xi} + \text{vec}_l(\ln (1 + e^{\xi_l}))
+%    \end{align*}
+%}
 
 \end{frame}
+
+
 
 %--- Datasets -------------------------%
 
@@ -713,62 +784,10 @@ Tweets from April to September 2013 (inclusive)
     \item Features are: authors; time at various granularities (hour, day, week, month)
 \end{itemize}
 
-Images are ongoing
-
-\end{frame}
-
-%--- Datasets -------------------------%
-
-\begin{frame}{Model}
-
-Two Datasets
-NIPS Papers from 1987 to 1999
-\begin{itemize}
-    \item 682 Documents. Vocabulary of 12503 words
-    \item Median document length of 1,532 words, total of 1,075,323 words across the corpus
-    \item Features are: authors; citations; {\color{gray} the year}
-\end{itemize}
-
-Tweets from April to September 2013 (inclusive)
-\begin{itemize}
-    \item 735,868 tweets from 572 users. Vocabulary of 82,698 words
-    \item Median tweet length is 10 words (genuinely!), total of 7,272,228 word observations across the corpus 
-    \item Features are: authors; time at various granularities (hour, day, week, month)
-\end{itemize}
-
-Images
-\begin{itemize}
-    \item Ongoing
-\end{itemize}
-
 \end{frame}
 
 
-%--- Results -------------------------%
 
-\begin{frame}{Model}
-
-Two Datasets
-NIPS Papers from 1987 to 1999
-\begin{itemize}
-    \item 682 Documents. Vocabulary of 12503 words
-    \item Median document length of 1,532 words, total of 1,075,323 words across the corpus
-    \item Features are: authors; citations; {\color{gray} the year}
-\end{itemize}
-
-Tweets from April to September 2013 (inclusive)
-\begin{itemize}
-    \item 735,868 tweets from 572 users. Vocabulary of 82,698 words
-    \item Median tweet length is 10 words (genuinely!), total of 7,272,228 word observations across the corpus 
-    \item Features are: authors; time at various granularities (hour, day, week, month)
-\end{itemize}
-
-Images
-\begin{itemize}
-    \item Ongoing
-\end{itemize}
-
-\end{frame}
 
 
 
