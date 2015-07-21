@@ -13,7 +13,7 @@
 \@removefromreset{subsection}{section}
 \makeatother
 \setcounter{subsection}{1}
-
+\usepackage{dsfont}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{amsfonts} 
@@ -265,10 +265,6 @@
 
 \newcommand \lse { \text{lse} }
 %\newcommand \lse[0] { \mathrm{lse} }
-
-\newcommand \Axi { { \Lambda_{\xi} } }
-\newcommand \bxi { { \vv{b}_{\xi} } }
-\newcommand \cxi { { c_{\xi} } }
 
 % Conditional independence 
 \def\ci{\perp\!\!\!\perp} % from Wikipedia
@@ -731,7 +727,7 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
 %--- Non-Conjugate Bounds -------------%
 
 \begin{frame}{Non-Conjugate Inference with Quadratic Bounds}
-\only<1-> {
+\only<1,2> {
     \begin{align*}
     \ln \sigma(\thd) & = \thd - \lse(\thd) & \lse(\thd) = \ln \sum_k \theta_{dk}
     \end{align*}
@@ -739,27 +735,29 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
 
 \only<2-> {
     \begin{align*}
-    \lse(\vv{y}) & \leq \half \vv{y}\T \Axi \vv{y} - \bxi\T\vv{y} + \cxi
+    \lse(\vv{\theta}) & \leq \half \vv{y}\T \Axi \vv{y} - \bxi\T\vv{y} + \cxi
     \end{align*}
 }
 
-\only<3-> {
+\only<3> {
+    Bohing Bound\cite{Bohning1988a}
+    \begin{align*}
+    \Axi & = \half \left( I - \frac{1}{K+1}\one \one\T \right) \\
+    \bxi & = A \vv{\xi} - \sigma(\vv{\xi})\\
+    \cxi & = \half \vv{\xi}\T A \vv{\xi} - \sigma(\vv{\xi})\T\vv{\xi} + \lse(\vv{\xi})
+    \end{align*}
+    
+    A second order Taylor approximation where the Hessian is replaced with $B \succeq H$, where $B = \left( I - \frac{1}{K+1}\one \one\T \right)$
+}
+
+\only<4> {
     Bouchard Bound\cite{Bouchard2007}
     \begin{align*}
-    \Axi & = \half (I_F - \frac{1}{L} \one \one \T) \\
-%    \bxi & = A \vv{\xi} - \sigma(\vv{\xi})\\
-%    \cxi & = \half \vv{\xi}\T A \vv{\xi} - \sigma(\vv{\xi})\T\vv{\xi} + \lse(\vv{\xi})
+    \Axi & = \diag{\frac{1}{2\xi_l} \left( \frac{1}{1 + e^{-\xi_l}} - \half\right) }_{l=1}^L  \\
+    \bxi & = \half - 2 s \text{ }\diag{\Axi} \\
+    \cxi & = s - \half (s + \vv{\xi})\T\one + s^2\Axi \one\T\one + \vv{\xi}\Axi\vv{\xi} + \text{vec}_l(\ln (1 + e^{\xi_l}))
     \end{align*}
 }
-
-%\only<4-> {
-%    Bohing Bound\cite{Bohning1988a}
-%    \begin{align*}
-%    \Axi & = \diag{\frac{1}{2\xi_l} \left( \frac{1}{1 + e^{-\xi_l}} - \half\right) }_{l=1}^L  \\
-%    \bxi & = \half - 2 s \text{ }\diag{\Axi} \\
-%    \cxi & = s - \half (s + \vv{\xi})\T\one + s^2\Axi \one\T\one + \vv{\xi}\Axi\vv{\xi} + \text{vec}_l(\ln (1 + e^{\xi_l}))
-%    \end{align*}
-%}
 
 \end{frame}
 
