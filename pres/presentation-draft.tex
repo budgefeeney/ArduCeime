@@ -328,19 +328,13 @@
 
 
 
-\author{Bryan Feeney} 
-\institute{Cognitive Match}
+\author{Bryan Feeney, \\
+Supervisor: Dr. Ricardo Silva} 
 \title[Multitask Admixture Prediction]{Multi-Task Learning of Component Strengths in Non-Conjugate Admixture Models}
 \institute[University College London]{
-  Read this presentation online at: \\
-  $\text{ }$\  $\text{ }$\\
-  \texttt{http://tinyurl.com/bryansphd2014}\\
-  $\text{ }$\\
-  $\text{ }$\\
-
-  \texttt{bryan.feeney@ucl.ac.uk}
+ University College London
 }
-\date[October 2013]{October , 2014}
+\date[July 23, 2015]{July 23, 2015}
 
 \begin{document}
 
@@ -357,51 +351,154 @@
 %--- Research - MTL -------------------------%
 
 
+\section{Introduction}
+\begin{frame}{Outline of the Talk}
 
-\begin{frame}{Research}
-Three Components
+\begin{itemize}
+    \item<1-> Introduction
+    \item<2-> Background
+    \only<2> {
+        \begin{itemize}
+            \item Latent-Variable Models of Textual Corpora
+            \item Choice of Priors for Topic Models
+            \item Multi-Task Learning
+        \end{itemize}
+    }
+    \item<3-> Model
+    \only<3> {
+        \begin{itemize}
+            \item Model Specification
+            \item Variational Inference
+            \item Non-Conjugate Variational Inference with Bounds
+        \end{itemize}
+    }
+    \item<4-> Results
+    \item<5->Future Work
+\end{itemize}
+
+
+\end{frame}
+
+%--- Admixture Modelling -------------------------%
+
+\section{Background}
+
+\begin{frame}{Latent Variable Models of Text}
+
 \only<1,2> {
-    \begin{enumerate}
-        \item Multi-Task Learning
-        \item Admixture Modelling ("Topic Models")
-        \item Local Variational Bounds
-    \end{enumerate}
+    \begin{figure}[t]
+    \centering
+    \resizebox{6cm}{!}{
+        \input{Images/mom-diagram.tex}
+    }
+    \end{figure}
 }
 
-\only<2> {
-    \bigskip
-    \texttt{http://tinyurl.com/bryansphd2014}
+\only<1,2,6,7,8>{
+Classical Mixture Model of Text - One topic per document
+\begin{align*}
+\vv{\theta} & \sim \dir{\alpha} & z_d & \sim \muln{\vv{\theta}}{1} & w_{dn} \sim \muln{\vv{\phi}_{z_d}}{1}
+\end{align*}
+}
+\only<1,2> {
+    Where each of the component vocabularies is drawn $\vv{\phi}_k \sim \dir{\vv{\beta}}$.
 }
 
-\only<3> {
+\medskip
 
-    \begin{enumerate}
-        \item { \bf Multi-Task Learning }
-        \item {\color{gray} Admixture Modelling ("Topic Models")}
-        \item {\color{gray} Local Variational Bounds}
-    \end{enumerate}
+\only<2>{
+However in practice this is not what people actually do...
+}
 
+\only<3>{ \includegraphics[width=1\textwidth]{images/BookTags.png}}
+\only<4>{ \includegraphics[width=1\textwidth]{images/NetflixTags.png}}
+\only<5>{ \includegraphics[width=1\textwidth]{images/lastfmTags.png}}
+
+\only<6> {
+Mixture models struggle to generalise.
+\begin{itemize}
+    \item Fewer clusters mean coarser estimates of cluster centroids
+    \item But more clusters mean fewer datapoints per cluster, and thus sparser estimates of cluster centroids, due to the assumption of one cluster per document
+    \item \fixme{Prediction}
+\end{itemize}
+}
+
+
+
+\only<7,8> {
+Admixture models assign a \emph{mixture} of topics to each document\cite{BleiNgJordan2003} 
+
+\begin{align*}
+\vv{\theta}_d & \sim \dir{\alpha} & z_{dn} & \sim \muln{\vv{\theta}_d}{1} & w_{dn} \sim \mul{\vv{\phi}_{z_{dn}},1}
+\end{align*}
 
 }
+
+\only<7> {
+    \begin{figure}[t]
+    \centering
+    \resizebox{6cm}{!}{
+        \input{Images/lda-diagram-2.tex}
+    }
+    \end{figure}
+}
+
+\only<9> {
+    Comparing mixture and admixture models for four newsgroups from 20-news.
+
+    \includegraphics[trim=12.3cm 7.3cm 0.5cm 7.7cm, clip=true, totalwidth=0.8\textwidth]{Images/20news-2013-03-25.pdf}
+}
+
+
+\end{frame}
+
+
+%--- Topic Model Research -------------------------%
+
+
+\begin{frame}{Choice of Priors for Topic Models}
+\only<1> { 
+    The Logistic Normal Distribution
+    \begin{itemize}
+            \item Captures Correlations between Topics\cite{Blei2006}
+        \end{itemize}
+
+        \begin{align*}
+        \vv{\theta}_d & \sim \nor{\mu}{\Sigma} & z_{dn} &\sim \muln{\sigma(\vv{\theta}_d)}{1}\\
+        & & \sigma(\vv{\theta}_d) & = \frac{\exp(\theta_{dk})}{\sum_j \exp(\theta_{dj})} 
+        \end{align*}
+    }
+    
+    \only<2> { 
+    The Use of Covariates: $p(\wdoc | \xd) = \int p(\wdoc|\thd) p(\thd|\xd) d\thd$
+    \begin{itemize}
+        \item Ad-hoc Models: topics over time\cite{Wang2006}, author-topics\cite{MacCallum2007}, regional topics\cite{Eisenstein2010}
+        \item Generic approach: Dirichlet Multinomial Regression (DMR)\cite{Mimno2008}.
+        \begin{align*}
+        \vv{\theta}_d & \sim \dir{\vv{\alpha}_d} & \alpha_{dk} = \exp(\vv{w}_k\top\xd)
+        \end{align*}
+
+    \end{itemize} 
+    }
+
 \end{frame}
 
 
 %--- ---- MTL -------------------------%
 
 
-\section{Multi Task Learning}
 \begin{frame}{Multi-Task Learning}
 Problem: Making many predictions from the same idea
 \begin{enumerate}
     \item Predict exam scores in $L$ subjects for several children\cite{Bonilla2008}
     \item Predict customers affinity to $L$ observed aspects of a product\cite{Allenby1999}
-    \item Propose image captions by predicting p(word|image) from image features for $L$ words (in this case $L > 10,000$)\cite{Archambeau2011}
+    \item Propose image captions by predicting $p(\text{word}|\text{image})$ from image features for every individual word (in this case $L > 10,000$)\cite{Archambeau2011}
 \end{enumerate}
 
 \medskip 
 \pause
 
-Key ideas codified in \cite{Caruana1997}
+Three general approaches:\cite{Caruana1997}
 \begin{enumerate}
     \item Learn correlations between tasks.
     \item Learn structure of features by how we use them - via regularization
@@ -423,15 +520,6 @@ Learn $L$ vectors $\vv{w}_l$. How to \emph{transfer} knowledge from inferring $\
 \medskip 
 
 \only<2>{
-
-    \begin{equation*}
-    y_{nl}|\vv{w}_l & \sim \nor{\vv{w}_l\T\vv{x}_n}{\sigma^2 I} & \qquad
-        \vv{w}_l & \sim \nor{\vv{0}}{\alpha^2 I} 
-    \end{equation*}
-
-}
-
-\only<3>{
     Bayesian approach - learn the prior\cite{Allenby1999}
     
     \begin{align*}
@@ -440,31 +528,13 @@ Learn $L$ vectors $\vv{w}_l$. How to \emph{transfer} knowledge from inferring $\
         \vv{m}|\Sigma & \sim \nor{\vv{m}_0}{\oneover{\lambda}\Sigma} & \qquad
         \Sigma & \sim \mathcal{W}^{-1}\left(\Sigma_0, \nu\right)
     \end{align*}
-}
-
-\only<4>{
-    Exploit sparsity using ARD priors
     
-    \begin{align*}
-        y_{nl}|\vv{w}_l & \sim \nor{\vv{w}_l\T\vv{x}_n}{\sigma^2 I} & \qquad
-        \vv{w}_l & \sim \nor{\vv{0}}{\diag{\vv{\alpha}}} \\
-        \alpha_f & \sim \mathcal{G}\left( a, b \right)
-    \end{align*}
+    For heterogeneous tasks one can use a mixture model as a prior.
 }
 
-\only<5>{
-    Exploit sparsity using Clustered ARD priors\cite{BakkerHeskes2003}
-    
-    \begin{align*}
-        y_{nl}|\vv{w}_l & \sim \nor{\vv{w}_l\T\vv{x}_n}{\sigma^2 I} & \qquad
-        \vv{w}_l|z_{l} & \sim \nor{\vv{0}}{\diag{\vv{\alpha}_{z_l}}} \\
-        z_l & \sim \muln{\vv{\theta}}{1} &
-        \alpha_{fk} & \sim \mathcal{G}\left( a, b \right) \\
-        \vv{\theta} & \sim \dir{\beta}
-    \end{align*}
-}
 
-\only<6>{
+
+\only<3>{
     Low-Rank Projections of the Feature Space  
     \begin{align*}
         y_{nl}|\vv{w}_l & \sim \nor{\vv{w}_l\T\vv{x}_n}{\sigma^2 I} & \qquad
@@ -472,17 +542,6 @@ Learn $L$ vectors $\vv{w}_l$. How to \emph{transfer} knowledge from inferring $\
         & & \qquad \vv{z}_l & \sim \nor{\vv{0}}{I} \\
         \implies \vv{w}_l & \sim \nor{\vv{0}}{\alpha^2 I + U U\T}  
     \end{align*}
-}
-
-\only<7>{
-    This is all just hierarchical Bayeisan modelling\\
-    \medskip
-    However analogous methods exist in error-optimisation approaches to machine learning which learn regularization functions instead of priors.
-    \begin{itemize}
-        \item Heterogeneous sparsity in \cite{Argyriou2005}
-        \item Low-Rank projections in \cite{argyriou2007spectral}
-    \end{itemize}
-
 }
 
 \end{frame}
@@ -494,307 +553,143 @@ Learn $L$ vectors $\vv{w}_l$. How to \emph{transfer} knowledge from inferring $\
 Once can also take into account task correlation by setting $W = \left\{ \vv{w}_l \right\}_{l=1}^L$ (note $W \in \MReal{L}{F}$), and defining
 
 \begin{align*}
-    \vv{y}_n|W & \sim \nor{W\vv{x}_n}{\Omega} & \vv{w}_l \sim \prod_l \nor{0}{\Sigma}
+    \vv{y}_n|W & \sim \nor{W\vv{x}_n}{\Sigma} & \vv{w}_l \sim \nor{0}{\Omega}
 \end{align*}
 
-where $\Omega \in \MReal{L}{L}$ is the \emph{task} correlation, $\Sigma \in \MReal{F}{F}$ is the \emph{feature} correlation, and these are learnt in the usual manner.
+where $\Sigma \in \MReal{L}{L}$ is the \emph{task} covariance, $\Omega \in \MReal{F}{F}$ is the \emph{feature} covariance, and these are learnt in the usual manner.
 
 
 \end{frame}
 
-%--- Matrix Variate Prior -------------------------%
-
-\begin{frame}{Matrix-Variate Priors}
-Matrix-Variate Normal Distribution \cite{Gupta1999} :
-\begin{align*}
-W \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{W} \sim \nor{\vecf{M}}{\Sigma \otimes \Omega}
-\end{align*}
-
-{ \fontsize{9}{11}\selectfont
-\begin{align*}
-\ln p(W) = -\halve{FL} \ln 2\pi - \halve{F}\ln |\Omega| - \halve{L} \ln | \Sigma | - \half \text{etr} \left( \inv{\Sigma} (W - M) \inv{\Omega} (W - M)\T \right)
-\end{align*}
-}
-where $\text{etr}(X) = \exp \left( \Tr{X} \right)$\\
-
-\bigskip
-\pause
-Matrix Variate Priors for Multi-Task Learning\cite{Bonilla2008}\cite{Archambeau2011}
-, infer $Y \in \MReal{D}{L}$ from $X \in \MReal{D}{F}$
-
-\begin{align*}
-Y | W & \sim \mnor{XW}{I_D}{\Sigma} & \quad W \sim \mnor{0}{\Omega}{\Sigma} \\
-Y &\sim \mnor{0}{I_D + X \Omega X\T}{\Sigma}
-\end{align*}
-Defining a multi-task Gaussian Process regression model\cite{Bonilla2008}.
-
-\end{frame}
-
-%--- Research -------------------------%
-
-\section{Admixture Modelling}
-
-\begin{frame}{Research}
-Three Components
+%%--- Matrix Variate Prior -------------------------%
+%
+%\begin{frame}{Matrix-Variate Priors}
+%Matrix-Variate Normal Distribution \cite{Gupta1999} :
+%\begin{align*}
+%W \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{W} \sim \nor{\vecf{M}}{\Sigma \otimes \Omega}
+%\end{align*}
+%
+%{ \fontsize{9}{11}\selectfont
+%\begin{align*}
+%\ln p(W) = -\halve{FL} \ln 2\pi - \halve{F}\ln |\Omega| - \halve{L} \ln | \Sigma | - \half \text{etr} \left( \inv{\Sigma} (W - M) \inv{\Omega} (W - M)\T \right)
+%\end{align*}
+%}
+%where $\text{etr}(X) = \exp \left( \Tr{X} \right)$\\
+%
+%\bigskip
+%\pause
+%Matrix Variate Priors for Multi-Task Learning\cite{Bonilla2008}\cite{Archambeau2011}
+%, infer $Y \in \MReal{D}{L}$ from $X \in \MReal{D}{F}$
+%
+%\begin{align*}
+%Y | W & \sim \mnor{XW}{I_D}{\Sigma} & \quad W \sim \mnor{0}{\Omega}{\Sigma} \\
+%Y &\sim \mnor{0}{I_D + X \Omega X\T}{\Sigma}
+%\end{align*}
+%Defining a multi-task Gaussian Process regression model\cite{Bonilla2008}.
+%
+%\end{frame}
+%
 
 
-    \begin{enumerate}
-        \item { \color{gray} Multi-Task Learning }
-        \item { \bf Admixture Modelling ("Topic Models")}
-        \item {\color{gray} Local Variational Bounds}
-    \end{enumerate}
-
-
-\end{frame}
-
-%--- Admixture Modelling -------------------------%
-
-\begin{frame}{Mixture Models versus Admixture Models}
-
-\only<1,2,6,8,9>{
-Classical Mixture Model of Text - One topic per document
-\begin{align*}
-\vv{\theta} & \sim \dir{\alpha} & z_d & \sim \muln{\vv{\theta}}{1} & w_{dn} \sim \muln{\vv{\phi}_{z_d}}{1}
-\end{align*}
-Where each of the component vocabularies is drawn $\vv{\phi}_k \sim \dir{\vv{\beta}}$.
-}
-
-\medskip
-
-\only<2>{
-However in practice this is not what people actually do...
-}
-
-\only<3>{ \includegraphics[width=1\textwidth]{images/BookTags.png}}
-\only<4>{ \includegraphics[width=1\textwidth]{images/NetflixTags.png}}
-\only<5>{ \includegraphics[width=1\textwidth]{images/lastfmTags.png}}
-
-\only<6> {
-Mixture models struggle to generalise.
-\begin{itemize}
-    \item Fewer clusters mean coarser estimates of cluster centroids
-    \item But more clusters mean fewer datapoints per cluster, and thus sparser estimates of cluster centroids (for text), due to the assumption of one cluster per document
-\end{itemize}
-}
-
-\only<7> {
-    \includegraphics[trim=12.3cm 7.3cm 0.5cm 7.7cm, clip=true, totalwidth=0.8\textwidth]{Images/20news-2013-03-25.pdf}
-}
-
-\only<8> {
-Admixture models assign a \emph{mixture} of topics to each document, 
-
-In the case of text the ``topic-model" implementation\cite{BleiNgJordan2003} assigns a single topic to each word $w_{dn}$.
-
-\begin{align*}
-\vv{\theta}_d & \sim \dir{\alpha} & z_{dn} & \sim \muln{\vv{\theta}_d}{1} & w_{dn} \sim \mul{\vv{\phi}_{z_{dn}},1}
-\end{align*}
-
-}
-
-\only<9> {
-Sample colored text
-}
-
-
-\end{frame}
-
-%--- Topic Model Relationships --------------------%
-
-\begin{frame}{Topic Models: Multinomial Admixtures}
-Links to other models
-\begin{itemize}
-    \item<1->Multinomial PCA
-    \only<1>{
-        \begin{itemize}
-            \item Drop the prior on the component distributions, treat $\vv{\phi}_k$ as a parameter
-            \item Collect into a single $T \times K$ matrix $\Phi = \{ \vv{\phi}_k \}_{k=1}^{K}$
-            \item Can now represent a document as a projection of a latent low-dimensional document
-            \begin{align}
-                \wdoc & \sim \muln{\Phi \thd}{n_d} & \thd &\sim \dir{\alpha}
-            \end{align}
-            \item From which the correspondence to PCA should be clear
-            \begin{align}
-                \xd & \sim \nor{A \vv{z}_d}{\sigma^2 I} & \vv{z}_d \sim \nor{0}{I}
-            \end{align}
-
-
-        \end{itemize}
-    
-    }
-    
-    \item<2->(Non-Negative) Matrix Factorization
-    \only<2> {
-        \begin{itemize}
-            \item Collect the topic probabilities into the $D \times K$ matrix $\Theta = \{ \thd\T \}_{d=1}^D$
-            \item Account for document length by letting $\hat{\Theta} = \diag{n_1, n_2, \ldots, n_D} \Theta$
-            \begin{align}
-                W \approx  \hat{\Theta}\Phi\T
-            \end{align}
-            \item Can do this directly by using $K\times T$ independent Poisson distributions instead of $K$ Mulitnomials $\vv{\phi}_k$, with corresponding Gamma priors\cite{Gopalan2013}
-
-        \end{itemize}
-    }
-    \only<3> { \smallskip }
-\end{itemize}
-
-\end{frame}
-
-
-
-%--- Topic Model Research -------------------------%
-
-\begin{frame}{Topic Models: Multinomial Admixtures}
-Five broad areas of research
-\begin{itemize}
-    \item<1-> Richer Observation Models
-        \only<1> { \begin{itemize}
-        \item Language Models\cite{Wallach2006}\cite{Wang2007}\cite{Lindsey2012} 
-        \item Alternative distrbutions such as logistic-normal\cite{Blei2006a}\cite{Eisenstein2010} or von Mises - Fisher\cite{Reisinger2010}
-    \end{itemize} }
-    
-    \item<2-> Alternatives to the Dirchlet prior
-    \only<2> { 
-        \begin{itemize}
-            \item The ``Logistic Normal" prior for the Correlated Topic Model\cite{Blei2006}
-        \end{itemize}
-
-        \begin{align}
-        \vv{\eta}_d & \sim \nor{\mu}{\Sigma} \\
-        \theta_{dk} & = \frac{\exp(\eta_{dk})}{\sum_j \exp(\eta_{dj})} \\
-        \implies \ln \theta_{dk} & = \eta_{dk} - \log(\sum_j \exp(\eta_{dj}) \\
-         & = \eta_{dk} - \lse(\vv{\eta}_d)
-    \end{align} 
-    }
-
-    \item<3-> Bayesian Non-Parametrics to estimate Topic Counts
-    \only<3> { \begin{itemize}
-         \item Hierarchical Dirichlet Processes\cite{Teh2006b}
-         \item Discrete Infinite Logistic Normal Distribution\cite{Paisley2012}
-    \end{itemize} }
-
-    \item<4-> Scalable Implementations: 
-    \only<4> { \begin{itemize}
-        \item Gibbs Sampling\cite{Pritchard2000} and Collapsed Gibbs Sampling\cite{Griffiths2004} 
-        \item Variational\cite{BleiNgJordan2003} inference and Collapsed Variational\cite{Teh2007}\cite{Hensman2012} inference
-        \item MAP and other approximations\cite{Asuncion2012}
-        \item Distributed "Big Data" approaches\cite{Smola2010}\cite{Newman2009}\cite{Chen2013}
-        \item Optimised online approaches\cite{Hoffman2010}\cite{Hoffman2012}\cite{Mimno2012a}
-    \end{itemize} }
-    
-    \item<5-> Use of Covariates $\vv{x}_d$
-    \only<5> { \begin{itemize}
-        \item Ad-hoc Models: topics over time\cite{Wang2006}, author-topics\cite{MacCallum2007}, regional topics\cite{Eisenstein2010}
-        \item ``Downstream" Models\cite{Blei2003}\cite{Salomatin2009}\cite{Virtanen2012a} \\$\qquad p(\wdoc,\xd) = \int_{\thd} p(\wdoc|\thd) p(\xd|\thd) p(\thd)$.
-        \item ``Upstream" Models:\cite{Mimno2008} $p(\wdoc | \xd) = \int_{\thd} p(\wdoc|\thd) p(\thd|\xd)$.
-    \end{itemize} 
-    }
-    
-    \only<6>{\medskip}
-\end{itemize}
-
-
-\end{frame}
-
-\section{Local Variational Bounds}
-
-\begin{frame}{Research}
-Three Components
-
-
-    \begin{enumerate}
-        \item { \color{gray} Multi-Task Learning }
-        \item { \color{gray} Admixture Modelling ("Topic Models")}
-        \item { \bf Local Variational Bounds}
-    \end{enumerate}
-
-
-\end{frame}
-
-
-%--- Local Variational Intro -------------------------%
-
-
-\begin{frame}{Local Variational Bounds}
-
-The softmax transformation
-\begin{align}
-    \ln \sigma_k\left(\thd\right) = \eta_{dk} - \lse(\vv{\eta}_d)
-\end{align}
-Problems
-\begin{itemize}
-    \item Prior (a Gaussian) is not conjugate to the likelihood (a multinomial mixture)
-    \item No analytic form for the posterior.
-\end{itemize}
-Approach is to approximate the likelihood using bounds
-\begin{itemize}
-    \item Classic approach is a global bound over the entire likelihood (e.g. the Laplace approximation)
-    \item A better fit, and more flexibility, can be obtained by using \emph{local} bounds over the likelihood of each document.
-\end{itemize}
-
-\end{frame}
-
-%--- Bounds List -------------------------%
-
-
-\begin{frame}{Local Variational Bounds}
-
-\begin{itemize}
-    \item Global Bounds: Laplace, Delta Method\cite{Wang2013a}
-    \item Quadratic Bounds: Bohning\cite{Bohning1988a}, Bouchard\cite{Bouchard2007}
-    \item Other more recent bounds
-    \begin{itemize}
-        \item Piecewise Quadratic Bounds\cite{Marlin2011}
-        \item Tilted Bound\cite{MinkaKnowles}
-        \item Stick-breaking bound\cite{Khan2012stick}
-    \end{itemize}
-\end{itemize}
-
-
-\end{frame}
 
 
 %--- Research -------------------------%
 
-\section{Research}
-\begin{frame}{Research}
+\section{Model}
+\begin{frame}{Motivation}
 
-Current Project
 \begin{itemize}
-    \item Predicting component strengths for upstream topic-models
-    \item Employing matrix-variate prior over weights to jointly
+    \item Predicting component strengths for topic-models with the aid of observed covariates
+    \item Use a matrix-variate prior over weights to jointly
     \begin{itemize}
         \item Capture correlations between topics
-        \item Capture a low-rank projection of the feature-covariance
-        \item Topic Model itself captures a low-rank representation of word-counts        
+        \item Capture a low-rank projection of the feature-covariance      
     \end{itemize}
+    \item The topic-model itself captures a low-rank representation of word-counts  
 \end{itemize}
 
-Use-Cases: Microtexts
+\pause
+Use-Case: Micro-Documents
 \begin{itemize}
-    \item Tweets: Predict text given user features (username, time tweet was posted). Notably predict absent words such as \strong{hashtags}.
-    \item Image captions: Predict caption given image features.
+    \item Tweets: Predict text given user features (username, time tweet was posted). 
+    \pause        
+    \item In particular predict absent words such as \strong{hashtags}.
 \end{itemize}
 
 \end{frame}
+
+
+%--- Matrix Variate ----------------%
+
+\begin{frame}{Matrix-Variate Normal Distribution}
+\begin{align*}
+X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sigma \otimes \Omega}
+\end{align*}
+
+\only<1> {
+    {\small
+        \begin{align*}
+        X & \in \MReal{K}{F} &
+        M & \in \MReal{K}{F} &
+        \Sigma & \in \MReal{K}{K} &
+        \Omega & \in \MReal{F}{F}
+        \end{align*}
+    }
+}
+
+\only<2> {
+    {\small
+        \begin{align*}
+        \ln p(X) = \frac{KD}{2}\ln 2\pi - \frac{K}{2}\ln |\Omega| - \frac{F}{2}\ln |\Sigma| -\half \Tr{\inv{\Sigma}(X - M)\inv{\Omega}(X - M)\T}
+        \end{align*}
+    }
+}
+
+\end{frame}
+
 
 
 %--- Model -------------------------%
 
 \begin{frame}{Model}
 
-The Model
-\begin{align}
-Z & \sim \mnor{0}{I}{I} & A|Z & \sim \mnor{AZ}{I}{\Sigma} \\
-\vv{\eta}_d & \sim \nor{A\xd}{\Sigma} & \thd & = \vv{\sigma}(\vv{\eta}_d) \\
-z_{dn} & \sim \muln{\thd}{1} & w_{dn} & \sim \muln{\vv{\phi}_{z_{dn}}}{1} 
-\end{align}
+\only<1> { The Correlated Topic-Model }
+\only<2> { Predicting the Mean from Features}
+\only<3->{Our Model: Correlation with Low-Rank Feature Covariance}
+\only<1> {
+    \begin{align*}
+    \vv{\theta}_d & \sim \nor{\vv{\mu}}{\Sigma} & z_{dn} & \sim \muln{\sigma(\thd)}{1} \\
+    & & w_{dn} & \sim \muln{\vv{\phi}_{z_{dn}}}{1} 
+    \end{align*}
+}
+\only<2> {
+    \begin{align*}
+    \vv{\theta}_d & \sim \nor{A\xd}{\Sigma} & z_{dn} & \sim \muln{\sigma(\thd)}{1} \\
+    & & w_{dn} & \sim \muln{\vv{\phi}_{z_{dn}}}{1} 
+    \end{align*}
+}
 
-Inference
-\begin{itemize}
-    \item Use quadratic bounds to approximate the per-document likelihoods
-    \item Use the variational bound to approximate the posterior using a meanfield approximation of the posterior $q(Z, \Phi, \Theta) \approx q(Z)q(\Theta)q(\Phi)$
-\end{itemize}
+\only<3-> {
+    \begin{align*}
+    V & \sim \mnor{0}{I}{I} & A|V & \sim \mnor{UV}{I}{\Sigma} \\
+    \vv{\theta}_d & \sim \nor{A\xd}{\Sigma} & z_{dn} & \sim \muln{\sigma(\thd)}{1} \\
+    & & w_{dn} & \sim \muln{\vv{\phi}_{z_{dn}}}{1} 
+    \end{align*}
+}
+
+\only<3> {
+    \begin{align*}
+    A & \sim \mnor{0}{I + UU\T}{\Sigma} 
+    \end{align*}
+}
+
+\only<4> {
+    \begin{itemize}
+        \item Learns a low-rank covariance over features $I + UU\T$
+        \item Learns correlations between topics, $\Sigma$
+        \item Learns a low-rank projection of words via the vocabularies $\vv{\phi}_k$
+    \end{itemize}
+}
 
 
 \end{frame}
@@ -874,6 +769,8 @@ Images
 \end{itemize}
 
 \end{frame}
+
+
 
 
 %--- the Bibliography frame -------------------------%
