@@ -373,7 +373,7 @@ Supervisor: Dr. Ricardo Silva}
         \end{itemize}
     }
     \item<4-> Results
-    \item<5->Future Work
+    \item<5->Conclusions \& Future Work
 \end{itemize}
 
 
@@ -595,6 +595,7 @@ where $\Sigma \in \MReal{L}{L}$ is the \emph{task} covariance, $\Omega \in \MRea
 
 \section{Model}
 \begin{frame}{Motivation}
+Our Model
 
 \begin{itemize}
     \item Predicting component strengths for topic-models with the aid of observed covariates
@@ -856,12 +857,133 @@ Baseline Models
 
 
 \begin{frame}{Tweets}
-\begin{center}  \includegraphics[height=2.5in]{Images/tweet-all.eps}\end{center}
+\only<1> {
+    \begin{center}      \includegraphics[height=2.5in]{Images/tweet-all.eps}    \end{center}
+}
+\only<2> {
+    {\tiny
+        \resizebox{\textwidth}{!}{
+            \begin{tabular}{| l | l | l | l | l | l |}
+            \hline
+            {\strong Tennis (RG)} &
+            {\strong Tennis (Wim)} &
+            {\strong US Politics (Left)} &
+            {\strong US Politics (Right)} &
+            {\strong Beer Fans} &
+            {\strong Markets} \\
+            \hline
+            {\tiny set} & 	{\tiny murrai} & 	{\tiny bill} & 	{\tiny obama} & 	{\tiny beer} & 	{\tiny morn} \\
+            {\tiny break} & 	{\tiny andi} & 	{\tiny white} & 	{\tiny fine} & 	{\tiny man} & 	{\tiny bui} \\
+            {\tiny point} & 	{\tiny draw} & 	{\tiny hous} & 	{\tiny gop} & 	{\tiny video} & 	{\tiny updat} \\
+            {\tiny serv} & 	{\tiny down} & 	{\tiny obama} & 	{\tiny listen} & 	{\tiny \#craftbeer} & 	{\tiny pleas} \\
+            {\tiny match} & 	{\tiny fact} & 	{\tiny american} & 	{\tiny hous} & 	{\tiny \#beer} & 	{\tiny sign} \\
+            {\tiny second} & 	{\tiny line} & 	{\tiny presid} & 	{\tiny experi} & 	{\tiny review} & 	{\tiny bank} \\
+            {\tiny up} & 	{\tiny set} & 	{\tiny program} & 	{\tiny republican} & 	{\tiny brew} & 	{\tiny perfect} \\
+            {\tiny winner} & 	{\tiny note} & 	{\tiny abort} & 	{\tiny senat} & 	{\tiny breweri} & 	{\tiny rais} \\
+            {\tiny hold} & 	{\tiny \#wimbledon} & 	{\tiny arriv} & 	{\tiny congrat} & 	{\tiny al} & 	{\tiny million} \\
+            {\tiny doubl} & 	{\tiny surpris} & 	{\tiny former} & 	{\tiny obamacar} & 	{\tiny nation} & 	{\tiny pt} \\
+            {\tiny \#rg13} & 	{\tiny tough} & 	{\tiny snowden} & 	{\tiny \#tcot} & 	{\tiny releas} & 	{\tiny initi} \\
+            {\tiny first} & 	{\tiny hewitt} & 	{\tiny west} & 	{\tiny stupid} & 	{\tiny fox} & 	{\tiny upgrad} \\
+            {\tiny from} & 	{\tiny 1st} & 	{\tiny nsa} & 	{\tiny immigr} & 	{\tiny craft} & 	{\tiny weather} \\
+            \hline
+            \end{tabular}
+        }
+    }
+    \\
+    \medskip
+    {\small Taken from a STM/Bohning run with K=100 and P=50}
+}
+\only<3> {
+{\small Sample of absent hashtags whose probability $> 0.04$.} \\
+\medskip 
+    {\small
+        \resizebox{\textwidth}{!}{
+            \begin{tabular}{| l || p{9cm} | } \hline 
+            {\small Hashtag} & %\bf{User (Internal)} & 
+            {\small Tweet Words} \\ \hline
+    {\tiny \tt \#egypt} & 	{\tiny Egyptian street party \#tamarod \#june30 http://instagram.com/p/bU51EcHEBx/} \\ \hline
+    {\tiny \tt \#egypt} & 	{\tiny \#BREAKING: Clashes erupt between pro- and anti-Morsi crowds in Cairo http://f24.my/1cZMakS} \\ \hline
+    %{\tiny \tt \#syria} & 	{\tiny Gunfire and explosion heard from \#Nairobi \#WestgateMall as security forces push to end siege - http://aje.me/1dBkvsx} \\ \hline
+    {\tiny \tt \#news} &     {\tiny Cargill Invests \$200M in Volgograd Sunflower Oil Factory http://tmt-go.ru/484191 \#business} \\ \hline
+    {\tiny \tt \#syria} & 	{\tiny Syrian official blames rebels for purported chemical weapons attack near Damascus: http://apne.ws/19MMurk -DC} \\ \hline
+    {\tiny \tt \#news} & 	{\tiny Disgraced politician Bo Xilai hints at love triangle as trial ends in China: http://apne.ws/19IRzNQ -KH} \\ \hline
+    {\tiny \tt \#syria} & 	{\tiny UK-based watchdog says Syrian rebels shot down a fighter jet in \#Aleppo http://aje.me/11hGLG6} \\ \hline
+    {\tiny \tt \#syria} & 	{\tiny French intel says regime launched CW attack because it feared rebel offensive in Damas suburbs, wanted to protect Mezze military airport.} \\ \hline
+    {\tiny \tt \#craftbeer} & 	{\tiny Enjoying Southern Tier Brewing Co. Pumking Imperial Pumpkin Ale - 2013 using @brewvault. pic.twitter.com/yxJE7nBkcF} \\ \hline
+    {\tiny \tt \#gp3} & 	{\tiny Free Practice Results: http://www.gp2series.com/Results/ \#GP2 \#KeepCalmAndWin} \\ \hline
+        \end{tabular}
+        }
+    }
+}
+\end{frame}
+
+\begin{frame}{ACL}
+\only<1> {
+    \begin{center}      \includegraphics[height=2.5in]{Images/acl-all.eps}    \end{center}
+}
+
+\only<2> {
+    {\tiny
+        \resizebox{\textwidth}{!}{
+            \begin{tabular}{| l | l | l | l | l | l | l | l |}
+            \hline
+            {\strong Parsing} &
+            {\strong Topic} &
+            {\strong Machine} &
+            {\strong Kernel} &
+            {\strong Parts Of} &
+            {\strong Word-Sense}\\
+             &
+            {\strong Models} &
+            {\strong Translation} &
+            {\strong Methods} &
+            {\strong Speech (POS)} &
+            {\strong Disambiguation}\\
+            \hline
+            {\tiny pars} & 	{\tiny topic} & 	{\tiny align} & 	{\tiny kernel} & 	{\tiny tag} & 	{\tiny sens} \\
+            {\tiny grammar} & 	{\tiny model} & 	{\tiny word} & 	{\tiny tree} & 	{\tiny word} & 	{\tiny word} \\
+            {\tiny rule} & 	{\tiny word} & 	{\tiny model} & 	{\tiny featur} & 	{\tiny morpholog} & 	{\tiny us} \\
+            {\tiny tree} & 	{\tiny document} & 	{\tiny translat} & 	{\tiny us} & 	{\tiny us} & 	{\tiny disambigu} \\
+            {\tiny can} & 	{\tiny distribut} & 	{\tiny sentenc} & 	{\tiny structur} & 	{\tiny po} & 	{\tiny wordnet} \\
+            {\tiny parser} & 	{\tiny each} & 	{\tiny pair} & 	{\tiny can} & 	{\tiny languag} & 	{\tiny system} \\
+            {\tiny algorithm} & 	{\tiny us} & 	{\tiny english} & 	{\tiny svm} & 	{\tiny arab} & 	{\tiny wsd} \\
+            {\tiny from} & 	{\tiny our} & 	{\tiny us} & 	{\tiny learn} & 	{\tiny morphem} & 	{\tiny from} \\
+            {\tiny which} & 	{\tiny from} & 	{\tiny parallel} & 	{\tiny base} & 	{\tiny form} & 	{\tiny context} \\
+            \hline
+            \end{tabular}        
+        }
+    }
+    \\
+    \medskip
+    {\small Taken from a STM/Bohning run with K=100 and P=50}
+}
+\end{frame}
+
+\section{Conclusions}
+\begin{frame}{Conclusions}
+\begin{itemize}
+    \item We have a presented a topic-model conditioned on features
+    \item This model performs much better than simple author-topic models for tweets
+    \item The use of a low-rank projection of the feature-space improves performance
+    \item The model is not generally applicable to all datasets however: given sufficiently large documents, features may not be useful.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Future Work}
+    \begin{itemize}
+    \item Investigate datasets with generalisable feature-sets, such as images.
+    \item Investigate the ability to scale using stochastic variational optimization \cite{Hoffman2012}
+    \item Investigate the low-rank decomposition of both topic and features covariances simultanesouly
+    \item Investigate the compound case $p(W,Y|X) = \int p(W|\Theta) p(Y|\Theta) p(\Theta|X) d\Theta$
+        \begin{itemize}
+            \item For example, given a corpus of academic papers, generate words and citations, using authors and time of publication as features
+        \end{itemize}
+     \end{itemize}
 \end{frame}
 
 
-\begin{frame}{ACL}
-\begin{center}  \includegraphics[height=2.5in]{Images/acl-all.eps}\end{center}
+\begin{frame}
+
 \end{frame}
 
 
