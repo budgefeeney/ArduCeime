@@ -419,7 +419,6 @@ Mixture models struggle to generalise.
 \begin{itemize}
     \item Fewer clusters mean coarser estimates of cluster centroids
     \item But more clusters mean fewer datapoints per cluster, and thus sparser estimates of cluster centroids, due to the assumption of one cluster per document
-    \item \fixme{Prediction}
 \end{itemize}
 }
 
@@ -446,7 +445,7 @@ Admixture models assign a \emph{mixture} of topics to each document\cite{BleiNgJ
 \only<9> {
     Comparing mixture and admixture models for four newsgroups from 20-news.
 
-    \includegraphics[trim=12.3cm 7.3cm 0.5cm 7.7cm, clip=true, totalwidth=0.8\textwidth]{Images/20news-2013-03-25.pdf}
+    \includegraphics[trim=12.3cm 7.3cm 0.5cm 7.7cm, clip=true]{Images/20news-2013-03-25.pdf}
 }
 
 
@@ -488,7 +487,7 @@ Admixture models assign a \emph{mixture} of topics to each document\cite{BleiNgJ
 
 
 \begin{frame}{Multi-Task Learning}
-Problem: Making many predictions from the same idea
+Problem: Making many predictions from the same data
 \begin{enumerate}
     \item Predict exam scores in $L$ subjects for several children\cite{Bonilla2008}
     \item Predict customers affinity to $L$ observed aspects of a product\cite{Allenby1999}
@@ -519,7 +518,7 @@ Learn $L$ vectors $\vv{w}_l$. How to \emph{transfer} knowledge from inferring $\
 
 \medskip 
 
-\only<2>{
+\only<1>{
     Bayesian approach - learn the prior\cite{Allenby1999}
     
     \begin{align*}
@@ -528,13 +527,11 @@ Learn $L$ vectors $\vv{w}_l$. How to \emph{transfer} knowledge from inferring $\
         \vv{m}|\Sigma & \sim \nor{\vv{m}_0}{\oneover{\lambda}\Sigma} & \qquad
         \Sigma & \sim \mathcal{W}^{-1}\left(\Sigma_0, \nu\right)
     \end{align*}
-    
-    For heterogeneous tasks one can use a mixture model as a prior.
-}
+    }
 
 
 
-\only<3>{
+\only<2>{
     Low-Rank Projections of the Feature Space  
     \begin{align*}
         y_{nl}|\vv{w}_l & \sim \nor{\vv{w}_l\T\vv{x}_n}{\sigma^2 I} & \qquad
@@ -542,6 +539,7 @@ Learn $L$ vectors $\vv{w}_l$. How to \emph{transfer} knowledge from inferring $\
         & & \qquad \vv{z}_l & \sim \nor{\vv{0}}{I} \\
         \implies \vv{w}_l & \sim \nor{\vv{0}}{\alpha^2 I + U U\T}  
     \end{align*}
+    For heterogeneous tasks one can use a mixture model as a prior.
 }
 
 \end{frame}
@@ -710,9 +708,9 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
     \end{align*}
 }
 \only<4-> {
-    As the posterior is not tractable, we use the ``mean-field factorization"
+    As the posterior is not tractable, we use the ``mean-field factorization" with conjugate posteriors
     \begin{align*}
-    q(V,A,\Theta,Z,\Phi) = q(V)q(A)\prod_d q(\thd)\prod_n q(z_dn) \prod_k q(\vv{phi}_k)
+    q(V,A,\Theta,Z,\Phi) = q(V)q(A)\prod_d q(\thd)\prod_n q(z_{dn}) \prod_k q(\vv{\phi}_k)
     \end{align*}
 }
 \only<5-> {
@@ -735,7 +733,7 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
 
 \only<2-> {
     \begin{align*}
-    \lse(\vv{\theta}) & \leq \half \vv{y}\T \Axi \vv{y} - \bxi\T\vv{y} + \cxi
+    \lse(\vv{\theta}) & \leq \half \vv{\theta}\T \Axi \vv{\theta} - \bxi\T\vv{\theta} + \cxi
     \end{align*}
 }
 
@@ -747,16 +745,17 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
     \cxi & = \half \vv{\xi}\T A \vv{\xi} - \sigma(\vv{\xi})\T\vv{\xi} + \lse(\vv{\xi})
     \end{align*}
     
-    A second order Taylor approximation where the Hessian is replaced with $B \succeq H$, where $B = \left( I - \frac{1}{K+1}\one \one\T \right)$
+    A second order Taylor approximation where the Hessian is replaced with $B \succeq H$, where $B = \frac{1}{4}\left( I - \frac{1}{K}\one \one\T \right)$
 }
 
 \only<4> {
     Bouchard Bound\cite{Bouchard2007}
     \begin{align*}
-    \Axi & = \diag{\frac{1}{2\xi_l} \left( \frac{1}{1 + e^{-\xi_l}} - \half\right) }_{l=1}^L  \\
+    \Axi & = \diag{\frac{1}{2\xi_k} \left( \frac{1}{1 + e^{-\xi_k}} - \half\right) }_{k=1}^K  \\
     \bxi & = \half - 2 s \text{ }\diag{\Axi} \\
-    \cxi & = s - \half (s + \vv{\xi})\T\one + s^2\Axi \one\T\one + \vv{\xi}\Axi\vv{\xi} + \text{vec}_l(\ln (1 + e^{\xi_l}))
+    \cxi & = s - \half (s + \vv{\xi})\T\one + s^2\Axi \one\T\one + \vv{\xi}\Axi\vv{\xi} + \text{vec}_k(\ln (1 + e^{\xi_k}))
     \end{align*}
+Obtained by approximating the $\lse(\cdot)$ with a product of sigmoids $\lse(\vv{\theta}) \approx s + \sum_k \ln (1 + e^{s + \theta_k})$ which are in turn bounded using Jaakola's bound\cite{Jaakkola1997}
 }
 
 \end{frame}
