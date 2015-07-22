@@ -669,7 +669,7 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
 
 \only<3-> {
     \begin{align*}
-    V & \sim \mnor{0}{\rho^2 I_P}{\Sigma} & A|V & \sim \mnor{UV}{\alpha^2 I_F}{\Sigma} \\
+    V & \sim \mnor{0}{\rho^2 I_P}{\Sigma} & A|V & \sim \mnor{VU}{\alpha^2 I_F}{\Sigma} \\
     \vv{\theta}_d & \sim \nor{A\xd}{\Sigma} & z_{dn} & \sim \muln{\sigma(\thd)}{1} \\
     & & w_{dn} & \sim \muln{\vv{\phi}_{z_{dn}}}{1} 
     \end{align*}
@@ -769,7 +769,7 @@ Variational E-Step
         R_V = & \invb{\rho^{-2} I_P + \alpha^{-2}U U \T} &
         M_V = & R_Y \left( \alpha^{-2} U M_A \right) & \\
         q(A): \quad S_A = & \Sigma &
-        R_A = & \invb{\alpha^{-2} I_F + \sigma^{-2} X\T X} &
+        R_A = & \invb{\alpha^{-2} I_F + X\T X} &
         M_A = & \left(\alpha^{-2} YV + \sum_d \md \inv{\Sigma} \xd\T\right) R_A
     \end{align*}
     \begin{align*}
@@ -992,13 +992,13 @@ Baseline Models
 
 %--- the Bibliography frame -------------------------%
 
-\section{Reference}
-\begin{frame}[allowframebreaks]{Reference}
+\section{References}
+\begin{frame}[allowframebreaks]{References}
 
-
-\bibliographystyle{plain}
-\bibliography{/Users/bryanfeeney/Documents/library.bib}
-
+{\tiny 
+    \bibliographystyle{plain}
+    \bibliography{/Users/bryanfeeney/Documents/library.bib}
+}
 
 \end{frame}
 
