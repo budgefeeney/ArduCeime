@@ -519,7 +519,7 @@ Learn $L$ vectors $\vv{w}_l$. How to \emph{transfer} knowledge from inferring $\
 \medskip 
 
 \only<1>{
-    Bayesian approach - learn the prior\cite{Allenby1999}
+    Bayesian approach - learn the prior\cite{BakkerHeskes2003}
     
     \begin{align*}
         y_{nl}|\vv{w}_l & \sim \nor{\vv{w}_l\T\vv{x}_n}{\sigma^2 I} & \qquad
@@ -609,9 +609,8 @@ where $\Sigma \in \MReal{L}{L}$ is the \emph{task} covariance, $\Omega \in \MRea
 \pause
 Use-Case: Micro-Documents
 \begin{itemize}
-    \item Tweets: Predict text given user features (username, time tweet was posted). 
-    \pause        
-    \item In particular predict absent words such as \strong{hashtags}.
+    \item Use covariates to help predict topics in an otherwise over-parameterised model
+    \item Use topics to expand documents: e.g. predict additional words, notably hashtags, for tweets 
 \end{itemize}
 
 \end{frame}
@@ -624,7 +623,7 @@ Use-Case: Micro-Documents
 X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sigma \otimes \Omega}
 \end{align*}
 
-\only<1> {
+
     {\small
         \begin{align*}
         X & \in \MReal{K}{F} &
@@ -633,15 +632,15 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
         \Omega & \in \MReal{F}{F}
         \end{align*}
     }
-}
 
-\only<2> {
+
+
     {\small
         \begin{align*}
         \ln p(X) = \frac{KD}{2}\ln 2\pi - \frac{K}{2}\ln |\Omega| - \frac{F}{2}\ln |\Sigma| -\half \Tr{\inv{\Sigma}(X - M)\inv{\Omega}(X - M)\T}
         \end{align*}
     }
-}
+
 
 \end{frame}
 
@@ -669,7 +668,7 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
 
 \only<3-> {
     \begin{align*}
-    V & \sim \mnor{0}{I}{I} & A|V & \sim \mnor{UV}{I}{\Sigma} \\
+    V & \sim \mnor{0}{\rho^2 I_P}{\Sigma} & A|V & \sim \mnor{UV}{\alpha^2 I_F}{\Sigma} \\
     \vv{\theta}_d & \sim \nor{A\xd}{\Sigma} & z_{dn} & \sim \muln{\sigma(\thd)}{1} \\
     & & w_{dn} & \sim \muln{\vv{\phi}_{z_{dn}}}{1} 
     \end{align*}
@@ -701,20 +700,20 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
     f \left( \ex{X}{q} \right) \geq \ex{f(X)}{q}
     \end{align*}
 }
-\only<3-> {
+\only<2-> {
     Using Jensen's bound, we derive a bound (the ``free-energy") on the marginal log-likelihood
     \begin{align*}
-    \ln p(W,X) \geq \ex{\ln p(W,X,V,A,\Theta,Z,\Phi | \Sigma, U}{q} + \ent{q}
+    \ln p(W|X,U,\Sigma) \geq \ex{\ln p(W,X,V,A,\Theta,Z,\Phi | \Sigma, U)}{q} + \ent{q}
     \end{align*}
 }
-\only<4-> {
-    As the posterior is not tractable, we use the ``mean-field factorization" with conjugate posteriors
+\only<3-> {
+    As the posterior is not tractable, we use the ``mean-field factorization" with posteriors conjugate to the prior
     \begin{align*}
     q(V,A,\Theta,Z,\Phi) = q(V)q(A)\prod_d q(\thd)\prod_n q(z_{dn}) \prod_k q(\vv{\phi}_k)
     \end{align*}
 }
-\only<5-> {
-    Most posteriors follow the usual mean-field form, e.g.
+\only<4-> {
+    Most posterior updates follow the usual mean-field form, e.g.
     \begin{align*}
     \ln q(A) \propto \ex{\ln p(W,X,V,A,\Theta,Z,\Phi}{q(W,X,V,\Theta,Z,\Phi)}
     \end{align*}
@@ -727,7 +726,7 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
 \begin{frame}{Non-Conjugate Inference with Quadratic Bounds}
 \only<1,2> {
     \begin{align*}
-    \ln \sigma(\thd) & = \thd - \lse(\thd) & \lse(\thd) = \ln \sum_k \theta_{dk}
+    \ln \sigma(\vv{\theta}) & = \thd - \lse(\vv{\theta}) & \lse(\vv{\theta}) = \ln \sum_k \theta_{k}
     \end{align*}
 }
 
@@ -741,11 +740,11 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
     Bohing Bound\cite{Bohning1988a}
     \begin{align*}
     \Axi & = \half \left( I - \frac{1}{K+1}\one \one\T \right) \\
-    \bxi & = A \vv{\xi} - \sigma(\vv{\xi})\\
-    \cxi & = \half \vv{\xi}\T A \vv{\xi} - \sigma(\vv{\xi})\T\vv{\xi} + \lse(\vv{\xi})
+    \bxi & = \Axi \vv{\xi} - \sigma(\vv{\xi})\\
+    \cxi & = \half \vv{\xi}\T \Axi \vv{\xi} - \sigma(\vv{\xi})\T\vv{\xi} + \lse(\vv{\xi})
     \end{align*}
     
-    A second order Taylor approximation where the Hessian is replaced with $B \succeq H$, where $B = \frac{1}{4}\left( I - \frac{1}{K}\one \one\T \right)$
+    A second order Taylor approximation where the Hessian is replaced with $B \preceq H$, where $B = \frac{1}{2}\left( I - \frac{1}{K+1}\one \one\T \right)$
 }
 
 \only<4> {
@@ -755,7 +754,60 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
     \bxi & = \half - 2 s \text{ }\diag{\Axi} \\
     \cxi & = s - \half (s + \vv{\xi})\T\one + s^2\Axi \one\T\one + \vv{\xi}\Axi\vv{\xi} + \text{vec}_k(\ln (1 + e^{\xi_k}))
     \end{align*}
-Obtained by approximating the $\lse(\cdot)$ with a product of sigmoids $\lse(\vv{\theta}) \approx s + \sum_k \ln (1 + e^{s + \theta_k})$ which are in turn bounded using Jaakola's bound\cite{Jaakkola1997}
+Obtained by approximating the $\lse(\cdot)$ with a product of sigmoids $\lse(\vv{\theta}) \approx s + \sum_k \ln (1 + e^{s + \theta_k})$ which are in turn bounded using Jaakkola's bound\cite{Jaakkola1997}
+}
+
+\end{frame}
+
+\begin{frame}{Algorithm}
+\only<1,4>{
+Variational E-Step
+{\tiny
+    \begin{align*}
+        q(V): \quad S_V = & \Sigma &
+        R_V = & \invb{\rho^{-2} I_P + \alpha^{-2}U U \T} &
+        M_V = & R_Y \left( \alpha^{-2} U M_A \right) & \\
+        q(A): \quad S_A = & \Sigma &
+        R_A = & \invb{\alpha^{-2} I_F + \sigma^{-2} X\T X} &
+        M_A = & \left(\alpha^{-2} YV + \sum_d \md \inv{\Sigma} \xd\T\right) R_A
+    \end{align*}
+    \begin{align*}
+         q(\thd): \quad S_d = & \diag{\invb{\inv{\Sigma} + N_d \Axi}}\\
+         \md = & \invb{\inv{\Sigma} + N_d \Axi} \left(\inv{\Sigma} M_A \xd  + N_d \bxi + Z^{(d)}\vv{w}_d \right )\\
+        q(z_{dv}): \quad \gamma_{dvk} \propto & \exp\left(m_{dk} + \Psi(\lambda_{kv}) - \Psi(\sum_t \lambda_{kt})\right) \\ 
+        q(\phi_{kv}): \quad \lambda_{kv} \propto & \beta_v + \sum_d \gamma_{dvk} w_{dv} 
+    \end{align*}
+}
+}
+\only<2> {
+    M-Step
+    {\small 
+    \begin{align*}
+        U = & \invb{K \times R_V + M_V\T \inv{\Sigma} M_V}M_V \inv{\Sigma} M_A \\
+        \Sigma = & \frac{1}{P+F+D} \left(M_V M_V\T + (M_A - U V)(M_A - U V)\T \right. \\
+            & \qquad \qquad \left. + \sum_d \left[ S_d + (\md - M_A \xd)(\md - M_A\xd)\T \right] \right)\\
+    \end{align*}
+    }
+}
+\only<3> {
+    Bohning Bound Update
+    {\small 
+    \begin{align*}
+        \xi_d = \md 
+    \end{align*}
+    }
+    Bouchard Bound Updates
+    {\small 
+    \begin{align*}
+    \Axi & = 2 \text{diag}_k
+    \left(
+        \frac{1}{2\Edk}\left(\frac{1}{1 + e^{\Edk}} - \half\right)
+    \right) \\
+    \bxi & = \half I_K - s_d \Axi \\
+    \Edk = & \sqrt{m_{dk}^2 - 2s_d m_{dk} + s_d^2 + V^{(d)}_{kk}} \\
+    s_d = & \frac{\frac{K}{4} - \half + \sum_k m_{dk} \AEdk}{\sum_k \AEdk}
+    \end{align*}
+    }
 }
 
 \end{frame}
@@ -764,26 +816,53 @@ Obtained by approximating the $\lse(\cdot)$ with a product of sigmoids $\lse(\vv
 
 %--- Datasets -------------------------%
 
-\begin{frame}{Model}
+\section{Results}
+\begin{frame}{Datasets}
 
 Two Datasets
-NIPS Papers from 1987 to 1999
+Tweets from May 1st to September 30th 2013 (inclusive)
 \begin{itemize}
-    \item 682 Documents. Vocabulary of 12503 words
-    \item Median document length of 1,532 words, total of 1,075,323 words across the corpus
-    \item Features are: authors; citations; {\color{gray} the year}
+    \item 578,408 tweets from 572 users. Vocabulary of 21,366 words
+    \item Median tweet length is 10 words, total of 5,313,438 word observations across the corpus 
+    \item Features are: author; time at various granularities (hour, day, week, month)
 \end{itemize}
 
-Tweets from April to September 2013 (inclusive)
+Association for Computational Linguistics papers published from 1965 to 2013
 \begin{itemize}
-    \item 735,868 tweets from 572 users. Vocabulary of 82,698 words
-    \item Median tweet length is 10 words (genuinely!), total of 7,272,228 word observations across the corpus 
-    \item Features are: authors; time at various granularities (hour, day, week, month)
+    \item 13,554 Documents. Vocabulary of 25,477 words
+    \item Median document length of 2,941 words, total of 41,009,480 words across the corpus
+    \item Features are: authors; publication venue, year
 \end{itemize}
 
 \end{frame}
 
+\begin{frame}{Evaluation Methodology}
+\only<1-> {
+    Perplexity
+    \begin{align*}
+    \mathcal{P}(W|X) = \exp \left( - \frac{\ln p(W|X)}{\sum_d n_d}   \right)
+    \end{align*}
+}
+\only<2> {
+Baseline Models
+\begin{description}
+\item[Tweets]: Author Topic Models: LDA and CTM with Bohning and Bouchard Bounds
+\item[ACL]: Standard Topic Models: LDA and CTM with Bohning and Bouchard Bounds
+\end{description}
 
+}
+
+\end{frame}
+
+
+\begin{frame}{Tweets}
+\begin{center}  \includegraphics[height=2.5in]{Images/tweet-all.eps}\end{center}
+\end{frame}
+
+
+\begin{frame}{ACL}
+\begin{center}  \includegraphics[height=2.5in]{Images/acl-all.eps}\end{center}
+\end{frame}
 
 
 
