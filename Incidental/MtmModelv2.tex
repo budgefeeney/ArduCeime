@@ -21,15 +21,15 @@ the topic for the $n$-th of the $N^w_d$ words in document $d$ as
 And likewise for the $m$-th of the $N^l_d$ out-links in document $d$
 \begin{align}
 y_{dm} & \sim \muln{\vv{\sigma}(\thdo)}{1} &
-l_{dp} & \sim \muln{\vv{\phi}_{- z_{dn}}}{1}
+l_{dp} & \sim \muln{\vv{\beta}_{- z_{dn}}}{1}
 \end{align}
 
-For the distributions over words we simply use the Dirichlet prior such that $\vv{\ lambda}_k \sim \dir{\vv{\beta}}$ for all $k$. Were we to do likewise for the distributions over out-links, we would just have a simple multi-field (or ``multi-modal") topic-model\cite{Salomatin2009}. However we instead wish to transfer our knowledge of emission topics assigned with each document $\Theta$ to the parameter $\Phi = \{ \vv{\phi}_k\T \}_{k=1}^K$ governing the emission of documents for each topic $k$. Thus we use the following prior:
+Were we to put simple Dirichlet priors over $\vv{\beta}_k$ and $\vv{\phi}_k$ we would just have a simple multi-field (or ``multi-modal") topic-model\cite{Salomatin2009}. However we instead wish to transfer our knowledge of emission topics assigned with each document $\Theta$ to the parameter $\Phi = \{ \vv{\phi}_k\T \}_{k=1}^K$ governing the emission of documents for each topic $k$. Thus we use the following prior:
 
 \begin{align}
 \Phi|\Theta & \sim \mnor{\Theta}{\Sigma}{\diag{\vv{\rho}}}
 \end{align}
-where $\vv{\rho} \in \VReal{D}$ is the column covariance associated with each document. 
+where $\vv{\rho} \in \VReal{D}$ is the column covariance of all documents. 
 
 \subsection{Inference with Non-Conjugate Bounds}
 \subsubsection*{The Matrix-Normal Distribution}
@@ -88,21 +88,22 @@ p(L|Y) & \geq \sum_k \hat{L}_{\cdot k}\T \ex{\phok}{q} - \sum_k N^i_{kk} \left(\
 & = \ex{\Tr{L \Phi}}{q} - \half \ex{\Tr{A_D \Phi N^i \Phi}}{q} + \ex{\Tr{F \Phi}}{q} - \one\T G \one \\
 & = \sum_d \hat{L}_{d\cdot} \phdo - \half \sum_{p \neq d} A_{dp} \vv{\phi}_{p\cdot}\T N^i \phdo -\half A_{dd} \phdo\T N^i \phdo + F_{d\cdot}\T\phdo + G_{d\cdot}
 \end{align}
-where the matrices $F \in \MReal{D}{K}$ and $G \in \MReal{D}{K}$ simply collect the vectors $\vv{f}_k$ and $\vv{g}_k$
+where the matrices $F \in \MReal{D}{K}$ and $G \in \MReal{D}{K}$ simply collect the vectors $\vv{f}_k$ and $\vv{g}_k$. This gives us a lower bound, which we denote $\hat{p}(\Theta, Z, Y, W, L, \Phi)$  on the complete probability
+
 
 \subsubsection*{Variational Inference}
-Having lower-bounded the complete log likelihood using Bohning's bound, we can then employ and approximate posterior distribution $q(\Theta, Z, Y, \Phi, \vv{\lambda}_1, \ldots \vv{\lambda}_k)$ in conjunction with Jensen's to obtain a lower-bound the marginal log-likelihood:
+Having lower-bounded the complete log likelihood using Bohning's bound, we can then employ an approximate posterior distribution $q(\Theta, Z, Y, \Phi, \Sigma, \vv{\rho}, \alpha)$ in conjunction with Jensen's to obtain a lower-bound on the marginal log-likelihood:
 
 \begin{align}
-\ln p(W, L) \geq \ex{\hat{p}(\Theta, Z, Y, W, L, \Phi, \vv{\lambda}_1, \ldots \vv{\lambda}_k)}{q} - \ent{q}
+\ln p(W, L) \geq \ex{\hat{p}(\Theta, Z, Y, W, L, \Phi)}{q} - \ent{q}
 \end{align}
 
 We use the following mean-field factorisation
 \begin{align}
-q(\Theta, Z, Y, \Phi, \vv{\lambda}_1, \ldots \vv{\lambda}_k) = \prod_d q(\thd)q(\vv{\phi}_d)\prod_n q(\vv{z}_{dn})q(\vv{y}_{dn}) \prod_k q(\vv{\lambda}_k).
+q(\Theta, Z, Y, \Phi, \Sigma, \vv{\rho}, \alpha) = q(\alpha)q(\Sigma)\prod_d q(\thd)q(\vv{\phi}_d)q(\rho_d)\prod_n q(\vv{z}_{dn})q(\vv{y}_{dn}).
 \end{align}
 
-In most cases, the approximate posterior is naturally conjugate to the prior and likelihood, and the posteriors are easily obtained. However, the case of the topic-distribution matrix $\Theta$ and the document-emission matrix $\Phi$ also require special attention as the posteriors do not have a matrix-variate Normal form: specifically while one can obtain a multivariate Normal posterior over $\vecf{\Theta}$, its covariance is not separable into a Kronecker product of two matrices. Thus we take the aggressive form of the mean-field factorisation outlined above where we consider individual rows of the matrices individually.
+In most cases, the posterior is naturally conjugate to the prior and likelihood, and the parameter estiamtes are easily obtained. However, the case of the topic-distribution matrix $\Theta$ and the document-emission matrix $\Phi$ requires special attention. That obvious choice, two matrix-variate posteriors, is unfortunately not possible. While one can obtain a multivariate Normal posterior over $\vecf{\Theta}$, the covariance of that distribution is not separable into a Kronecker product of two matrices, and thus not matrix-variate posterior over $\Theta$ exists. Thus we take the aggressive form of the mean-field factorisation outlined above where we consider the rows of the matrices individually.
 
 \newcommand \mtd { { \vv{m}^{\theta}_d } }
 \newcommand \std { { S^\theta_d } }
@@ -113,7 +114,7 @@ In most cases, the approximate posterior is naturally conjugate to the prior and
 q(\Theta) &= \prod_d \mathcal{N}\left(\thdo; \mtd, \std \right) &
 q(\Phi) &= \prod_d \mathcal{N}\left(\phdo; \mpd, \spd\right) 
 \end{align}
-and futher assume that the covariances $\std$ and $\spd$ are diagonal. Denoting the sum of expected topic assignments for document $d$ as $\hat{\vv{z}}_{d\cdot} = \sum_n \ex{\vv{z}_{dn}}{q}$ and $\hat{\vv{y}}_{d\cdot} = \sum_m \ex{\vv{y}_{dm}}{q}$ we obtain the following updates for both means:
+and further assume that the covariances $\std$ and $\spd$ are diagonal. Denoting the sum of expected topic assignments for document $d$ as $\hat{\vv{z}}_{d\cdot} = \sum_n \ex{\vv{z}_{dn}}{q}$ and $\hat{\vv{y}}_{d\cdot} = \sum_m \ex{\vv{y}_{dm}}{q}$ we obtain the following updates for both means:
 \begin{align}
 \mtd &= \invb{ \invb{(\alpha + \rho_d)\Sigma} + N^o_d A_K }
             \left(
@@ -129,37 +130,52 @@ and futher assume that the covariances $\std$ and $\spd$ are diagonal. Denoting 
              \right)
  \end{align}
  
-As can be expected, the first inverted term on the right-hand sides is the expression for the (full) posterior covariance. In both cases it is a sum of two terms each of which takes the form of a scalar covariance times a covariance matrix, as one would expect given the matrix-variate form. 
+As can be expected, both updates feature as the first term of the right-hand side the value of the (full) posterior covariance matrix. In both cases the posterior precision is a sum of two terms each of which takes the form of a scalar inverse variance times a precision matrix, as one would expect given the matrix-variate form. 
 
-In the case of $\mtd$, the matrix $A_K$ is a component of the posterior row-covariance and the diagonal matrix $N^o = \diag{N^o_1, \ldots, N^o_D}$ is a component of the column covariance, while in the case of $\mpd$ these roles are reversed, due to the bound operating column-wise. Note that $A_{dd} = \frac{D-1}{2D}$ while $A_{dp} = - \oneover{2D}$
+In the case of $\mtd$, the matrix $A_K$ is a component of the posterior row-precision and the matrix $N^o = \diag{N^o_1, \ldots, N^o_D}$ is a component of the column precisoin. In the case of $\mpd$ these roles are reversed, due to the bound operating column-wise. Note that $A_{dd} = \frac{D-1}{2D}$ while $A_{dp} = - \oneover{2D}$
 
-However it is not possible to express this matrix as a Kronecker product of terms involving $\alpha I_D, \diag{\vv{\rho}}$ and $N^o$ on the left-hand side and $\Sigma$ and $A_K$ on the right, which is why we cannot straightforwardly use a matrix-variate posterior.
-
-The interpretation of these two distributions is that $q(\thd)$ is the distribution of document $d$ being the \emph{origin} of a word or link according to topic $k$, for all $k \in \{1, \ldots, K\}$, whereas $q(\vv{\phi}_d)$ is the distribution of a document being the \emph{target} of a link emitted according to topic $k$, for all $k \in \{1, \ldots, K\}$.
+The interpretation of these two distributions is that $q(\thd)$ is the distribution of document $d$ being the \emph{origin} of a word or link according to topic $k$, whereas $q(\vv{\phi}_d)$ is the distribution of a document being the \emph{target} of a link emitted according to topic $k$.
 
 \begin{algorithm}
-\caption{Self-Referential Algorithm}
+\caption{Matrix-Variate Topic Model}
 \label{alg:sra_generic}
+
     \begin{align*}
         \mtd &= 
-            \invb{ (\inv{\alpha} + \inv{\rho_d}) + N^o_d A_K }
-            \left(
+            \invb{ \invb{(\alpha + \rho_d)\Sigma} + N^o_d A_K } \\
+            & \times \left(
                 \invb{\alpha \Sigma}\vv{\mu}
                 + \invb{\rho_d \Sigma} \mpd + \vv{b}_d 
                 + \sum_n \ex{\vv{z}_{dn}}{q} 
                 + \sum_m \ex{\vv{y}_{dn}}{q}
-            \right)
+            \right)\\
+         S^\theta_{d,kk} &= \invb{\inv{\alpha} + \inv{\rho_d} + \inv{\Sigma}_{kk}} \\
+         \mpd & = \invb{\invb{\rho_d \Sigma} + A_{dd}N^i} \\
+             & \times \left(
+                 \invb{\rho_d \Sigma}\mtd 
+                 + N^i F_{d\cdot} 
+                 -\half \sum_{p \neq d} A_{dp} N^i \vv{m}^\phi_p 
+                 + \hat{L}_{d\cdot}
+             \right) \\
+        S^\phi_{d,kk} & = \invb{ \invb{\rho_d \Sigma_{kk}} + A_{dd}N^i_{kk} } \\
+        z_{dnk} & \propto \exp(\ex{\theta_{dk}}{q})\beta_{k,w_{dn}} \\
+        y_{dmk} & \propto \exp(\ex{\theta_{dk}}{q} + \ex{\phi_{l_{dp},k}}{q}) \\
+        \vv{\beta}_{kt} & = \sum_d \sum_n \sum_t \ex{z_{dnk}}{q} w_{dnt} \\
+        \Sigma & =  \oneover{\nu + 2D} \left(\Sigma_0
+             + \sum_d \inv{\alpha} (\thdo - \vv{\mu})(\thdo - \vv{\mu})\T + \std  \right .\\
+            & \qquad\qquad\qquad\quad+ \left. \sum_d \inv{\rho_d} (\phdo - \thdo)(\phdo - \thdo)\T + \spd \right)  \\  \ex{\rho_d}{q} & = \oneover{a + K} \left(b + (\phdo - \thdo)\T \inv{\Sigma} (\phdo - \thdo) + \Tr{\std \inv{\Sigma}} + \Tr{\spd \inv{\Sigma}} \right) \\
+        \ex{\alpha}{q} & = \oneover{a + DK} \left(b + \sum_d (\thdo - \vv{\mu})\T\inv{\Sigma}(\thdo + \vv{\mu}) + \Tr{\std \inv{\Sigma}} \right) \\
+        \vv{\mu} &= \oneover{D} \sum_d \thdo
     \end{align*}
 \end{algorithm}
 
 \subsubsection*{Non-Identifiability of the prior Covariances}
 Careful attention needs to be applied to the case of the prior covariances: factors in Kronecker products are inherently non-identifiable as $A \otimes B = c A \otimes \frac{1}{c} B$ for any constant $c$. In practice this means that maximum likelihood estimates of A and B can diverge below and over machine precision respectively.
 
-In the case of maximum likelihood estimation this is addressed by means of ``flip-flop" algorithms\cite{Srivastava2009} which fix an element of one matrix to a constant value and adjust the other accordingly. In our case, we use priors to address this computation issue, drawing $\alpha$ and $\rho_d$ from the same inverse-gamma prior $\inv{\Gamma}\left(a, b\right)$ and $\Sigma \sim \inv{\mathcal{IW}}\left(\Sigma_0, \nu\right)$. This means that our estimates of the covariances are only weakly identifiable.
+In the case of maximum likelihood estimation this is addressed by means of ``flip-flop" algorithms\cite{Srivastava2009} which fix an element of one matrix to a constant value and adjust the other accordingly. In our case, take a Bayeisan approach and put priors over the covariances, drawing $\alpha$ and $\rho_d$ from the same inverse-gamma prior $\inv{\Gamma}\left(a, b\right)$ and $\Sigma \sim \inv{\mathcal{IW}}\left(\Sigma_0, \nu\right)$. This addresses the computational issue, though with the caveat that our variance estimates are only weakly identifiable.
 
-
-
-
+\subsubsection*{Eliminating topic assignments}
+Storing $z_{dnk}$ and $y_{dmk}$ for every word or link in every document is prohibitively difficult. Therefore in our implementation we simply substitute the update for these terms in those terms where they appear, and simplify. This significantly improves the runtime of our algorithm. 
 \section{Experiments}
 The dataset is the Associated for Computational Linguistics (ACL) corpus of academic papers. Each document has associated with it a list of links to other documents in the corpus, the list of authors, the venue and the year published. Excluding all documents with fewer than three unique words, there were 13,533 documents. Excluding from that set all documents with fewer than 2 out-links resulted in a corpus of 4,264 documents. The total word-count of that corpus was 14,864,709 words drawn from a dictionary of 23,769 unique terms.
 
@@ -176,19 +192,19 @@ The baseline models currently consist of the RTM model, which as established ear
 \begin{align}
 \Theta & \sim \mnor{0}{I}{\Sigma} &
 z_{dn} & \sim \muln{\vv{\sigma}(\thdo)}{1} &
-w_{dn} & \sim \prod_k \muln{\vv{\lambda}_k}{1}^{z_{dnk}} \\
+w_{dn} & \sim \prod_k \muln{\vv{\beta}_k}{1}^{z_{dnk}} \\
 & &
 y_{dm} & \sim \muln{\vv{\sigma}(\thdo)}{1} &
 l_{dp} & \sim \prod_k \muln{\vv{\sigma}(\thok)}{1}^{y_{dmk}}
 \end{align}
-As noted in previous work, MTM-Old exhibits the property that the model prefers to adapt $\Theta$ to fit words rather than out-links, which is unsurprising since each document has approximate 300 words for every out-link. Consequently, as training continues, perplexity scores improved at the expense of recall and precision scores. The current model, where the emission distribution for links $\Phi$ is separate from $\Theta$ seeks to address this.
+As noted in previous work, MTM-Old exhibits the property that the model prefers to adapt $\Theta$ to fit words rather than out-links, which is unsurprising since each document has approximate 300 words for every out-link. Consequently, as training progressed for that model, perplexity scores improved while recall and precision scores degraded. The current model, where the emission distribution for links $\Phi$ is separate from $\Theta$ seeks to address this.
 
 \subsubsection*{Model Variants}
-I looked into initialising the $\vv{\mu}$, $\Sigma$, $\Theta$ and $\vv{\lambda}_1, \ldots, \vv{\lambda}_k$ with the output of a CTM run, and then drawing $\Phi \sim \mnor{\Theta}{\diag{\vv{\rho}}}{\Sigma}$ however while that improved perplexity it caused the precision and recall scores to degrade.
+I looked into initialising the $\vv{\mu}$, $\Sigma$, $\Theta$ and $\vv{\beta}_1, \ldots, \vv{\beta}_k$ with the output of a CTM run, and then drawing $\Phi \sim \mnor{\Theta}{\diag{\vv{\rho}}}{\Sigma}$ however while that improved perplexity it caused the precision and recall scores to degrade.
 
 I also looked at the effect of $\alpha$ and $\vv{\rho}$. Fixing these at 1 led to poorer perplexity, precision and recall metrics. The more interesting effect however that convergence was substantially slower (taking almost twice as many iterations) with $\rho_d$ fixed at 1. This suggests that there is significant benefit to taking into account variance at the document level during training.
 
-
-
+\section{Discussion}
+In this model, I've re-used the same topic-covariance $\Sigma$ across both distributions. In practice, it's necessary to share a single covariance matrix in order to be able to obtain marginal distributions, in this case $\Phi \sim \mnor{0}{\alpha I_D + \diag{\vv{\rho}}}{\Sigma}$.
 
 \input{../footer.tex}
