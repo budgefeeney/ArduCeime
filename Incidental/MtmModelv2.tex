@@ -142,31 +142,32 @@ The interpretation of these two distributions is that $q(\thd)$ is the distribut
 
     \begin{align*}
         \mtd &= 
-            \invb{ \invb{(\alpha + \rho_d)\Sigma} + N^o_d A_K } \\
+            \invb{ \invb{(\hat{\alpha} + \hat{\rho}_d)\hat{\Sigma}} + N^o_d A_K } \\
             & \times \left(
-                \invb{\alpha \Sigma}\vv{\mu}
-                + \invb{\rho_d \Sigma} \mpd + \vv{b}_d 
-                + \sum_n \ex{\vv{z}_{dn}}{q} 
-                + \sum_m \ex{\vv{y}_{dn}}{q}
+                \inv{\ex{\alpha \Sigma}{}}\vv{\mu}
+                + \inv{\ex{\rho_d \Sigma}{}} \mpd + \vv{b}_d 
+                + \sum_n \ex{\vv{z}_{dn}}{} 
+                + \sum_m \ex{\vv{y}_{dn}}{}
             \right)\\
-         S^\theta_{d,kk} &= \invb{\inv{\alpha} + \inv{\rho_d} + \inv{\Sigma}_{kk}} \\
-         \mpd & = \invb{\invb{\rho_d \Sigma} + A_{dd}N^i} \\
+         S^\theta_{d,kk} &= \invb{\inv{\ex{\alpha}{}} + \inv{\ex{\rho_d}{}} + \inv{\ex{\Sigma}{}}_{kk}} \\
+         \mpd & = \invb{\inv{\ex{\rho_d \Sigma}{}} + A_{dd}N^i} \\
              & \times \left(
-                 \invb{\rho_d \Sigma}\mtd 
+                 \inv{\ex{\rho_d \Sigma}{}}\mtd 
                  + N^i F_{d\cdot} 
                  -\half \sum_{p \neq d} A_{dp} N^i \vv{m}^\phi_p 
                  + \hat{L}_{d\cdot}
              \right) \\
-        S^\phi_{d,kk} & = \invb{ \invb{\rho_d \Sigma_{kk}} + A_{dd}N^i_{kk} } \\
+        S^\phi_{d,kk} & = \invb{ \inv{\ex{\rho_d \Sigma_{kk}}{}} + A_{dd}N^i_{kk} } \\
         z_{dnk} & \propto \exp(\ex{\theta_{dk}}{q})\beta_{k,w_{dn}} \\
         y_{dmk} & \propto \exp(\ex{\theta_{dk}}{q} + \ex{\phi_{l_{dp},k}}{q}) \\
         \vv{\beta}_{kt} & = \sum_d \sum_n \sum_t \ex{z_{dnk}}{q} w_{dnt} \\
         \Sigma & =  \oneover{\nu + 2D} \left(\Sigma_0
-             + \sum_d \inv{\alpha} (\thdo - \vv{\mu})(\thdo - \vv{\mu})\T + \std  \right .\\
-            & \qquad\qquad\qquad\quad+ \left. \sum_d \inv{\rho_d} (\phdo - \thdo)(\phdo - \thdo)\T + \spd \right)  \\  \ex{\rho_d}{q} & = \oneover{a + K} \left(b + (\phdo - \thdo)\T \inv{\Sigma} (\phdo - \thdo) + \Tr{\std \inv{\Sigma}} + \Tr{\spd \inv{\Sigma}} \right) \\
-        \ex{\alpha}{q} & = \oneover{a + DK} \left(b + \sum_d (\thdo - \vv{\mu})\T\inv{\Sigma}(\thdo + \vv{\mu}) + \Tr{\std \inv{\Sigma}} \right) \\
-        \vv{\mu} &= \oneover{D} \sum_d \thdo
+             + \sum_d \inv{\ex{\alpha}{}} (\mtd - \vv{\mu})(\mtd - \vv{\mu})\T + \std  \right .\\
+            & \qquad\qquad\qquad\quad+ \left. \sum_d \inv{\ex{\rho_d}{}} (\mpd - \mtd)(\mpd - \mtd)\T + \spd \right)  \\  \ex{\rho_d}{} & = \oneover{a + K} \left(b + (\mpd - \mtd)\T \inv{\Sigma} (\mpd - \mtd) + \Tr{\std \inv{\Sigma}} + \Tr{\spd \inv{\Sigma}} \right) \\
+        \ex{\alpha}{q} & = \oneover{a + DK} \left(b + \sum_d (\mtd - \vv{\mu})\T\inv{\Sigma}(\mtd - \vv{\mu}) + \Tr{\std \inv{\Sigma}} \right) \\
+        \vv{\mu} &= \oneover{D} \sum_d \mtd
     \end{align*}
+    For brevity, we let $\hat{\alpha} = \ex{\alpha}{}$, $\hat{\rho}_d = \ex{\rho_d}{}$ and $\hat{\Sigma} = \ex{\Sigma}{}$
 \end{algorithm}
 
 \subsubsection*{Non-Identifiability of the prior Covariances}
@@ -179,14 +180,16 @@ Storing $z_{dnk}$ and $y_{dmk}$ for every word or link in every document is proh
 \section{Experiments}
 The dataset is the Associated for Computational Linguistics (ACL) corpus of academic papers. Each document has associated with it a list of links to other documents in the corpus, the list of authors, the venue and the year published. Excluding all documents with fewer than three unique words, there were 13,533 documents. Excluding from that set all documents with fewer than 2 out-links resulted in a corpus of 4,264 documents. The total word-count of that corpus was 14,864,709 words drawn from a dictionary of 23,769 unique terms.
 
-We used precision-at-m and recall-at-m as our metric. For a document $d$ this is simply the precision and recall evaluated on the top $m$ documents, ranked by their probability of being and out-link of document d, $p(l_{dp} | \thd)$. We average these across all documents. The other metric mentioned in perplexity, which is the marginal log-likelihood normalized by document length, according to 
+The evaluation methodology consists of removing from each document half of its links, training on the full corpus, and then evaluating the rank of the held out links.
+
+We use three ranking metrics metrics. Mean reciprocal-rank, is the average of the reciprocal of the ranks of all held-out links across all documents: $mrr = \frac{1}{D} \sum_d \frac{1}{Q} \sum_q r_q$.  The precision at m is the precision evaluated on the top-ranked $m$ documents, which is simply the quotient of the number of held-out links found in that subset and $m$. The recall at m similarly is the recall evaluated on the top-ranked $m$ documents, being the quotient of number of held-out links returned and either $m$ or the total number of out links that could be returned, whichever is smaller. Precision and recall at m were averaged across all documents in the corpus. In all cases larger values are better.
+
+As a model convergence check, we also look at the perplexity of the words and links. This is the marginal log-likelihood normalized by document length, according to 
 
 \begin{equation}
 \mathcal{P}erp(W,L) = \exp\left( - \frac{\ln p(W,L)}{\sum_d N^w_d + N^l_d} \right)
 \end{equation}
 Smaller perplexity scores are better.
-
-The evaluation methodology consists of removing from each document half of its links, training on the full corpus, and then evaluating precision and recall at m for each document on the held-out links, and averaging.
 
 The baseline models currently consist of the RTM model, which as established earlier, performs extremely poorly, and a previous version of this model, ``MTM-Old" which re-used $\Theta$ for link emissions
 \begin{align}
@@ -199,12 +202,16 @@ l_{dp} & \sim \prod_k \muln{\vv{\sigma}(\thok)}{1}^{y_{dmk}}
 \end{align}
 As noted in previous work, MTM-Old exhibits the property that the model prefers to adapt $\Theta$ to fit words rather than out-links, which is unsurprising since each document has approximate 300 words for every out-link. Consequently, as training progressed for that model, perplexity scores improved while recall and precision scores degraded. The current model, where the emission distribution for links $\Phi$ is separate from $\Theta$ seeks to address this.
 
+We used weak priors for the variances, with $a = b = 0.001$, and $\nu = 1.1 \times K$ and $\Sigma_0 = 0.001 I_K$.
+
 \subsubsection*{Model Variants}
 I looked into initialising the $\vv{\mu}$, $\Sigma$, $\Theta$ and $\vv{\beta}_1, \ldots, \vv{\beta}_k$ with the output of a CTM run, and then drawing $\Phi \sim \mnor{\Theta}{\diag{\vv{\rho}}}{\Sigma}$ however while that improved perplexity it caused the precision and recall scores to degrade.
 
-I also looked at the effect of $\alpha$ and $\vv{\rho}$. Fixing these at 1 led to poorer perplexity, precision and recall metrics. The more interesting effect however that convergence was substantially slower (taking almost twice as many iterations) with $\rho_d$ fixed at 1. This suggests that there is significant benefit to taking into account variance at the document level during training.
+I also looked at the effect of $\alpha$ and $\vv{\rho}$. Fixing these at 1 led to poorer perplexity, precision and recall metrics. The more interesting effect however that convergence was substantially slower (taking almost twice as many iterations) with $\rho_d$ fixed at 1. This suggests that there is significant benefit to taking into account variance at the document level during training. With $\rho_d$ and $\alpha$ allowed vary, the new MTM model converged in half the number of iterations as the MTM-Old model.
 
 \section{Discussion}
-In this model, I've re-used the same topic-covariance $\Sigma$ across both distributions. In practice, it's necessary to share a single covariance matrix in order to be able to obtain marginal distributions, in this case $\Phi \sim \mnor{0}{\alpha I_D + \diag{\vv{\rho}}}{\Sigma}$.
+In this model, I've re-used the same topic-covariance $\Sigma$ across both distributions. In practice, it's necessary to share a single covariance matrix in order to be able to obtain marginal distributions, in this case $\Phi \sim \mnor{0}{\alpha I_D + \diag{\vv{\rho}}}{\Sigma}$. 
+
+This model still doesn't take into account any temporal effects, i.e. that certain papers become less popular over time.
 
 \input{../footer.tex}
