@@ -5,6 +5,43 @@
 \newcommand \phok { { \vv{\phi}_{\cdot k} } }
 \newcommand \phdo { { \vv{\phi}_{d\cdot} } }
 
+\title{Self-Referential Matrix-Variate Topic Models for Citation Prediction}
+\author{Bryan Feeney}
+\maketitle
+\section{Introduction}
+As document corpora have grown ever larger, the need for improved methods to search within these corpora has grown. The simplest approach is to learn a low-rank representation of each document, for example using latent Dirichlet allocation (LDA)\cite{BleiNgJordan2003} to infer a distribution over the topics that best explain the contents of each document. 
+
+In the case of document networks however, one also needs to incorporate network structure as well as words to explain the corpus. In particular, by modelling network structure, models can propose additional links, providing the basis for a recommendation engine. 
+
+Most approaches to date have focussed on modelling the network as an unweighted graph (i.e. a link exists or does not), and frequently as an undirected graph. Oftentimes topic-modelling has been used as a separate feature extraction step, or has been incorporated into the model. The most successful discriminative approach has been the SVM approach of\cite{Bethard2010}, which classified documents as links or non-links according to features. They found the most influential features when predicting links were, in order: whether the link is a self-citation; a transitive self-citation with one step; the number of times the linked paper has been cited a priori; the words of the paper; it's age relative to the link origina; whether the cited and out-link papers shared a venue; and finally functions of the topics inferred from the words using LDA\cite{Blei2003}.
+
+However learning topics in conjunction with, instead of separate from, the prediction problem, adds the advantage that the link structure can be used to help learn the topics. The typical approach is to learn topics from the text of a document, which simultaneously training a logistic regression model to predict whether a link should exist between two documents based on a function of their topics. Two possible features are available, the parameter of the Dirichlet posterior over topics for document $d$ $\thd$ or the average of per-word topic-assignments for document $\bar{\vv{z}}_d = \frac{1}{N_d} \sum_d \vv{z}_{dn}$.
+
+Typically however, the topic distribution explain a document's words differs slightly from those predicting the origins of its inbound links, necessitating some adaptation. In the Relational Topic Model (RTM)\cite{Chang2009a}\cite{Chang2010a} the probability of a link from $d$ and $p$ is $p(y_{dp} = 1) = \sigma\left(\vv{\eta}\T(\bar{\vv{z}}_d .* \bar{\vv{z}}_p) + \nu \right)$ where $.*$ indicates the Hadamard product, the vector $\vv{eta}$ weights the distance and the scalar $\nu$ is some learnt random noise. By comparison, in \cite{Neiswanger2014} a separate noise term is learnt for each document when it is the target of a link, leading to the distribution $y_{dp} \sim \nor{\gamma \thd\T\vv{\theta}_p + \gamma \thd\T\vv{\epsilon}_p}{\tau_{y_{dp}}}$ where $\gamma$ scales the result to approximately $0\ldots 1$, and $\vv{\epsilon}_p$ is drawn from a Gaussian. Two different values of the variance $\tau$ are learnt depending on whether $y_{dp} = 1$ or $y_{dp} = 0$. 
+
+The LDA/PLSA model\cite{Nallapati2008}\cite{Nallapati2008a} takes a slightly different approach. It starts with a multi-field topic-model approach\cite{Blei2003} where using a single Dirichlet prior over the $K$ topics parameterised by $\thd$, two sets of topic-assignments are drawn, one for words, and one for links. In the case of words, there are $K$ associated distributions over topic words. In the case of documents there are likewise $K$ distributions over topic documents. However to encourage this latter distribution to take into account document contents, both it and the per-topic vocabularies are simultaneously used to train a PLSA model. This requires learning two sets of topic assignments to model words (one for LDA and one for PLSA) in addition to the set of topics modelling links.
+
+The SVM model of \cite{Bethard2010} is one of the few to consider time. In a generative setting \cite{Gerrish2010} modelled words only using an extension of thedynamic topic model of \cite{Blei2006a} in which time was quantized, and per-topic vocabularies changed between quanta according to a Kalman Filter style algorithm operating on the logistic-normal vocabulary distributions. The novel aspect of \cite{Gerrish2010} is in the addition of an impact factor, one for each paper and topic, which up-weights the contribution of that paper's topic-words when inferring the prior over vocabularies in the next time-step.
+
+Link prediction is an unbalanced prediction problem, with very few positive examples in the dataset. In the case of \cite{Bethard2010} a variant of SVM optimising the MAP criterion\cite{Yue2007} (i.e. ranking) was found to outperform logistic regression and logistic regression with downsampled negative inputs. In the RTM model\cite{Chang2009a}\cite{Chang2010a} a single-class classifier was trained, regularised by using a combination of Gaussian priors and the addition of a number of pseudo-documents for the negative case drawn from the posterior, their number indicated by means of a parameter $\rho$. This was motivated by the fact that the absence of links cannot be construed as evidence indicating links should not exist, and therefore one should not employ the ``zeroes" in the dataset as negative samples when training a classifier. Other approaches have simply ignored the imbalance, or in the case of the Link-PSLA-LDA model\cite{Nallapati2008}\cite{Nallapati2008a} used a multinomial distribution over documents' out-links, whose posterior is a function solely of existing links (the ``ones").
+
+An alternative approach is to use a form of weighted stochastic gradient descent, which preferably samples from the positive links rather than negative ones, while maintaining convergence guarantees. This was used in \cite{Gopalan2013b}\cite{Gopalan2013} though in network models which ignored document contents.
+
+In this paper we propose a new model for link-prediction. Unlike the approaches discussed this far, we consider both the directionality and the \emph{weight} of links: for each document, we consider the number of times a paper has been cited. As in the Link-PSLA-LDA model we try to use the topics learnt from words of a document to model whether a document should be the recipient of a link. However we take a wholly Bayesian approach to this problem, using suitably configured priors to account for the fact that the topics which explain a documents words and "out-links" do not exactly model the "in-links" it receives as it is cited by subsequent work.
+
+\section{The Matrix-Variate Normal Distribution}
+Given a random matrix $X \in \MReal{D}{K} \sim \mnor{M}{\Sigma}{\Omega}$ with row covariance $\Sigma \in \MReal{K}{K}$ and column covariance $\Omega \in \MReal{D}{D}$ its log-pdf is given by
+\begin{align}
+\halve{DK}\ln 2\pi - \halve{D}\ln|\Sigma| - \halve{K} \ln|\Omega| -\Tr{\inv{\Omega}(X - M)\inv{\Sigma}(X - M)\T}
+\end{align}
+This is mathematically identical to the following distribution over the vectorized matrix X, $\vecf{X} \sim \nor{\vecf{M}}{\Omega \otimes \Sigma}$. It should be noticed that this approach, due to the assumed separability of the covariance, is a considerably more parsimonious model than naively assuming $\vecf{X} \sim \nor{\vecf{M}}{S}$. The separability assumption, i.e. that $S = \Omega \otimes \Sigma$ means that the covariance is approximated in the following ways:
+
+\begin{align}
+\cov{X_{dk}, X_{pj}} & = \Omega_{dp} \Sigma_{kj} &
+\cov{X_{d-}} & = \Omega_{dd} \Sigma &
+\cov{X_{-k}} & = \Sigma_{kk} \Omega \label{eqn:sep-cov-forms}
+\end{align}
+
 
 \section{The Model}
 Following the example of the correlated topic model (CTM)\cite{Blei2006} we try to capture correlations between topics. We collect the individual document topic-score vectors $\thdo$ into a matrix $\Theta \in \MReal{D}{K}$. 
@@ -24,26 +61,15 @@ y_{dm} & \sim \muln{\vv{\sigma}(\thdo)}{1} &
 l_{dp} & \sim \muln{\vv{\beta}_{- z_{dn}}}{1}
 \end{align}
 
-Were we to put simple Dirichlet priors over $\vv{\beta}_k$ and $\vv{\phi}_k$ we would just have a simple multi-field (or ``multi-modal") topic-model\cite{Salomatin2009}. However we instead wish to transfer our knowledge of how topics are emitted by document $\Theta$ to the parameter $\Phi = \{ \vv{\phi}_k\T \}_{k=1}^K$ governing how documents are emitted for each topic $k$. Thus we use the following prior:
+Were we to put simple Dirichlet priors over $\vv{\beta}_k$ and $\vv{\phi}_k$ we would just have a simple multi-fieldtopic-model\cite{Blei2003}. However we instead wish to transfer our knowledge of how topics are emitted by document $\Theta$ to the parameter $\Phi = \{ \vv{\phi}_k\T \}_{k=1}^K$ governing how documents are emitted for each topic $k$. Thus we use the following prior:
 \begin{align}
 \Phi|\Theta & \sim \mnor{\Theta}{\Sigma}{\diag{\vv{\rho}}}
 \end{align}
-where $\vv{\rho} \in \VReal{D}$ is the column covariance of all documents. 
+where $\vv{\rho} \in \VReal{D}$ is the column covariance of all documents, and takes into account our uncertainty with regard to individual documents' probabilities of being the targets of links.
+
+We use the term's ``out-links" to denote the links emitted by a document, being the papers it cites, and ``in-links" to denote the links arriving at a document, being its citations by subsequent papers.
 
 \section{Inference with Non-Conjugate Bounds}
-\subsubsection*{The Matrix-Normal Distribution}
-Given a random matrix $X \in \MReal{D}{K} \sim \mnor{M}{\Sigma}{\Omega}$ with row covariance $\Sigma \in \MReal{K}{K}$ and column covariance $\Omega \in \MReal{D}{D}$ its log-pdf is given by
-\begin{align}
-\halve{DK}\ln 2\pi - \halve{D}\ln|\Sigma| - \halve{K} \ln|\Omega| -\Tr{\inv{\Omega}(X - M)\inv{\Sigma}(X - M)\T}
-\end{align}
-This is mathematically identical to the following distribution over the vectorized matrix X, $\vecf{X} \sim \nor{\vecf{M}}{\Omega \otimes \Sigma}$. It should be noticed that this approach, due to the assumed separability of the covariance, is a considerably more parsimonious model than naively assuming $\vecf{X} \sim \nor{\vecf{M}}{S}$. The separability assumption, i.e. that $S = \Omega \otimes \Sigma$ means that the covariance is approximated in the following ways:
-
-\begin{align}
-\cov{X_{dk}, X_{pj}} & = \Omega_{dp} \Sigma_{kj} &
-\cov{X_{d-}} & = \Omega_{dd} \Sigma &
-\cov{X_{-k}} & = \Sigma_{kk} \Omega \label{eqn:sep-cov-forms}
-\end{align}
-
 \subsubsection*{Non-Conjugate Bounds}
 The log-probability of the emission probabilities for words is given by
 \begin{align}
@@ -209,11 +235,17 @@ As noted in previous work, MTM-Old exhibits the property that the model prefers 
 
 We used weak priors for the variances, with $a = b = 0.001$, and $\nu = 1.1 \times K$ and $\Sigma_0 = 0.001 I_K$.
 
+\begin{figure}
+  \centering
+    \includegraphics[width=0.5\textwidth]{/Users/bryanfeeney/Desktop/mrr.eps}
+  \caption{Mean reciprocal-rank results for our current model. The ideal score is 0.6164. \emph{I'm still running experiments up to 100 topics}}\label{fig:mrr}
+\end{figure}
+
 The results for precision and recall at M are given in tables \ref{tbl:rtm}, \ref{tbl:mtm-old} and \ref{tbl:mtm-new}. The documents are grouped into subsets based on how many out-links they have. This is the ``group" column with the number of documents in each group in the ``count" column.
 
 The mean reciprocal-rank for 25 topics for RTM, MTM-Old and MTM-New is are 0.0016, 0.0887 and 0.1050 respectively.
 
-The perplexity for 25 topics for RTM, MTM-Old and MTM-New as evaluated on the \emph{training} dataset is 1581.67, 1559.38 and 15.68 respectively. I just use this as a convergence check. The old MTM model does a better job of modelling words and links despite doing worse at ranking, but in reality it's simply focusing on words which outnumber links 300 to 1.
+The perplexity for 25 topics for RTM, MTM-Old and MTM-New as evaluated on the \emph{training} dataset is 1581, 1559 and 1568 respectively. I just use this as a convergence check. The old MTM model does a better job of modelling words and links despite doing worse at ranking, but in reality it's simply focusing on words which outnumber links 300 to 1.
 
 \begin{table}{\small
 Precision at m\\
@@ -290,9 +322,8 @@ I also looked at the effect of $\alpha$ and $\vv{\rho}$. Fixing these at 1 led t
 \section{Discussion}
 In this model, I've re-used the same topic-covariance $\Sigma$ across both distributions. In practice, it's necessary to share a single covariance matrix in order to be able to obtain marginal distributions, in this case $\Phi \sim \mnor{0}{\alpha I_D + \diag{\vv{\rho}}}{\Sigma}$. I'm not sure that's sufficient justification for sharing the parameter. It is scaled in different ways by $\alpha$ and $\rho_d$ in both distributions, with $\rho_d$ always being greater than $\alpha$.
 
-This model still doesn't take into account any temporal effects, i.e. that certain papers become less popular over time.
+This model still doesn't take into account any temporal effects, i.e. that certain papers become less popular over time. 
 
 I haven't made use of the authorship or venue features in this. I tried employing these in a separate model which derived topics for $\thd$ for document $d$ from features $\xd$ according to $\thd \sim \nor{A \xd}{\Sigma}$, and found that they gave no benefit, presumably the 3,000 words in each document provide sufficient information, such that authorship, venue and year are of no benefit. 
 
-However there may be some benefit to features in terms of certain patterns observed in other research\cite{Bethard2010}, e.g. that authors self-cite, that they cite authors who cite them in turn, and that newer papers are more likely to be cited than old
-\input{../footer.tex}
+However there may be some benefit to features in terms of certain patterns observed in other research\cite{Bethard2010}, e.g. that authors self-cite, that they cite authors who cite them in turn, and that newer papers are more likely to be cited than old. \input{../footer.tex}
