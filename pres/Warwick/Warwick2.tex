@@ -404,11 +404,11 @@
 \section{Introduction}
 As they grow in size and number, the problem of how to navigate large document networks such as Wikipedia, Arxiv and others is increasingly pressing. \\
 
-One avenue is be provided by algorithms which recommend can links for give nodes. Such algorithms may consider graph structure on its own\cite{Gopalan2013b}, but one can learn more about each node, and also predict links for new nodes in the graph, if one also takes into account the content of document-nodes. \\
+One method is employing algorithms to recommend links for given nodes. Such algorithms may consider graph structure on its own\cite{Gopalan2013b}, but one can learn more about each node, and also predict links for new nodes in the graph, if one also takes into account the content of document-nodes. \\
 
-Typically the latent representation which describes a node's content does not perfectly describe its linkage however. Therefore previous approaches have relied on the ad hoc addition of extra noise factors\cite{Chang2009a}\cite{Neiswanger2014}. \\
+Typically the latent representation which describes a node's content does not perfectly describe its linkage however. Therefore previous approaches have relied on the addition of extra noise factors\cite{Chang2009a}\cite{Neiswanger2014}. \\
 
-We present a model for recommending links in document networks. We eschew noise factors by using a hierarchical scheme to share information between distinct representations of document's content and linkage. We take into account edge-weights by extracting the number of times a document $p$ is linked to by document $d$. We present a deterministic inference algorithm using softmax bounds and variational Bayes which is linear in the number of network links.
+We present a model for recommending links in document networks. We eschew noise factors by using a hierarchical scheme to share information between representations of document's content and linkage. We take into account edge-weights, modelling number of times a document $p$ is linked to by document $d$. We present a deterministic inference algorithm using softmax bounds and variational Bayes which is linear in the number of links.
 
 
 %%% Introduction
@@ -417,12 +417,10 @@ Given a random matrix $X \in \MReal{D}{K} \sim \mnor{M}{\Sigma}{\Omega}$ with ro
 \begin{align*}
 \halve{DK}\ln 2\pi - \halve{D}\ln|\Sigma| - \halve{K} \ln|\Omega| -\Tr{\inv{\Omega}(X - M)\inv{\Sigma}(X - M)\T}
 \end{align*}
-This is mathematically identical writing, $\vecf{X} \sim \nor{\vecf{M}}{\Omega \otimes \Sigma}$; however this is far more parsimonious model than the naive approach of $\vecf{X} \sim \nor{\vecf{M}}{S}$. The separability assumption,that $S = \Omega \otimes \Sigma$ means that the covariance is:
-
+This is mathematically identical writing, $\vecf{X} \sim \nor{\vecf{M}}{\Omega \otimes \Sigma}$; and is far more parsimonious than the naive approach of $\vecf{X} \sim \nor{\vecf{M}}{S}$. The separability assumption,that $S = \Omega \otimes \Sigma$ means that the covariance is:
 \begin{align*}
 \cov{X_{dk}, X_{pj}} & = \Omega_{dp} \Sigma_{kj} &
-\cov{X_{d-}} & = \Omega_{dd} \Sigma \\
-\cov{X_{-k}} & = \Sigma_{kk} \Omega 
+\cov{X_{d-}} & = \Omega_{dd} \Sigma 
 \end{align*}
 
 
@@ -454,15 +452,16 @@ Similar to the correlated topic model\cite{Blei2006} each document is modelled a
 \end{align*}
 
 Denoting the softmax function as $\sigma_k(\vv{\theta}) = \frac{\theta_k}{\sum_j \theta_j}$ and the vector of softmax scores as $\vv{\sigma}(\vv{\theta})$ we 
-the draw topic and then word for the $n$-th of the $N^w_d$ tokens in document $d$ as
+draw the topic $z_{dn}$ and word $w_{dn}$ for the $n$-th of the $N^w_d$ tokens in document $d$ as
 \begin{align*}
 \zdn & \sim \muln{\vv{\sigma}(\thdo)}{1} &
-\wdn & \sim \muln{\vv{\beta}_{z_{dn}}}{1}
+\wdn & \sim \muln{\vv{\beta}_{z_{dn}}}{1} &
+\vv{\beta}_k & \sim \dir{\vv{\lambda}}
 \end{align*}
-And likewise for the $m$-th of the $N^l_d$ out-links in document $d$
+And likewise for the $m$-th of the $N^l_d$ out-links in document $d$, $l_{dm}$
 \begin{align*}
 y_{dm} & \sim \muln{\vv{\sigma}(\thdo)}{1} &
-l_{dp} & \sim \muln{\vv{\phi}_{- y_{dm}}}{1}
+l_{dm} & \sim \muln{\vv{\phi}_{- y_{dm}}}{1}
 \end{align*}
 
 We link the probability of a document being generated according to topic $k$ with the probability of that same document generating a word or link according to topic $k$ using this prior over $\Phi$.
@@ -523,7 +522,6 @@ The matrix $F \in \MReal{D}{K}$ and vector $G \in \MReal{1}{K}$ simply collect t
 \newcommand \spd { { S^\phi_d } }
 
 Having lower-bounded the complete log likelihood using Bohning's bound, we can then employ an approximate posterior distribution $q(\Theta, Z, Y, \Phi, \Sigma, \vv{\rho}, \alpha)$ in conjunction with Jensen's inequality to obtain a lower-bound on the marginal log-likelihood:
-
 \begin{align*}
 \ln p(W, L) \geq \ex{\hat{p}(\Theta, Z, Y, W, L, \Phi)}{q} - \ent{q}
 \end{align*}
@@ -539,7 +537,7 @@ q(\phdo) &= \mathcal{N}\left(\phdo; \mpd, \spd\right)
 \end{align*}
 All other posteriors have the same functional form as the priors.\\
 
-The factorisation is firstly tractable, since matrix-variate posteriors are unavailable for $\Theta$ and $\Phi$, but it also allows us to perform inference a document at time which in future work will facilitate online learning over larger dataset using stochastic gradient descent. \\
+The factorisation is firstly tractable, since matrix-variate posteriors are unavailable for $\Theta$ and $\Phi$, but it also allows us to perform inference a document at time which could facilitate online learning over larger datasets using stochastic gradient descent. In the batch setting, the use of a multinomial distribution, modelling only observed links, link prediction is linear relative to the number of observations  \\
 
 The distribution $q(\thdo)$ gives the probability of document $d$ originating a word or link according to topic $k$, while the probability $q(\vv{\phi}_p)$ gives the probability of document $p$ being the target of a link emitted according to topic $k$\\
 
@@ -561,11 +559,11 @@ Denoting the sum of expected topic assignments for document $d$ as $\hat{\vv{z}}
              \right)
  \end{align*}
  
-One can see the similarity between the summands in the covariance terms on the right-hand side, and the covariance of a vector in a matrix-variate distribution. Note that $\invb{A\otimes B} = \inv{A} \otimes \inv{B}$, so one expectats the precision of a matrix vector to similarly be of the form $\inv{a}\inv{B}$
+One can see the similarity between the summands in the covariance terms on the right-hand side, and the covariance of a vector in a matrix-variate distribution. Note that $\invb{A\otimes B} = \inv{A} \otimes \inv{B}$, so one expects the precision of a matrix row to similarly be of the form $\inv{a}\inv{B}$
 
 \section{Experimental Results}
 
-We use the Association for Computational Linguistics (ACL) corpus of academic papers, which we have augmented by extracting the number of times each link appears in the document text. Excluding documents with fewer than three words or two out-going links, we arrive at a corpus of 4,264 documents. The total word-count of that corpus is 14,864,709 words drawn from a dictionary of 23,769 unique terms. 
+We use the Association for Computational Linguistics (ACL) corpus of academic papers, from which we have extracted link-counts per document. Excluding documents with fewer than three words or two out-going links, the corpus consists 4,264 documents, comprising 14,864,709 words drawn from a dictionary of 23,769 unique terms. 
 
 The evaluation methodology consists of removing from each document half its links, training on the full corpus, and then evaluating the rank of the held out links.
 
@@ -580,12 +578,12 @@ These all then averaged across all documents in the corpus. We additionally plot
 
 \includegraphics[scale=1.1]{images/RPlot.pdf}
 
-Our results, on the ACL dataset, are given above. Perplexity is seen to improve even as ranking metrics degrade. This is likely due to the greater preponderance of words versus links.
+Perplexity is seen to improve even as ranking metrics degrade. This is likely due to the greater preponderance of words versus links.
 
 \section{Discussion}
 We have presented a model which links the emission of topics per document, to the emissions of documents per topic, and therefore shares information between these two related tasks. \\
 
-Our model is the first, to our knowledge, which uses the \emph{incidence} rather than mere \emph{existence} of links when modelling relationships between documents. By construction it avoids the quadratic scaling problem of \cite{Chang2009a} and instead uses a deterministic inference algorithm which is linear in the number of links.\\
+Our model is the first, to our knowledge, which uses the \emph{incidence} rather than mere \emph{existence} of links when modelling relationships between documents. It avoids the quadratic scaling problem of \cite{Chang2009a} and instead uses a deterministic inference algorithm which is linear in the number of links.\\
 
 Our model can be used to predict links for existing and new documents, in the latter case by inferring $\thdo$ from document words. Our ranking results, on existing documents is competitive with published work, notably \cite{Chang2009a}\cite{Neiswanger2014} and we are actively experimenting with implementations of competing models and other datasets.
 
