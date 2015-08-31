@@ -359,7 +359,7 @@ Supervisor: Dr. Ricardo Silva}
     \item<2-> Background
     \only<2> {
         \begin{itemize}
-            \item Latent-Variable Models of Textual Corpora
+            \item Admixture (``Topic") Models of Text
             \item Choice of Priors for Topic Models
             \item Multi-Task Learning
         \end{itemize}
@@ -383,7 +383,7 @@ Supervisor: Dr. Ricardo Silva}
 
 \section{Background}
 
-\begin{frame}{Latent Variable Models of Text}
+\begin{frame}{Admixture Models of Text}
 
 \only<1,2> {
     \begin{figure}[t]
@@ -491,7 +491,7 @@ Problem: Making many predictions from the same data
 \begin{enumerate}
     \item Predict exam scores in $L$ subjects for several children\cite{Bonilla2008}
     \item Predict customers affinity to $L$ observed aspects of a product\cite{Allenby1999}
-    \item Propose image captions by predicting $p(\text{word}|\text{image})$ from image features for every individual word (in this case $L > 10,000$)\cite{Archambeau2011}
+    \item Propose image captions by predicting $p(\text{word}|\text{image})$ from image features for every individual word\cite{Archambeau2011} - in this case $L > 10,000$
 \end{enumerate}
 
 \medskip 
@@ -523,9 +523,7 @@ Learn $L$ vectors $\vv{w}_l$. How to \emph{transfer} knowledge from inferring $\
     
     \begin{align*}
         y_{nl}|\vv{w}_l & \sim \nor{\vv{w}_l\T\vv{x}_n}{\sigma^2 I} & \qquad
-        \vv{w}_l & \sim \nor{\vv{m}}{\Sigma} \\
-        \vv{m}|\Sigma & \sim \nor{\vv{m}_0}{\oneover{\lambda}\Sigma} & \qquad
-        \Sigma & \sim \mathcal{W}^{-1}\left(\Sigma_0, \nu\right)
+        \vv{w}_l & \sim \nor{\vv{m}}{\Sigma}
     \end{align*}
     }
 
@@ -621,7 +619,8 @@ Use-Case: Micro-Documents
 
 \begin{frame}{Matrix-Variate Normal Distribution}
 \begin{align*}
-X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sigma \otimes \Omega}
+X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sigma \otimes \Omega} \\
+\mathbb{C}\text{ov}\left[X_{ax}, X_{by}\right] & = \Sigma_{xy}\Omega_{ab}
 \end{align*}
 
 
@@ -677,7 +676,7 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
 
 \only<3> {
     \begin{align*}
-    A & \sim \mnor{0}{I + UU\T}{\Sigma} 
+    A & \sim \mnor{0}{\alpha^2 I_F + \rho^{2}UU\T}{\Sigma} 
     \end{align*}
 }
 
@@ -716,7 +715,7 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
 \only<4-> {
     Most posterior updates follow the usual mean-field form, e.g.
     \begin{align*}
-    \ln q(A) \propto \ex{\ln p(W,X,V,A,\Theta,Z,\Phi}{q(W,X,V,\Theta,Z,\Phi)}
+    \ln q(A) \propto \ex{\ln p(W,X,V,A,\Theta,Z,\Phi)}{q(W,X,V,\Theta,Z,\Phi)}
     \end{align*}
 }
 \end{frame}
@@ -740,12 +739,12 @@ X & \sim \mnor{M}{\Omega}{\Sigma} & \implies \vecf{X} & \sim \nor{\vecf{M}}{\Sig
 \only<3> {
     Bohing Bound\cite{Bohning1988a}
     \begin{align*}
-    \Axi & = \half \left( I - \frac{1}{K+1}\one \one\T \right) \\
+    \Axi & = \half \left( I - \frac{1}{K}\one \one\T \right) \\
     \bxi & = \Axi \vv{\xi} - \sigma(\vv{\xi})\\
     \cxi & = \half \vv{\xi}\T \Axi \vv{\xi} - \sigma(\vv{\xi})\T\vv{\xi} + \lse(\vv{\xi})
     \end{align*}
     
-    A second order Taylor approximation where the Hessian is replaced with $B \preceq H$, where $B = \frac{1}{2}\left( I - \frac{1}{K+1}\one \one\T \right)$
+    A second order Taylor approximation where the Hessian is replaced with a fixed matrix $\Axi \preceq H$.
 }
 
 \only<4> {
@@ -823,7 +822,7 @@ Variational E-Step
 Two Datasets
 Tweets from May 1st to September 30th 2013 (inclusive)
 \begin{itemize}
-    \item 578,408 tweets from 572 users. Vocabulary of 21,366 words
+    \item 578,408 tweets from 363 users. Vocabulary of 21,366 words
     \item Median tweet length is 10 words, total of 5,313,438 word observations across the corpus 
     \item Features are: author; time at various granularities (hour, day, week, month)
 \end{itemize}
@@ -858,7 +857,7 @@ Baseline Models
 
 \begin{frame}{Tweets}
 \only<1> {
-    \begin{center}      \includegraphics[height=2.5in]{Images/tweet-all.eps}    \end{center}
+    \begin{center}      \includegraphics[height=3.0in]{Images/tweet-all.pdf}    \end{center}
 }
 \only<2> {
     {\tiny
@@ -919,7 +918,7 @@ Baseline Models
 
 \begin{frame}{ACL}
 \only<1> {
-    \begin{center}      \includegraphics[height=2.5in]{Images/acl-all.eps}    \end{center}
+    \begin{center}      \includegraphics[height=2.5in]{Images/acl-all.pdf}    \end{center}
 }
 
 \only<2> {
