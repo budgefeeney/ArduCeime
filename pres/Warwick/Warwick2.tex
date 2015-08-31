@@ -408,7 +408,7 @@ One avenue is be provided by algorithms which recommend can links for give nodes
 
 Typically the latent representation which describes a node's content does not perfectly describe its linkage however. Therefore previous approaches have relied on the ad hoc addition of extra noise factors\cite{Chang2009a}\cite{Neiswanger2014}. \\
 
-We present a model for recommending links in document networks. We eschew noise factors by using a hierarchical scheme to share information between distinct representations of document's content and linkage. We present a deterministic inference algorithm using softmax bounds and variational Bayes which is linear in the number of network links.
+We present a model for recommending links in document networks. We eschew noise factors by using a hierarchical scheme to share information between distinct representations of document's content and linkage. We take into account edge-weights by extracting the number of times a document $p$ is linked to by document $d$. We present a deterministic inference algorithm using softmax bounds and variational Bayes which is linear in the number of network links.
 
 
 %%% Introduction
@@ -457,7 +457,7 @@ Denoting the softmax function as $\sigma_k(\vv{\theta}) = \frac{\theta_k}{\sum_j
 the draw topic and then word for the $n$-th of the $N^w_d$ tokens in document $d$ as
 \begin{align*}
 \zdn & \sim \muln{\vv{\sigma}(\thdo)}{1} &
-\wdn & \sim \muln{\vv{\lambda}_{z_{dn}}}{1}
+\wdn & \sim \muln{\vv{\beta}_{z_{dn}}}{1}
 \end{align*}
 And likewise for the $m$-th of the $N^l_d$ out-links in document $d$
 \begin{align*}
@@ -479,7 +479,7 @@ The log-probability of the emission probabilities for words is given by
 \end{align*}
 where the log-sum-exp function is $\lse(\thd) = \ln (\sum_k e^\thdk)$. This this expectation cannot be evaluated analytically
 
-Rather than use a Taylor approximation\cite{Wang2013} we choose to bound it with using the Bohning bound\cite{Bohning1988}. This guarantees to convergence, and due to is quadratic form, allows for closed form updates.
+Rather than use a Taylor approximation\cite{Wang2013} we choose to bound it with using the Bohning bound\cite{Bohning1988}. This guarantees convergence, and due to its quadratic form, allows for closed form updates.
 
 \begin{align*}
 \lse(\thdo) \leq \half \thdo\T A_K \thdo - \vv{b}_d\T\thdo + c_d \label{eqn:lse-def}
@@ -501,7 +501,7 @@ Employing this bound, and denoting $N^o_d = N^w_d + N^l_d$ we can lower-bound th
 \end{equation*}
 and derive the expectations of the linear and quadratic terms in the usual way.\\
 
-Taking derivatives, we obtain the solution to the bound parameter is $\Ed = \ex{\thdo}{q}$. This indicates that our bound simplifies to $\ex{\lse(\thdo)}{q} \leq \lse(\ex{\thdo}{q})$, however the longer form using $A$, $\vv{b}$ and $c$ avoids nested Newton-Raphson updates.\\
+Taking derivatives, we obtain the solution to the bound parameter is $\Ed = \ex{\thdo}{q}$. This indicates that our bound simplifies to $\ex{\lse(\thdo)}{q} \leq \lse(\ex{\thdo}{q})$, however the longer form using $A$, $\vv{b}$ and $c$ avoids the need for nested Newton-Raphson iterations.\\
 
 The distribution over links is similarly bounded by $A_D$, $\vv{f}$ and $g$, but we can rotate it from an equation over $\vv{\phi}_k$ into an equation over $\vv{\phi}_d$ by letting $\hat{L}_{dk} = \sum_p \sum_m y_{pmk} l_{pmd}$ and $N^i = \diag{\sum_d \hat{L}_{d\cdot}}$
 \begin{equation*}
@@ -533,11 +533,11 @@ We use the following mean-field factorisation
 q(\ldots) = q(\alpha)q(\Sigma)\prod_d q(\thd)q(\vv{\phi}_d)q(\rho_d)\prod_n q(\vv{z}_{dn})q(\vv{y}_{dn}).
 \end{align*}
 where 
-\begin{align}
+\begin{align*}
 q(\thdo) &= \mathcal{N}\left(\thdo; \mtd, \std \right) &
 q(\phdo) &= \mathcal{N}\left(\phdo; \mpd, \spd\right) 
-\end{align}
-And the other posteriors have the same functional form as the priors.\\
+\end{align*}
+All other posteriors have the same functional form as the priors.\\
 
 The factorisation is firstly tractable, since matrix-variate posteriors are unavailable for $\Theta$ and $\Phi$, but also allows us to perform inference a document at time which in future work will facilitate online learning over larger dataset using stochastic gradient descent. \\
 
@@ -561,7 +561,7 @@ Denoting the sum of expected topic assignments for document $d$ as $\hat{\vv{z}}
              \right)
  \end{align*}
  
-One can see the similarity between the summands in the covariance terms on the right-hand side, and the covariance of a vector in a matrix-variate distribution. Note that $\invb{A\otimes B} = \inv{A} \otimes \inv{B}$, so one expectation the precision to similarly be of the form $\inv{a}\inv{B}$
+One can see the similarity between the summands in the covariance terms on the right-hand side, and the covariance of a vector in a matrix-variate distribution. Note that $\invb{A\otimes B} = \inv{A} \otimes \inv{B}$, so one expectats the precision of a matrix vector to similarly be of the form $\inv{a}\inv{B}$
 
 \section{Experimental Results}
 
@@ -571,11 +571,14 @@ The evaluation methodology consists of removing from each document half of its l
 
 We use three ranking metrics:
 \begin{description}
-\item[Mean Reciprocal Rank]: 
+\item[Mean Reciprocal Rank]: $\frac{1}{D} \sum_d \frac{1}{Q} \sum_q r_q$. 
+\item[Recall at M]: The number of correct links found in the top $m$ links returned for a document as a proportion of the total number of correct links. 
+\item[Precision at M]: The proportion of correct links found in the top $m$ links returned for a document.
+\item[Mean Average Precision]: Given the ranks of all correct links for a document, average the precision at m for m equal to each of those ranks. 
 \end{description}
+These all then averaged across all documents in the corpus.
 
-
-Mean reciprocal-rank, is the average of the reciprocal of the ranks of all held-out links across all documents: $mrr = \frac{1}{D} \sum_d \frac{1}{Q} \sum_q r_q$.  
+Mean reciprocal-rank, is the average of the reciprocal of the ranks of all held-out links across all documents: $mrr =  
 
 The precision at m is the precision evaluated on the top-ranked $m$ documents, which is simply the quotient of the number of held-out links found in that subset and $m$. The recall at m similarly is the recall evaluated on the top-ranked $m$ documents, being the quotient of number of held-out links returned and either $m$ or the total number of out links that could be returned, whichever is smaller. Precision and recall at m were averaged across all documents in the corpus. In all cases larger values are better.
 
