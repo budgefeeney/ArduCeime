@@ -49,13 +49,13 @@ Using Jensen's inequality\fixme{citation} with the approximate bound, we obtain 
 
 The posterior distributions are
 
-%\begin{align}
-%\ex{\ln p(\Phi)}{q}
-%\ex{\ln p(Y)}{q}
-%\ex{\ln p(A)}{q}
-%\ex{\ln p(\thd)}{q}
-%\ex{\ln p(\wdn)}{q}
-%\end{align}
+\begin{align}
+\begin{split}
+\ex{\ln p(Y)}{q} 
+    & = \halve{PQ} \ln 2\pi - \halve{PQ} \ln \alpha - \halve{PQ} \ln \beta \\
+    & - \half \Tr{ \inv{\beta} I_P M_Y \inv{\alpha} I_Q M_Y\T }
+\end{split}
+\end{align}
 
 
 
