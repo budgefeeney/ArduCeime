@@ -52,10 +52,21 @@ The posterior distributions are
 \begin{align}
 \begin{split}
 \ex{\ln p(Y)}{q} 
-    & = \halve{PQ} \ln 2\pi - \halve{PQ} \ln \alpha - \halve{PQ} \ln \beta \\
-    & - \half \Tr{ \inv{\beta} I_P M_Y \inv{\alpha} I_Q M_Y\T }
+    & = -\halve{PQ} \ln 2\pi - \halve{PQ} \ln \alpha \beta - \\
+    & - \half \Tr{ \invb{\alpha \beta} I_P M_Y M_Y\T } \\
+    & - \half \Tr{\invb{\alpha \beta} I_{PQ} S_y }
+\end{split} \\
+\begin{split}
+\ex{\ln p(Y)}{q} 
+    & = -\halve{KF} \ln 2\pi - \halve{KF} \ln \sigma - \halve{KF} \ln \tau \\
+    & - \half \Tr{ \inv{\tau} I_F (M_Y - U M_A V\T) \inv{\sigma} I_K (M_Y - U M_A V\T)\T } \\
+    & - \half \Tr{ \inv{\tau} I_F S_A}\Tr{\inv{\sigma} I_K R_A} \\
+    & - \half \Tr{ U\T \inv{\tau}I_F U}\Tr{ V\T \sigma I_K V)}
 \end{split}
 \end{align}
+
+
+\fixme{Note that $\Tr{A \otimes B} = \Tr{A}\Tr{B}$}
 
 
 
