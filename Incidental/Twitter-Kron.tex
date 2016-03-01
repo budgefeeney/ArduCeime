@@ -1,0 +1,64 @@
+\input{../header.tex}
+
+\section{Appendix}
+
+\subsection{The Variational Lower Bound}
+To recap, our model posits that each for each document $d$ in our corpus, its topic score-vector $\thd \in \VReal{K}$ is a function of an observed vector of document features $\xd \in \VReal{F}$ and an unknown matrix $A$. This is converted to topic-distribution using the softmax function $\vv{\sigma}(\vv{\theta}) = \left\{ \frac{\exp(\theta_k)}{\sum_j \exp(\theta_j)} \right\}_{k=1}^K$. For each position in the document we draw a topic $\zdn$ according to this distribution, and then draw a word from the topic-specific word-distribution $\pk$
+
+\begin{align}
+\thd &\sim \nor{A\T\xd}{\sigma I_K} &
+\zdn &\sim \muln{\vv{\sigma}(\thd)}{1} & 
+\wdn &\sim \muln{\pk}{1}
+\end{align}
+
+The word distributions have a symmetric Dirichlet prior $\pk \sim \dir{\vv{\beta}}$. For $A \in \MReal{F}{K}$ we use a matrix-variate prior conditioned on a latent variable $Y \in \MReal{P}{Q}$ where $P << F$ and $Q << K$.
+
+\begin{align}
+A &\sim \mnor{UYV\T}{\sigma I_K}{\tau I_F} &
+Y &\sim \mnor{0}{\alpha I_Q}{\beta I_P}
+\end{align}
+
+while $U \in \MReal{F}{P}$ and $V \in \MReal{K}{Q}$ are parameters with no distribution. Letting $n_d$ be the total number of words in document $d$, $\Theta = \left\{ \thd\T \right\}_{d=1}^D$ and $\mathcal{Z} = \bigcup_{d=1}^D \{ z_{dn} | n \in \{1, \ldots, n_d \} \}$ we approximate the true posterior $p(Y, A, \Theta, \mathcal{Z})$ with the factorised approximate posterior
+
+\fixme{How to allow for MAP estimation of $\pk$ in this framework}
+
+\begin{align}
+q(Y, A, \vv{\theta}_1, \ldots \vv{\theta}_D, \mathcal{Z}) = q(Y)q(A)\prod_d q(\thd) \prod_n q(\zdn)
+\end{align}
+For the factored posterior we use the same distributions as the priors, except for $q(Y)$ where we use a multivariate distribution
+
+\begin{equation}
+\begin{split}
+q(Y) &= \nor{\vecf{M_Y}}{S_y} &
+q(A) &= \mnor{M_A}{R_A}{S_A} \\
+q(\thd) &= \nor{\md}{\diag{\vv{\rho}}} &
+q(\zdn) & = \muln{\gdn}{1} \\
+\end{split}
+\end{equation}
+
+
+Using Jensen's inequality\fixme{citation} with the approximate bound, we obtain the following lower-bound on the log-evidence, $\ln p(W)$
+
+\begin{equation}
+\begin{split}
+\ln p(W) 
+&= \ex{\ln p(Y)}{q} + \ex{\ln p(A)}{q} \\
+&+ \sum_d \ex{\ln p(\thd)}{q} + \sum_n \ex{\ln p(\zdn)}{q} + \ex{\ln p(\wdn)}{q}
+\end{split}
+\end{equation}
+
+The posterior distributions are
+
+%\begin{align}
+%\ex{\ln p(\Phi)}{q}
+%\ex{\ln p(Y)}{q}
+%\ex{\ln p(A)}{q}
+%\ex{\ln p(\thd)}{q}
+%\ex{\ln p(\wdn)}{q}
+%\end{align}
+
+
+
+
+
+\input{../footer.tex}
