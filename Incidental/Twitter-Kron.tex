@@ -1,4 +1,6 @@
 \input{../header.tex}
+\newcommand \ed { { \vv{\xi}_d } }
+\newcommand \bd { { \vv{b}_d   } }
 
 \section{Appendix}
 
@@ -8,7 +10,7 @@ To recap, our model posits that each for each document $d$ in our corpus, its to
 \begin{align}
 \thd &\sim \nor{A\T\xd}{\sigma I_K} &
 \zdn &\sim \muln{\vv{\sigma}(\thd)}{1} & 
-\wdn &\sim \muln{\pk}{1}
+\wdn &\sim \prod_k z_{dnk} \muln{\pk}{1}
 \end{align}
 
 The word distributions have a symmetric Dirichlet prior $\pk \sim \dir{\vv{\beta}}$. For $A \in \MReal{F}{K}$ we use a matrix-variate prior conditioned on a latent variable $Y \in \MReal{P}{Q}$ where $P << F$ and $Q << K$.
@@ -18,20 +20,20 @@ A &\sim \mnor{UYV\T}{\sigma I_K}{\tau I_F} &
 Y &\sim \mnor{0}{\alpha I_Q}{\beta I_P}
 \end{align}
 
-while $U \in \MReal{F}{P}$ and $V \in \MReal{K}{Q}$ are parameters with no distribution. Letting $n_d$ be the total number of words in document $d$, $\Theta = \left\{ \thd\T \right\}_{d=1}^D$ and $\mathcal{Z} = \bigcup_{d=1}^D \{ z_{dn} | n \in \{1, \ldots, n_d \} \}$ we approximate the true posterior $p(Y, A, \Theta, \mathcal{Z})$ with the factorised approximate posterior
+while $U \in \MReal{F}{P}$ and $V \in \MReal{K}{Q}$ are parameters with no distribution. Letting $n_d$ be the total number of words in document $d$, $\Theta = \left\{ \thd\T \right\}_{d=1}^D$, $\mathcal{Z} = \bigcup_{d=1}^D \{ z_{dn} | n \in \{1, \ldots, n_d \} \}$ and $\mathcal{W} = \bigcup_{d=1}^D \{ w_{dn} | n \in \{1, \ldots, n_d \} \}$ we approximate the true posterior $p(Y, A, \Theta, \mathcal{Z} | \mathcal{W})$ with the factorised approximate posterior
 
 \fixme{How to allow for MAP estimation of $\pk$ in this framework}
 
 \begin{align}
-q(Y, A, \vv{\theta}_1, \ldots \vv{\theta}_D, \mathcal{Z}) = q(Y)q(A)\prod_d q(\thd) \prod_n q(\zdn)
+q(Y, A, \Theta, \mathcal{Z}) = q(Y)q(A)\prod_d q(\thd) \prod_n q(\zdn)
 \end{align}
-For the factored posterior we use the same distributions as the priors, except for $q(Y)$ where we use a multivariate distribution
+The posterior factors have the following distributions
 
 \begin{equation}
 \begin{split}
 q(Y) &= \nor{\vecf{M_Y}}{S_y} &
 q(A) &= \mnor{M_A}{R_A}{S_A} \\
-q(\thd) &= \nor{\md}{\diag{\vv{\rho}}} &
+q(\thd) &= \nor{\md}{\diag{\vv{s}_d}} &
 q(\zdn) & = \muln{\gdn}{1} \\
 \end{split}
 \end{equation}
@@ -42,7 +44,7 @@ Using Jensen's inequality\fixme{citation} with the approximate bound, we obtain 
 \begin{equation}
 \begin{split}
 \ln p(W) 
-&= \ex{\ln p(Y)}{q} + \ex{\ln p(A)}{q} \\
+&\geq \ex{\ln p(Y)}{q} + \ex{\ln p(A)}{q} \\
 &+ \sum_d \ex{\ln p(\thd)}{q} + \sum_n \ex{\ln p(\zdn)}{q} + \ex{\ln p(\wdn)}{q}
 \end{split}
 \end{equation}
@@ -57,18 +59,110 @@ The posterior distributions are
     & - \half \Tr{\invb{\alpha \beta} I_{PQ} S_y }
 \end{split} \\
 \begin{split}
-\ex{\ln p(Y)}{q} 
+\ex{\ln p(A)}{q} 
     & = -\halve{KF} \ln 2\pi - \halve{KF} \ln \sigma - \halve{KF} \ln \tau \\
-    & - \half \Tr{ \inv{\tau} I_F (M_Y - U M_A V\T) \inv{\sigma} I_K (M_Y - U M_A V\T)\T } \\
+    & - \half \Tr{ \inv{\tau} I_F (M_A - U M_Y V\T) \inv{\sigma} I_K (M_A - U M_Y V\T)\T } \\
     & - \half \Tr{ \inv{\tau} I_F S_A}\Tr{\inv{\sigma} I_K R_A} \\
-    & - \half \Tr{ U\T \inv{\tau}I_F U}\Tr{ V\T \sigma I_K V)}
+    & - \half \Tr{ U\T \inv{\tau}I_F U}\Tr{ V\T \inv{\sigma} I_K V)}
+\end{split} \\
+\begin{split}
+\ex{\ln p(\Theta)}{q} 
+    & = -\halve{DK} \ln 2\pi - \halve{DK} \ln \sigma  \\
+    & - \half \sum_d \left(\md - M_A\T \xd\right)\T \inv{\sigma} I_K \left(\md - M_A\T \xd\right) \\
+    & - \half \sum_d \Tr{ \inv{\sigma} I_K \diag{\vv{s}_d}} \\
+    & - \half \Tr{ X\T X S_A}\Tr{\inv{\sigma} I_K}
+\end{split}\\
+\begin{split}
+\ex{\ln p(\mathcal{W})}{q} 
+    & = \sum_d \sum_n \sum_k \sum_t \zdnk \wdnt \ln \pk
 \end{split}
 \end{align}
 
+Using the Bohning bound\cite{Bohning1988} we can lower bound the expected log-probability of the topic-assignments as
 
-\fixme{Note that $\Tr{A \otimes B} = \Tr{A}\Tr{B}$}
+\begin{equation}
+\begin{split}
+\ex{\ln p(\mathcal{Z})}{q} 
+    & \geq \sum_d \vv{\gamma}_{d\cdot}\T \md
+      - \sum_d n_d \left( \half \ed\T H \ed - \bd \T \ed + c_d \right)
+\end{split}
+\end{equation}
+
+where $\vv{\gamma}_{d\cdot} = \sum_n \gdn$
 
 
+\section{The Posterior Distributions}
+
+\subsection{q(Y)}
+Taking derivatives we obtain the solution
+
+\begin{align}
+-\invb{\alpha \beta} M_Y - U\T U M_Y V V\T + U\T M_A V \mbeq 0
+\end{align}
+
+This Sylvester equation can be solved by means of the transformation $\vecf{ABC} = (C\T \otimes A)\vecf{B}$. This leads to the solution
+
+\begin{align}
+\vecf{M_Y} = \invb{\invb{\alpha \beta} I_{PQ} + U\T U \otimes V\T V}\vecf{U\T M_A V} \label{eqn:dumb-y-soln}
+\end{align}
+
+
+Similar calculations show the posterior covariance to be 
+
+\begin{align}
+S_y = \invb{\invb{\alpha \beta} I_{PQ} + U\T U \otimes V\T V}
+\end{align}
+
+As the dimensions of $S_y \in \MReal{(P\times Q)}{(P \times Q)}$ are excessive, we use the following method to avoid the inverse when deriving the update for $M_Y$.
+
+Given the eigen-decomposition $B = B_A S_B U_B\T$, where $S_A$ is the diagonal matrix of eigenvalues, we can write $\inv{B} = U_B \inv{S_B} U_B\T$. Using the result in \cite{Stegle2011} we can further write that for a matrix $A = \alpha I + B \otimes C$ its eigen-decomposition is given by the matrices
+
+\begin{align}
+A & = U_A S_A U_A\T & U_A & = U_C \otimes U_B & S_A = \alpha I + S_C \otimes S_B
+\end{align}
+
+where the eigen-decomposition of $B$ is $U_B S_B U_B^\top$ and similarly for $C$. Employing this identity, we see that
+
+\begin{align}
+\begin{split}
+((\alpha \beta)^{-1} I_{PQ} & + U\T U \otimes V\T V) \\
+& =  \left(U_V \otimes U_U\right)
+  \invb{\invb{\alpha \beta} I_{PQ} + S_V \otimes S_U}
+  \left(U_V\T \otimes U_U\T\right)
+\end{split}
+\end{align}
+
+where the eigen-decomposition of $V\T V$ is $U_V S_V U_V\T$ and similarly for $U\T U$. For brevity in the following we denote $S_{VU} = \left(\invb{\alpha \beta} I_{PQ} + S_V \otimes S_U\right)$. Note that being a diagonal matrix, its inverse is trivially obtained. This allows us to re-write the solution for $M_Y$ as
+
+\begin{align}
+\vecf{M_Y} 
+    & = \invb{\invb{\alpha \beta} I_{PQ} + U\T U \otimes V\T V}\vecf{U\T M_A V} \\
+    & = \left(U_V \otimes U_U\right) \inv{S_{VU}} \left(U_V \otimes U_U\right)\T \vecf{U\T M_A V}
+\end{align}
+
+By first using the fact that $\inv{S_{VU}}$ is a diagonal matrix, and then the fact that $(C\T \otimes A)\vecf{B} = \vecf{ABC}$ we can simplify the expression 
+\begin{align}
+ &\inv{S_{VU}}(U_V^\top \otimes U_U^\top) \vecf{U\T M_A V} \\
+= & (U_V^\top \otimes U_U^\top)\inv{S_{VU}} \vecf{U\T M_A V} \\
+= & (U_V^\top \otimes U_U^\top)\vecf{\diag{\inv{S_{VU}}}^{(P)} .* (U\T M_A V)} \\
+= & \vecf{U_U (\diag{\inv{S_{VU}}}^{(P)} .* (U\T M_A V)) U_V^\top} = \vecf{\hat S}
+\end{align}
+
+where $.*$ indicates the Hadamard product and the notatiuon $A^{(N)}$ indicates the N-th order \emph{vec-transpose}\cite{Minka2000a} of the matrix $A$, which for a vector is equivalent to a fortran-order reshaping of its contents to form a matrix containing contain $N$ rows.
+
+Once again applying the identity $(C\T \otimes A)\vecf{B} = \vecf{ABC}$ we now can re-write the full update for $\vecf{M_Y}$ as:
+
+\begin{align}
+\vecf{M_Y} & = (U_V \otimes U_U)\vecf{\hat S} = \vecf{U_U^\top \hat S U_V}
+\end{align}
+
+And then remove the $\vecf{\cdot}$ function from both sides and thus obtain our final solution:
+
+\begin{align}
+M_Y = U_U^\top U_U (\diag{\inv{S_{VU}}}^{(P)} .* (U\T M_A V)) U_V^\top U_V
+\end{align}
+
+where `.*` indicates the Hadamard product, and $\hat S$ is an appropriately shaped matrix containing the elements of the diagonal given by $(\alpha I + S_V \otimes S_U)$. The time complexity of this approach is $O(P^3 + Q^3)$ rather than the initial approach in $\eqref{eqn:dumb-y-soln}$ which is $O(P^3Q^3)$
 
 
 
