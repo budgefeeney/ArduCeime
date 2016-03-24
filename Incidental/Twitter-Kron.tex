@@ -70,7 +70,7 @@ The posterior distributions are
     & = -\halve{DK} \ln 2\pi - \halve{DK} \ln \sigma  \\
     & - \half \sum_d \left(\md - M_A\T \xd\right)\T \inv{\sigma} I_K \left(\md - M_A\T \xd\right) \\
     & - \half \sum_d \Tr{ \inv{\sigma} I_K \diag{\vv{s}_d}} \\
-    & - \half \Tr{ X\T X S_A}\Tr{\inv{\sigma} I_K}
+    & - \halve{D} \Tr{ X\T X S_A}\Tr{\inv{\sigma} I_K R_A}
 \end{split}\\
 \begin{split}
 \ex{\ln p(\mathcal{W})}{q} 
@@ -164,6 +164,39 @@ M_Y = U_U^\top U_U (\diag{\inv{S_{VU}}}^{(P)} .* (U\T M_A V)) U_V^\top U_V
 
 where `.*` indicates the Hadamard product, and $\hat S$ is an appropriately shaped matrix containing the elements of the diagonal given by $(\alpha I + S_V \otimes S_U)$. The time complexity of this approach is $O(P^3 + Q^3)$ rather than the initial approach in $\eqref{eqn:dumb-y-soln}$ which is $O(P^3Q^3)$
 
+\subsection{q(A)}
+Denoting $M_\Theta = \{ \vv{m}_d \}_{d=1}^D$, and taking derivatives we arrive at the solution
+
+\begin{align}
+- \inv\tau\inv\sigma M_A 
+- \inv\sigma X\T X M_A
++ \inv\tau \inv\sigma UM_YV\T
++ \inv\sigma X\T M_\Theta
+\mbeq 0\end{align}\begin{align}
+\implies M_A = \invb{\inv\tau I_F + X\T X}\left(\inv\tau UM_YV\T + X\T M_\Theta \right)
+\end{align}
+
+Similarly taking derivatives gives the following updates for column and row covariances $S_A$ and $R_A$. 
+\begin{align}
+\inv{S_A}
+    & = \Tr{\inv\sigma I_K R_A}\inv\tau I_F + \Tr{\inv\sigma I_K R_A} X\T X \\
+    & = \Tr{(\inv\sigma I_K) R_A}\left(\inv\tau I_F + X\T X\right) \\
+\inv{R_A} 
+    & = \Tr{\inv\tau I_F S_A}\inv\sigma I_K + \Tr{X\T X S_A}\inv\sigma I_K \\
+    & = \Tr{\left(\inv\tau I_F + X\T X \right) S_A}\inv\sigma I_K
+\end{align}
+At first glance, these appear coupled, however if we substitute the solution for $R_A$ into $S_A$ we obtain
+
+\begin{align}
+S_A = 2
+\end{align}
+
+
+
+
+
+
+\subsection{q($\Theta$)}
 
 
 \input{../footer.tex}
