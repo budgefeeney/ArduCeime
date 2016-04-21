@@ -364,8 +364,7 @@ R & = W ./ \hat{W} \\
 G & = \Theta .* (R \Phi\T) \\
 \Theta_{d\cdot} & = \invb{\inv\sigma I_K + n_d H}\left(\inv\sigma M_A\T\xd + n_d \vv{b}_d + G_{d\cdot} \right) \\
 \Phi & = \text{normalizerows}\left( \Phi .* (\Theta\T R) + \beta  \right)
-\end{align*}
-
+came
 The incorporation of the document length in the update for $\Theta$ can be ameliorated by bucketing documents with the same length and doing bulk updates for each bucket. In the case of micro-documents like tweets, there number of documents vastly exceeds the number of unique document lengths.
 
 \input{../footer.tex}

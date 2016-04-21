@@ -21,13 +21,14 @@ The logit is motivated as a log-odds ratio. Let $y_d = \vv{w}\T\vv{x}_d$. Then:
 
 This leads to an easy interpretation of the weights in logistic regression: each individual weight $w_f$ indicates how much the log-odds of the positive class are increased.
 
-%The following identities are useful when working with the logit:
-%\begin{align}
-%\sigma(y)' & = \sigma(y)(1 - \sigma(y)) \label{eqn:sigma-identity} &
-%2 \sigma(y) & = 1 - \tanh (\frac{y}{2}) \\
-%1 - \sigma(y) & = \frac{e^{-y}}{1 + e^{-y}} &
-%\sigma(-y) & = -\sigma(y)
-%\end{align}
+% FIXME comment again
+The following identities are useful when working with the logit:
+\begin{align}
+\sigma(y)' & = \sigma(y)(1 - \sigma(y)) \label{eqn:sigma-identity} &
+2 \sigma(y) & = 1 - \tanh (\frac{y}{2}) \\
+1 - \sigma(y) & = \frac{e^{-y}}{1 + e^{-y}} &
+\sigma(-y) & = -\sigma(y)
+\end{align}
 
 
 \subsubsection*{Maximum Likelihood Estimation}
