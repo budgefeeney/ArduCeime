@@ -16,38 +16,38 @@
 \newcommand \logjoint { { \ln \joint } }
 \newcommand \exlogjoint[1] { { \ex{\logjoint}{{#1}} } }
 
-\section{Review of Inference in Probabilistic Models}
-Probabilistic inference is concerned with two problems: the problem of estimation parameter values $\param$ from a set of observations $\vv{x} \in \xdat$; and the prediction of the probability of unobserved variables $p(\xnew | \xdat) = \int p(\xnew | \param) p(\param | \xdat) d\param$. Various methods have been proposed for this purpose
+\section{Inference in Probabilistic Models}
+Probabilistic inference is concerned with two problems: inference, the estimation parameter values $\param$ from a set of observations $\vv{x} \in \xdat$; and prediction, the evaluation of the probability of unobserved variables $p(\xnew | \xdat) = \int p(\xnew | \param) p(\param | \xdat) d\param$. Various methods have been proposed for this purpose.
 
-\emph{Maximum likelihood} finds the parameter value that maximises, $p(\xdat|\param)$, known as the likelihood. For reasons of algebraic convenience, it is usual to find the maximum of the log of the likelihood.\begin{align*}
+\emph{Maximum likelihood} finds the parameter value that maximises, $p(\xdat|\param)$, known as the likelihood. For reasons of algebraic convenience, one commonly finds the maximum of the log of the likelihood.\begin{align}
 \ml{\param} = \arg \max_{\param} \ln p(\xdat | \param)
-\end{align*}
+\end{align}
 As the log of a monotonically increasing function, the log-likelihood and likelihood have the same maxima. For the particular case of independently and identically distributed (IID) observations, the log-likelihood factors into a simple sum.
-\begin{align*}
+\begin{align}
 \ml{\param} = \arg \max_{\param} \sum_d \ln p(\xd | \param)
-\end{align*}
-
+\end{align}
+\bflong{Which is stronger: exchangeability or IID}
 For prediction one typically employs the approximation
 
-\begin{align*}
+\begin{align}
 p(\xnew | \xdat) 
 &= \int p(\xnew | \param) p(\param | \xdat) d\param \\
 &\approx \int p(\xnew | \ml{\param}) p(\param | \xdat) d\param
 =  p(\xnew | \ml{\param})
-\end{align*}
+\end{align}
 
 \emph{Maximum a Posteriori} (MAP) estimation, like maximum likelihood, finds a mode, but of the posterior distribution instead of the likelihood. Given a prior $p(\param)$, the posterior is given by Bayes rule:
-\begin{align*}
+\begin{align}
 p(\param | \xdat) = \frac{p(\xdat | \param)p(\param)}{p(\xdat)} = \frac{\text{likelihood} \times \text{prior}}{\text{evidence}}
-\end{align*}
+\end{align}
 
 The MAP solution is:
 
-\begin{align*}
+\begin{align}
 \map{\param} = \arg \max_{\param} \frac{p(\xdat | \param)p(\param)}{p(\xdat)}
-& = \arg \max_{\param} p(\xdat | \param)p(\param) \\
+ & = \arg \max_{\param} p(\xdat | \param)p(\param) \\
  & = \arg \max_\param \ln p(\xdat | \param) + \ln p(\param)
-\end{align*}
+\end{align}
 Like Maximum Likelihood, prediction using MAP is approximated with a point-estimate $p(\xnew | \xdat) \approx p(\xnew | \map{\param})$. Such an approximation is appropriate if we assume the posterior is tightly concentrated around the mode.
 
 The incorporation of the prior is motivated by two related reasons: firstly it allows a practitioner to supply some prior knowledge to the inference procedure and secondly it prevents a model from overfitting in the presence of limited or noisy data.
@@ -55,95 +55,107 @@ The incorporation of the prior is motivated by two related reasons: firstly it a
 The alternative to finding modes is to take a fully \emph{Bayesian} approach and solve Bayes rule directly, and thereby derive a \emph{distribution} over $\param$. This involves evaluating the evidence $p(\xdat) = \int p(\xdat | \param) p(\param) d\param$. In many cases this is intractable, but there are families of prior and likelihood distributions where the prior and posterior have the same functional form for which exact inference is possible. In these cases we say the prior is \emph{conjugate} to the likelihood.
 
 An example is learning a parameter $\param$ with a Dirichlet distribution given multinomial-distributed observations (e.g. throws of a weighted dice). The Dirichlet distribution is given by:
-\begin{align*}
-p(\param) & = \oneover{B(\vv{\beta})} \prod_i \phi_i^{(\beta_i - 1)} &
-B(\vv{\beta}) & = \frac{\prod_i \Gamma(\beta_i)}{\Gamma(\sum_i \beta_i)}
-\end{align*}
+\begin{align}
+p(\param) & = \oneover{B(\vv{\beta})} \prod_k \phi_k^{(\beta_k - 1)} &
+B(\vv{\beta}) & = \frac{\prod_k \Gamma(\beta_k)}{\Gamma(\sum_k \beta_k)}
+\end{align}
 where $B(\cdot)$ is the multivariate beta function, and $\Gamma(\beta)$ is the Gamma function, which can be thought of as a continuous generalisation of the factorial function such that $x! = \Gamma(x+1)$. The multinomial is given by:
-\begin{align*}
+\begin{align}
 p(\vv{x}|\param) = \frac{(\sum_k x)!}{\prod_k x!} \prod_k \phi_k^{x_k}
-\end{align*}
-though for a single draw, the binomial coefficient evaluates to one and the resulting distribution is sometimes known as the \emph{categorical} distribution. The joint distribution of several, exchangeble observations using a categorical likelihood is
-\begin{align*}
-p(\xdat|\param) & = \prod_d \prod_k \phi_k^{x_{dk}} = \prod_d \phi_k^{n_k} &
+\end{align}
+though for a single draw, the binomial coefficient evaluates to one. The resulting distribution is sometimes known as the \emph{categorical} distribution. The joint distribution of several, exchangeble observations using a categorical likelihood is
+\begin{align}
+p(\xdat|\param) & = \prod_d \prod_k \phi_k^{x_{dk}} = \prod_k \phi_k^{n_k} &
 n_k = \sum_d x_{dk}
-\end{align*}
+\end{align}
 The evidence $p(\xdat)$ for a Categorical-Dirichlet mixture is therefore:
-\begin{align*}
-p(\xdat) & = \frac{1}{B(\beta)} \int \prod_i \phi_i^{n_i} \prod_i \phi_i^{(\beta_i - 1)} d\param  = \frac{1}{B(\beta)} \int \prod_i \phi_i^{n_i + \beta_i - 1} \\
+\begin{align}
+p(\xdat) & = \frac{1}{B(\beta)} \int \prod_k \phi_k^{n_k} \prod_k \phi_k^{(\beta_k - 1)} d\param  = \frac{1}{B(\beta)} \int \prod_k \phi_k^{n_k + \beta_k - 1} \\
 & = \frac{B(\vv{n} + \vv{\beta})}{B(\vv{\beta})}.
-\end{align*}
+\end{align}
 The analytic solution arises from observing that the integrand is an unnormalised Dirichlet distribution parameterised by $\vv{n} + \vv{\beta}$. This marginal distribution is sometimes known as the P\'{o}lya distribution, or the Dirichlet-compound-Multinomial distribution \cite{Madsen2005}.\label{polya}
 
-The product of the likelihood and evidence is $\frac{1}{B(\vv{\beta})} \prod_i \phi_i^{(n_i + \beta_i - 1)}$ and so the $B(\vv{\beta})$ terms cancel out, and leave us with just a Dirichlet distribution parameterised by $\vv{n} + \vv{\beta}$.
+Putting this together we can analytically derive an expression for the posterior:
 
-If we compare the expected value of this posterior, versus the point estimates found by maximising the posterior and the likelihood, we can see that the Bayesian approach is most affected by the choice of prior.
+\begin{align}
+\begin{split}
+p(\phi|\xdat) 
+& = \frac{p(\phi|\xdat)p(\phi)}{p(\xdat)}
+ = \left(\prod_k \phi_k^{n_k} \right)
+   \left(\oneover{B(\vv{\beta})} \prod_k \phi_k^{\beta_k - 1} \right)
+   \frac{B(\vv{\beta})}{B(\vv{n} + \vv{\beta})} \\
+& = \oneover{B(\vv{n} + \vv{\beta})} \prod_k \phi_k^{n_k + \beta_k - 1}
+\end{split}
+\end{align}
+which is a Dirichlet distribution parameterised by $\vv{n} + \vv{\beta}$, where $\vv{n} = \{ n_k \}_{n=1}^K$
 
-\begin{align*}
+It is useful to compare the expected value of the posterior with the MAP and maximum likelihood solutions.
+
+\begin{align}
 \ex{\param}{}  &= \frac{n_k + \beta_k}{\sum_j n_j + \beta_j} &
 \map{\param} &= \frac{n_k + \beta_k - 1}{\sum_j n_j + \beta_j - 1} &
 \ml{\param}  &= \frac{n_k}{\sum_j n_j}
-\end{align*}
+\end{align}
 
-The maximium-likelihood and MAP solutions are obtained by augmenting the log-likelihood with a Langrangian constraint to ensure the parameter $\param$ lies on the simplex and then taking derivatives, and solving at zero.
+The Bayesian approach is more affected by the prior than the MAP solution, where the prior is discounted, and the ML approach obviously incorporates no prior information whatsoever.
  
 \subsection{Latent Variable Models}
 Oftentimes it is appropriate to assume that there is some unobserved, ``latent" process which determines the distributions of the observed variables. Denoting the latent variables as $\vv{z}$ this gives rise to the following likelihood
 
-\begin{align*}
+\begin{align}
 p(\xdat|\param) = \int p(\xdat, \zdat|\param) d\zdat
-\end{align*}
+\end{align}
 
 An exampleis simply a mixture model where each observation $\xd$ is generated by on of $K$ distributions, identified by the latent variable $\vv{z}_d$. Like the distribution over the face $\vv{x}_d$, the latent manufacturer $\vv{z}_d$ has a categorical likelihood. As an example, the mixture of multinomials is given by\cite{Nigam2000}
-\begin{align*}
+\begin{align}
 \vv{\theta} & \sim \dir{\vv{\alpha}} &
 \vv{z}_d|\vv{\theta} & \sim \muln{\vv{\theta}}{1} & 
 \vv{x}_d|\vv{z}_d, \param & \sim \prod_k \muln{\param}{1}^{z_{dk}} & 
 \param & \sim \dir{\vv{\beta}}
-\end{align*}
+\end{align}
 
-To derive a MAP estimate of $\param$, we need to approximate the log-likelihood using Jensen's inequality which, for any \emph{concave} function $f(x)$, states that $f\left(\ex{x}{}\right) \geq \ex{f(x)}{}$. By choosing to evaluate the expectation over an arbitrate distribution $q(\zdat)$ the likelihood is bounded by:
+To derive a MAP estimate of $\param$, we need to approximate the log-likelihood using Jensen's inequality which, for any \emph{concave} function $f(x)$, states that $f\left(\ex{x}{}\right) \geq \ex{f(x)}{}$. By choosing to evaluate the expectation over an arbitrary distribution $q(\zdat)$ the likelihood is bounded by:
 
-\begin{align*}
+\begin{align}
 \ln p(\xdat|\param) & = \ln \int \joint p(\param) d\zdat 
  = \ln \int \frac{q(\zdat)}{q(\zdat)} \joint p(\param) d\zdat \\
 & \geq \int  q(\zdat) \left(\logjoint + \ln p(\param)\right) d\zdat
   -     \int \ln q(\zdat) \ln q(\zdat) d\zdat \\
 & = \exlogjoint{q} + \ln p(\param) + \ent{q} = \fqt{q, \param}
-\end{align*}
+\end{align}
 where the term $\fqt{q, \param}$ is known as the ``free energy". The resulting maximisation algorithm requires iteratively alternating between the following:
 
-\begin{align*}
+\begin{align}
 \text{E-Step:} & & q^t(\zdat) & = \arg \max_{q(\zdat)} \fqt{q(\zdat), \param^{t-1}} \\
 \text{M-Step:} & & \param^t & = \arg \max_{\param} \fqt{q^t(\zdat), \param} \\
 & & & = \arg \max_{\param} \exlogjoint{q} + \ln p(\param)
-\end{align*}
+\end{align}
 To determine how to maximise $q(\zdat)$ we observe that, for a fixed $\param$, the difference between the free energy and the regularised log-likelihood is given by the Kullback Leibler divergence between $q(\zdat)$ and the posterior $p(\zdat|\zdat, \param)$.
-\begin{align*}
+\begin{align}
 \fqt{q, \param} 
 & = \ln p(\param) + \int q(\zdat) \ln \frac{p(\xdat, \zdat|\param)}{q(\zdat)} d\zdat \\
 & = \ln p(\param) + \int q(\zdat) \ln \frac{p(\zdat|\xdat, \param)p(\xdat | \param)}{q(\zdat)} d\zdat \\
 & = \ln p(\param) + \int q(\zdat) \ln p(\xdat | \param) q\zdat + \int q(\zdat)\frac{p(\zdat|\xdat, \param)}{q(\zdat)} d\zdat \\
 & = \ln p(\param) + \ln p(\xdat | \param) + \kl{q(\zdat)}{p(\zdat|\xdat, \param)}
-\end{align*}
+\end{align}
 When $\kl{q(\zdat)}{p(\zdat|\xdat, \param)} = 0$, $\fqt{q, \param} = \ln(p(\xdat | \param)p(\param))$, and thus the free-energy is maximised for a fixed $\param$ when $q(\zdat) = p(\zdat | \xdat, \param)$.
 
 This is known as the MAP variant of the Expectation Maximization (EM) algorithm which is usually presented in the maximum likelihood context\cite{Dempster1977}. For a mixture of multinomials model, the updates are
 
-\begin{align*}
+\begin{align}
 \text{E-Step:} & & q(z_{dk}) 
 & = \frac{p(\xd|z_d = k, \param)p(z_d = k)}{\sum_j p(\xd|z_d = j, \param)p(z_d = j)} 
 = \frac{p(\xd | \param_k) \theta_k}{\sum_j p(\xd | \param_j) \theta_j}  \\
 \text{M-Step:} 
 & & \phi_{ki} & = \frac{1}{N_k} \sum_d \ex{z_{dk}}{q} x_{dk} + \beta_i - 1, \qquad N_k = \sum_d \ex{z_{dk}}{} \\
 & & \theta_k & =  \frac{N_k + \alpha_k - 1}{\sum_j N_j + \alpha_j - 1}
-\end{align*}
+\end{align}
 where $\ex{z_{dk}}{q} = p(z_{dk})$. The predictive distribution is
 
-\begin{align*}
+\begin{align}
 p(\xnew | \xdat)  = \sum_k p(z_{\text{new}} = k | \vv{\theta}) p(\xnew, z_{\text{new}} = k | \param) 
 \approx \sum_k \theta_k \cdot p(\xnew | \param^{(k)}_{\text{MAP}})
-\end{align*}
+\end{align}
 
 EM is guaranteed to find a possibly local maximum of the the likelihood. In the M-Step, we maximise the free-energy with respect to the $\param$, increasing the likelihood and the free-energy. In the E-Step setting $q(\zdat) = p(\zdat|\zdat, \param)$ the KL divergence goes to zero, such that the bound equals and likelihood have the same value for a fixed  $\param$. 
 
@@ -153,28 +165,28 @@ It is not always feasible to evaluate the posterior distribution $p(\zdat|\xdat,
 
 We consider the latter approach, where one assumes the true distribution $q(\zdat)$ can be approximated by a family of distributions $\qfam$. One popular choice is the family of factorized distributions $q(\zdat) = \prod_m q(\zdat_m)$. Note that this factorization is not derived from the IID principle, as the in prior discussion on EM, rather it is a modelling assumption made by the practitioner. The question then is how to evaluate the variational E-Step
 
-\begin{align*}
+\begin{align}
 q(\zdat) & = \arg \max_{q(\zdat_1) \ldots q(\zdat_M)} \fqt{\prod_m q(\zdat_m), \param}
-\end{align*}
+\end{align}
 
 Given this formulation, we can solve independently for each block of latent variables $\zdat_m$ in turn, using the following decomposition.
 
-\begin{flalign*}
+\begin{flalign}
 \fqt{\prod_m q(\zdat_m), \param} 
  = \exlogjoint{\tinymath{\prod_m q(\zdat_m)}} + \ent{q} \qquad\qquad\qquad\\
 \qquad = \int q(\zdat_n) \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}} d\zdat_n + \ent{q_n} + \sum_{m\neq n} \ent{q_m} & \qquad \\
 \qquad = -\kl{q(\zdat_n)}{\tilde{p}(\xdat, \zdat|\param)} + \sum_{m\neq n} \ent{q_m} & \qquad
-\end{flalign*}
+\end{flalign}
 
 Where $\tilde{p}(\xdat, \zdat|\param)$ is the distribution corresponding to
-\begin{align*}
+\begin{align}
 \ln \tilde{p}(\xdat, \zdat|\param) = \ex{\logjoint}{\tinymath{\prod_{m\neq n} q(\zdat_m)}} + \text{const}
-\end{align*}
+\end{align}
 As the KL divergence is always non-negative, the bound is maximised when it is set to zero, from which the following update is derived: 
 
-\begin{align*}
+\begin{align}
 q(\zdat) \propto \exp\left( \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}}  \right)
-\end{align*}
+\end{align}
 
 Unlike the case of EM however, setting the KL divergence to zero does not cause the free-energy to become equal to the likelihood for a fixed $\param$. This is because the true posterior $p(\zdat | \xdat, \param)$ may not be in the family of distributions $\qfam$ which we have chosen. Consequently, the variational E-Step is not guaranteed to maximise the bound, and so the algorithm is not guaranteed to converge to a local maximum as with EM. However by optimising the bound will still improve the likelihood, and may therefore find useful parameter values. Fuller descriptions of variational learning are given in \cite{Jordan1999a}\cite{Bishop2006}\cite{Tzikas2008}. 
 
@@ -185,8 +197,8 @@ For very large datasets, one can partition parameters and distributions into tho
 %
 %In more concrete terms, the joint distribution, including hyperparameters $\alpha$ can be written as
 %
-%\begin{align*}
-%p(\xdat, \zdat, \param) = p(\param | \beta)  \prod_d \prod_n p(\xd, \zd | \param)\end{align*}
+%\begin{align}
+%p(\xdat, \zdat, \param) = p(\param | \beta)  \prod_d \prod_n p(\xd, \zd | \param)\end{align}
 %
 %Note that compared to the previous sections, $\param$ may be a set of random variables in this setting like $\zdat$ and not simply a parameter with no distribution.
 %
@@ -202,10 +214,10 @@ For very large datasets, one can partition parameters and distributions into tho
 %\subsubsection*{Gradient Descent}
 %Gradient descent is used to find the root of a function $f(x; \param)$ using the update
 %
-%\begin{align*}
+%\begin{align}
 %\param^{t+1} & \leftarrow \param^t - \rho_t \nabla_\param f(x; \param^t) &
 %\text{where } \rho_t = (\tau_0 + t)^{-\kappa}
-%\end{align*}
+%\end{align}
 %
 %where $\kappa \in (0.5,1]$ controls the learning rate and $\tau_0 \geq 0$ slows down this rate in the early stages of the algorithm. Other kinds of step-size function $\rho_t$ can be used: so long as $\sum_t \rho_t = \infty$ and $\sum_t \rho^2_t < \infty$ the algorithm should converge to a local minimum\cite{RobbinsMonro1951}. 
 %
@@ -214,37 +226,37 @@ For very large datasets, one can partition parameters and distributions into tho
 %\subsubsection*{Stochastic Gradient Descent}
 %In order to perform the update in gradient descent one needs to consider the gradient evaluated at the entire dataset, which is still costly. A better approach is to evaluate the gradient at a random function $b(\xdat; \param)$ such that $\ex{b(\xdat; \param)}{} = \sum_{x \in \xdat} f(x; \param)$. One can then perform a stochastic gradient descent of the form
 %
-%\begin{align*}
+%\begin{align}
 %\param^{t+1} \leftarrow \param^t - \rho_t \nabla_\param b_t(\xdat; \param^t)
-%\end{align*}
+%\end{align}
 %
 %Note that in this formula above we sample a different instance of this function at each time step. The issue is how to choose $b(\xdat; \param)$.
 %
 %Assume that we are interested in $\ex{f(x)}{}$, the expectation of the given function (a loss function say) across all possible inputs according to the data-generating distribution. Since the data-generating distribution is unknown, we approximate it using the empirical distribution of the dataset
 %
-%\begin{align*}
+%\begin{align}
 %p(x) = \frac{1}{D} \sum_d \delta(x, x_d)
-%\end{align*}
+%\end{align}
 %where D is the size of our dataset, and additionally we define $D(x)$ to be the number of copies of input $x$ in the dataset. With this formulation we can write the following.
 %
-%\begin{align*}
+%\begin{align}
 %\ex{\frac{D}{D(x)} f(x)}{}
 %& = \sum_d \frac{D}{D(x_d)} f(x_d) p(x_d) \\
 %& = \sum_d \frac{D}{D(x_d)} f(x_d) \left(\frac{1}{D} \sum_p \delta(x_d, x_p)\right) \\ 
 %& = \sum_d \frac{D}{D(x_d)} f(x_d) \frac{D(x_d)}{D} = \sum_d f(x_d)
-%\end{align*}
+%\end{align}
 %
 %In the case where we assume all data-points are different, this simplifies to
 %
-%\begin{align*}
+%\begin{align}
 %\ex{D f(x)}{} = \sum_d f(x_d)
-%\end{align*}
+%\end{align}
 %
 %Thus any approximation of the expectation (e.g. by sampling from the data-distribution) is an approximation of the sum, providing us with a definition for $b(\xdat; \param)$ of $\sum_{x \in \xdat} f(x;param)$
 %
-%\begin{align*}
+%\begin{align}
 %b(x) = \frac{D}{S} \sum_s f(x_s) \approx \sum_d f(x_d)
-%\end{align*}
+%\end{align}
 %
 %where S is the number of samples. In theory one could evaluate the gradient a sample at a time, however in practice, to minimise the variance of the gradient estimates, the number of samples (often called the ``batch size") is usually set to a reasonably large number. The resulting stochastic EM algorithm is therefore
 %
@@ -253,13 +265,13 @@ For very large datasets, one can partition parameters and distributions into tho
 %    \item Iterate until converged, time-step is $t$:
 %    \begin{enumerate}
 %        \item Sample a batch of $S$ observations $\{ x_s \}_{s=1}^S$ and infer the (factored\footnote{Note that this is not necessarily a variational mean-field factorization; for example in mixture-models using ordinary EM, the posterior naturally factors over the IID datapoints}) posterior:
-%        \begin{align*}
+%        \begin{align}
 %            q(z_s) = \arg \max_{q_s} \fqt{q_s, \param}
-%        \end{align*}
+%        \end{align}
 %        \item Use the posteriors to perform a gradient update of the parameters
-%        \begin{align*}
+%        \begin{align}
 %        \param \leftarrow \param + \rho_t \nabla_\param \left(\sum_s \ex{\ln p(x_s, z_s|\param)}{q(z_s)}\right)
-%        \end{align*}
+%        \end{align}
 %        \end{enumerate}
 %\end{enumerate}
 %
@@ -269,37 +281,37 @@ For very large datasets, one can partition parameters and distributions into tho
 %
 %As an example, consider a sampling distribution $q(x)$ such that with some very small probability $\epsilon$ we choose one of the $D^-$ negative datapoints, and with high probability $1 - \epsilon$ we choose one of the $D^+$ positive datapoints. We can re-write our expectation as
 %
-%\begin{align*}
+%\begin{align}
 %\ex{D f(x)}{} \quad
 %&= \quad \sum_d D f(x_d) \frac{p(x_d)}{q(x_d)} q(x_d) 
 %& = \quad & \ex{D f(x) \frac{p(x)}{q(x)}}{q} \\
 %& & \approx & \frac{D}{S} \sum_s f(x_s) \frac{p(x_s)}{q(x_s)} \\
 %& & = & \frac{D}{S} \sum_s \frac{f(x_s)}{q(x_s)} \frac{1}{D} \\
 %& & = & \frac{1}{S} \sum_s \frac{f(x_s)}{q(x_s)}
-%\end{align*}
+%\end{align}
 %Where samples $x_s$ are drawn from $q$ and we've omitted the detail of $D(x)$ for brevity. If $x_s$ is sampled from the negative samples, its weight $\oneover{q(x_s)}$ will be the large number $\frac{D^-}{\epsilon}$, whereas if it's sampled from the positive group its weight will be the much smaller $\frac{D^+}{1 - \epsilon}$. This method was considerably extended in \cite{Gopalan2013b} (see supplemental material) for the problem of predicting citations within an academic corpus, where the majority of node-pairs had no links between them.
 %
 %\subsubsection*{The Natural Gradient}
 %A final refinement of gradient descent, noted in \cite{Hoffman2012} is to observe that the gradient is the solution to
 %
-%\begin{align*}
+%\begin{align}
 %\lim_{\epsilon \rightarrow 0} \arg \max_{d\param} f(\param + d\param) \qquad \text{where } ||d\param|| < \epsilon
-%\end{align*}
+%\end{align}
 %And thus implicitly works on the idea of a Euclidean distance, which is inappropriate in the case of probability distribution parameters. If one were to use the symmetric KL divergence instead of the 2-norm:
 %
-%\begin{align*}
+%\begin{align}
 %\symmkl{\param}{\param'}
 % = \ex{\ln \frac{p(x; \param)}{p(x; \param'}}{\param}
 % + \ex{\ln \frac{p(x; \param')}{p(x; \param}}{\param'}
-%\end{align*}
+%\end{align}
 %
 %one can obtain a ``natural gradient" instead. In practice one can convert a Euclidean gradient to a natural gradient by premultiplying the former by a Riemannian matrix, which for probability distributions is the Fisher information matrix. As noted in \cite{Bottou2004} gradient descent convergence is unaffected by premultiplying the gradient by a matrix, so long as that matrix is positive semi-definite.
 %
 %However as first observed in \cite{Hoffman2010}, and then fully explained in \cite{Hoffman2012}, for conditionally conjugate models composed of distributions in the exponential family, the formula for the the natural gradient is identical to the formula for the posterior, and so one need not determine the Fisher information. For example, in a variational mixture of multinomials model, where one infers a full posterior $q(\param_k)$ over the parameters instead of a MAP estimate, the batch update is:
 %
-%\begin{align*}
+%\begin{align}
 %q(\param_k) = \dir{\vv{\beta} + \sum_d z_{dk} \vv{x}_{d}}
-%\end{align*}
+%\end{align}
 %
 %while the natural gradient update, where we parameterise the posterior $q(\param; \hat{\param})$ by $\hat{\param}$ is 
 %
