@@ -4,15 +4,16 @@
 \newcommand \qfam { { \mathcal{Q} } }
 \newcommand \xdat { { \mathcal{X} } }
 \newcommand \zdat { { \mathcal{Z} } }
-\newcommand \xnew { { \vv{x}_{\text{new}} } }
-\newcommand \znew { { \vv{z}_{\text{new}} } }
+\newcommand \xnew { { \vv{x}^{*} } }
+\newcommand \znew { { \vv{z}^{*} } }
 \newcommand \param { { \vv{\phi} } }
+\newcommand \params { { \Phi } }
 \newcommand \ml[1] { { {#1}_{\text{ML}} } } 
 \newcommand \map[1] { { {#1}_{\text{MAP}} } } 
 \newcommand \quarter { { \oneover{4} } }
 \newcommand \eighth { { \oneover{8} } }
 \newcommand \fqt[1] { { \mathcal{F}\left( {#1} \right) } }
-\newcommand \joint { { p(\xdat, \zdat | \Phi) } }
+\newcommand \joint { { p(\xdat, \zdat | \params) } }
 \newcommand \logjoint { { \ln \joint } }
 \newcommand \exlogjoint[1] { { \ex{\logjoint}{{#1}} } }
 
@@ -22,6 +23,7 @@ Probabilistic inference is concerned with two problems: inference, the estimatio
 \emph{Maximum likelihood} finds the parameter value that maximises, $p(\xdat|\param)$, known as the likelihood. For reasons of algebraic convenience, one commonly finds the maximum of the log of the likelihood.\begin{align}
 \ml{\param} = \arg \max_{\param} \ln p(\xdat | \param)
 \end{align}
+\bflong{Take Marks lecture not about the log and the motivation from information theory}
 As the log of a monotonically increasing function, the log-likelihood and likelihood have the same maxima. For the particular case of independently and identically distributed (IID) observations, the log-likelihood factors into a simple sum.
 \begin{align}
 \ml{\param} = \arg \max_{\param} \sum_d \ln p(\xd | \param)
@@ -36,6 +38,8 @@ p(\xnew | \xdat)
 =  p(\xnew | \ml{\param})
 \end{align}
 
+\bflong{This is wrong as $\param$ has no distribution, check with Heinrich}
+
 \emph{Maximum a Posteriori} (MAP) estimation, like maximum likelihood, finds a mode, but of the posterior distribution instead of the likelihood. Given a prior $p(\param)$, the posterior is given by Bayes rule:
 \begin{align}
 p(\param | \xdat) = \frac{p(\xdat | \param)p(\param)}{p(\xdat)} = \frac{\text{likelihood} \times \text{prior}}{\text{evidence}}
@@ -48,6 +52,7 @@ The MAP solution is:
  & = \arg \max_{\param} p(\xdat | \param)p(\param) \\
  & = \arg \max_\param \ln p(\xdat | \param) + \ln p(\param)
 \end{align}
+\bfshort{This is wrong as it may be solved directly}
 Like Maximum Likelihood, prediction using MAP is approximated with a point-estimate $p(\xnew | \xdat) \approx p(\xnew | \map{\param})$. Such an approximation is appropriate if we assume the posterior is tightly concentrated around the mode.
 
 The incorporation of the prior is motivated by two related reasons: firstly it allows a practitioner to supply some prior knowledge to the inference procedure and secondly it prevents a model from overfitting in the presence of limited or noisy data.
@@ -63,7 +68,7 @@ where $B(\cdot)$ is the multivariate beta function, and $\Gamma(\beta)$ is the G
 \begin{align}
 p(\vv{x}|\param) = \frac{(\sum_k x)!}{\prod_k x!} \prod_k \phi_k^{x_k}
 \end{align}
-though for a single draw, the binomial coefficient evaluates to one. The resulting distribution is sometimes known as the \emph{categorical} distribution. The joint distribution of several, exchangeble observations using a categorical likelihood is
+though for a single draw, the binomial coefficient evaluates to one. A single-draw multinomial distributions is known as a \emph{categorical} distribution. The joint distribution of several, exchangeable observations using a categorical likelihood is \bfshort{Used exchangeable before introducing it}
 \begin{align}
 p(\xdat|\param) & = \prod_d \prod_k \phi_k^{x_{dk}} = \prod_k \phi_k^{n_k} &
 n_k = \sum_d x_{dk}
@@ -105,24 +110,33 @@ Oftentimes it is appropriate to assume that there is some unobserved, latent pro
 p(\xdat|\param) = \int p(\xdat, \zdat|\param) d\zdat
 \end{align}
 
-A common example is the mixture model, where it is assumed there are $K$ distributions, of which one, identified by a latent categorical variable $\vv{z}_d$ is used to sample an observation $\xd$. Consider the problem of modelling a corpus of documents. Letting $\xd \in \mathbb{N}^T$ be the count of how often each word occurred in document $d$, for all $T$ words, we can use a categorical distribution to model $\xd$, and a Dirichlet to model the $K$ distributions over words $\vv{\phi}_k$, giving rise to the mixture of multinomials model\cite{Nigam2000}
+A common case where latent variables arise is the mixture model, where it is assumed there are $K$ distributions, of which one, identified by a latent categorical variable $\vv{z}_d$ is used to sample an observation $\xd$. 
+
+As an example, consider the problem of modelling a corpus of documents. Let $\xd \in \mathbb{N}^T$ be the count of how often each word occurred in document $d$, for all $T$ words. If we presume each document is about one of K topics, where each topic has a distribution over word-counts $\vv{\phi}_k$, we can associate a latent variable $\vv{z}_d$ with each document indicating which (unobserved) topic it generated its words. This gives rise to the mixture of multinomials model\cite{Nigam2000}
 \begin{align}
 \vv{\theta} & \sim \dir{\vv{\alpha}} &
 \vv{z}_d|\vv{\theta} & \sim \muln{\vv{\theta}}{1} & 
 \vv{x}_d|\vv{z}_d, \param & \sim \prod_k \muln{\param}{1}^{z_{dk}} & 
 \param & \sim \dir{\vv{\beta}}
 \end{align}
-\bflong{Consider Bishop book for help with why this is impractical}
-Letting $\Phi = \{ \vv{\phi}_{k=1}^K \}$, our MAP solution is
+
+It should be noted that this model does not simply rely on obsevations being IID. It further relies on their joint distribution being \emph{exchangeable}
+
+Letting $\params = \{ \vv{\phi}_{k=1}^K \}$, our MAP solution is
 \begin{align}
 \begin{split}
-\Phi 
-    &= \arg \max_\Phi \ln p(\Phi) + \ln p(\xdat|\Phi) \\
-    &= \arg \max_\Phi \ln p(\Phi) + \ln \int \joint d\zdat
+\params 
+    &= \arg \max_\params \ln p(\params) + \ln p(\xdat|\params) \\
+    &= \arg \max_\params \ln p(\params) + \ln \int \joint d\zdat
 \end{split}
 \end{align}
 
-The integral has no analytic solution, and so we approximate it. Jensen's inequality states that for any \emph{concave} function $f(x)$, $f\left(\ex{x}{}\right) \geq \ex{f(x)}{}$. By introducing a new, wholly arbitrary distribution $q(\zdat)$ we approximate the integral
+
+
+\bflong{Why does the integral have no analytic solution}
+The integral has no analytic solution, so we approximate it, leading to the EM algorithm.
+\subsubsection{Expectation Maximization}
+Jensen's inequality states that for any \emph{concave} function $f(x)$, $f\left(\ex{x}{}\right) \geq \ex{f(x)}{}$. By introducing a new, wholly arbitrary distribution $q(\zdat)$ we can approximate the previous log-integral
 
 \begin{align}
  \ln \int & \joint d\zdat = \ln \int \frac{q(\zdat)}{q(\zdat)} \joint d\zdat\\ 
@@ -135,56 +149,61 @@ where the entropy $\ent{q} = -\ex{\ln q(\zdat)}{q}$. Equation \eqref{eqn:elbo} i
 This leads two a two step maximisation process.
 
 \begin{align}
-\text{E-Step:} & & q^t(\zdat) & = \arg \max_{q(\zdat)} \ex{\ln p(\xdat, \zdat|\Phi^{t-1})}{q^{t-1}} + \ent{q} \\
-\text{M-Step:} & & \Phi^t & = \arg \max_{\Phi} \ex{\ln \joint}{q^{t}} + \ln p(\Phi)
+\text{E-Step:} & & q^t(\zdat) & = \arg \max_{q(\zdat)} \ex{\ln p(\xdat, \zdat|\params^{t-1})}{q^{t-1}} + \ent{q} \label{eqn:estep} \\
+\text{M-Step:} & & \params^t & = \arg \max_{\params} \ex{\ln \joint}{q^{t}} + \ln p(\params) \label{eqn:mstep}
 \end{align}
-To determine how to maximise $q(\zdat)$ we observe that, for a fixed $\Phi$, the difference between the ELBO and the marginal log-likelihood is given by the Kullback Leibler divergence between $q(\zdat)$ and the posterior $p(\xdat|\zdat, \Phi)$.
+To determine how to maximise $q(\zdat)$ we observe that, for a fixed $\params$, the difference between the ELBO and the marginal log-likelihood is given by
+ the Kullback Leibler divergence between $q(\zdat)$ and the posterior $p(\zdat|\xdat, \params)$.
 \begin{align}
-\int q(\zdat) \ln \frac{p(\xdat, \zdat|\Phi)}{q(\zdat)} d\zdat
-& = \int q(\zdat) \ln \frac{p(\zdat|\xdat, \Phi)p(\xdat | \Phi)}{q(\zdat)} d\zdat \\
-& = \int q(\zdat) \ln p(\xdat | \Phi) q\zdat + \int q(\zdat)\ln\frac{p(\zdat|\xdat, \Phi)}{q(\zdat)} d\zdat \\
-& = \ln p(\xdat | \Phi) + \kl{q(\zdat)}{p(\zdat|\xdat, \Phi)}
+\int q(\zdat) \ln \frac{p(\xdat, \zdat|\params)}{q(\zdat)} d\zdat
+& = \int q(\zdat) \ln \frac{p(\zdat|\xdat, \params)p(\xdat | \params)}{q(\zdat)} d\zdat \\
+& = \int q(\zdat) \ln p(\xdat | \para) q\zdat + \int q(\zdat)\ln\frac{p(\zdat|\xdat, \params)}{q(\zdat)} d\zdat \\
+& = \ln p(\xdat | \params) + \kl{q(\zdat)}{p(\zdat|\xdat, \params)}
 \end{align}
-When $\kl{q(\zdat)}{p(\zdat|\xdat, \param)} = 0$, the difference between the ELBO and the marginal likelihood collapses to zero, hence the E-Step \eqref{eqn:estep} is maximised by setting $q(\zdat) = p(\zdat | \xdat, \param)$.
+As the Kullback-Leibler divergence is always positive, we can deduce that reducing the divergence will increase the ELBO, whose maximum is $\ln p(\xdat | \params)$. Hence the E-Step maximisation procedure is to set $q(\zdat) = p(\zdat | \xdat, \param)$, since in this case $\kl{q(\zdat)}{p(\zdat|\xdat, \params)} = 0$.
 
-This is the MAP variant of the Expectation Maximization (EM) algorithm\cite{Dempster1977}. For a mixture of multinomials model, the updates are
+This is the MAP variant of the Expectation Maximization (EM) algorithm\cite{Dempster1977}. 
+Both E and M steps increase the bound. In the M-Step, we maximise the ELBO with respect to $\params$, increasing both the likelihood and the ELBO. In the E-Step by setting $q(\zdat) = p(\xdat|\zdat, \params)$ the KL divergence goes to zero, decreasing the gap between the ELBO and marginal likelihood. Consequently EM is guaranteed to find a local maximum of the marginal likelihood.\fixme{ref}
+
+For a mixture of multinomials model, the updates can be derived using the method of partial derivatives with Lagrange multipliers and are as follows:
 
 \begin{align}
 \text{E-Step:} & & q(z_{dk}) 
 & = \frac{p(\xd|z_d = k, \param)p(z_d = k)}{\sum_j p(\xd|z_d = j, \param)p(z_d = j)} 
-= \frac{p(\xd | \param_k) \theta_k}{\sum_j p(\xd | \param_j) \theta_j} \label{eqn:estep} \\
+= \frac{p(\xd | \param_k) \theta_k}{\sum_j p(\xd | \param_j) \theta_j} \label{eqn:mom-estep} \\
 \text{M-Step:} 
 & & \phi_{kt} & = \frac{1}{N_k} \sum_d \ex{z_{dk}}{q} x_{dt} + \beta_t - 1, \qquad N_k = \sum_d \ex{z_{dk}}{} \\
-& & \theta_k & =  \frac{N_k + \alpha_k - 1}{\sum_j N_j + \alpha_j - 1} \label{eqn:mstep}
+& & \theta_k & =  \frac{N_k + \alpha_k - 1}{\sum_j N_j + \alpha_j - 1} \label{eqn:mom-mstep}
 \end{align}
-where $\ex{z_{dk}}{q} = q(z_{dk})$. The predictive distribution is
-
+where $\ex{z_{dk}}{q} = q(z_{dk})$. The predictive distribution for a new observation $\xnew$ is:
+\bfshort{$\phi_{kt}$ denom looks wrong, it needs normalisation}
 \begin{align}
-p(\xnew | \xdat)  = \sum_k p(z_{\text{new}} = k | \vv{\theta}) p(\xnew, z_{\text{new}} = k | \param) 
-\approx \sum_k \theta_k \cdot p(\xnew | \param^{(k)}_{\text{MAP}})
+p(\xnew | \xdat, \params)  = \sum_k p(\znew = k | \vv{\theta}) p(\xnew, \znew = k | \param_k) 
+= \sum_k \theta_k \cdot p(\xnew | \param_k)
 \end{align}
-\bflong{Bishop to check prediction, or maybe Nigam}
-
-In the M-Step, we maximise the free-energy with respect to the $\param$, increasing the likelihood and the free-energy. In the E-Step setting $q(\zdat) = p(\zdat|\zdat, \param)$ the KL divergence goes to zero, such that the bound equals and likelihood have the same value for a fixed  $\param$. Since both increase the likelihood, EM is guaranteed to find a local maximum of the marginal likelihood.
 
 
-\subsubsection*{Variational EM}
-It is not always feasible to evaluate the posterior distribution $p(\zdat|\xdat, \param)$ exactly. In such cases one needs to either approximate the update to the distribution (e.g. by parameterising it and taking a gradient step), or approximate the distribution itself.
+\subsubsection{Variational EM}
+It is not always feasible to evaluate the posterior distribution $p(\zdat|\xdat, \param)$ exactly. In such cases one needs to either approximate the E-Step update to the distribution (e.g. by parameterising it and taking a gradient step), or approximate the distribution itself.
 
 We consider the latter approach, where one assumes the true distribution $q(\zdat)$ can be approximated by a family of distributions $\qfam$. One popular choice is the family of factorized distributions $q(\zdat) = \prod_m q(\zdat_m)$. Note that this factorization is not derived from the IID principle, as the in prior discussion on EM, rather it is a modelling assumption made by the practitioner. The question then is how to evaluate the variational E-Step
 
+
 \begin{align}
-q(\zdat) & = \arg \max_{q(\zdat_1) \ldots q(\zdat_M)} \fqt{\prod_m q(\zdat_m), \param}
+q(\zdat) & = \arg \max_{q(\zdat_1) \ldots q(\zdat_M)} \exlogjoint{\tinymath{\prod_m q(\zdat_m)}} + \ent{q}
 \end{align}
 
 Given this formulation, we can solve independently for each block of latent variables $\zdat_m$ in turn, using the following decomposition.
 
-\begin{flalign}
-\fqt{\prod_m q(\zdat_m), \param} 
- = \exlogjoint{\tinymath{\prod_m q(\zdat_m)}} + \ent{q} \qquad\qquad\qquad\\
-\qquad = \int q(\zdat_n) \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}} d\zdat_n + \ent{q_n} + \sum_{m\neq n} \ent{q_m} & \qquad \\
-\qquad = -\kl{q(\zdat_n)}{\tilde{p}(\xdat, \zdat|\param)} + \sum_{m\neq n} \ent{q_m} & \qquad
-\end{flalign}
+\begin{align}
+\begin{split}
+& \mathbb{E}_{\tinymath{\prod_m q(\zdat_m)}} \left[ \logjoint \right] + \ent{q} \\
+& \qquad = \int q(\zdat_n) \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}} d\zdat_n + \ent{q_n} + \sum_{m\neq n} \ent{q_m}
+\end{split}\\
+\begin{split}
+& \qquad = -\kl{q(\zdat_n)}{\tilde{p}(\xdat, \zdat|\param)} + \sum_{m\neq n} \ent{q_m} 
+\end{split}
+\end{align}
 
 Where $\tilde{p}(\xdat, \zdat|\param)$ is the distribution corresponding to
 \begin{align}
@@ -196,8 +215,11 @@ As the KL divergence is always non-negative, the bound is maximised when it is s
 q(\zdat) \propto \exp\left( \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}}  \right)
 \end{align}
 
-Unlike the case of EM however, setting the KL divergence to zero does not cause the free-energy to become equal to the likelihood for a fixed $\param$. This is because the true posterior $p(\zdat | \xdat, \param)$ may not be in the family of distributions $\qfam$ which we have chosen. Consequently, the variational E-Step is not guaranteed to maximise the bound, and so the algorithm is not guaranteed to converge to a local maximum as with EM. However by optimising the bound will still improve the likelihood, and may therefore find useful parameter values. Fuller descriptions of variational learning are given in \cite{Jordan1999a}\cite{Bishop2006}\cite{Tzikas2008}. 
+Unlike the case of EM however, setting the KL divergence to zero does not cause the free-energy to become equal to the likelihood for a fixed $\params$. This is because the true posterior $p(\zdat | \xdat, \params)$ may not be in the family of distributions $\qfam$ which we have chosen. Consequently, the variational E-Step is not guaranteed to maximise the bound, and so the algorithm is not guaranteed to converge to a local maximum as with EM. Optimising the bound will still improve the likelihood however, and may therefore find useful parameter values. Fuller descriptions of variational learning are given in \cite{Jordan1999a}\cite{Bishop2006}\cite{Tzikas2008}. 
 
+
+
+\subsubsection*{Further Methods of Inference}
 For very large datasets, one can partition parameters and distributions into those ``local" parameters directly linked to individual observations, and ``global" parameters, and then infer local parameters one small batch of documents at a time, and use them to perform a gradient update\cite{RobbinsMonro1951} on the global variables, leading to a stochastic variational update scheme\cite{Hoffman2012}. This addresses the case where the whole dataset will not fit in memory. Additionally it allows for global parameters to be while inferring local parameters rather than waiting till all local parameters have been learnt.
  
 %\subsection{Stochastic Variational Learning}
