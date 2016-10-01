@@ -1,12 +1,20 @@
 \input{../header.tex}
 
 
-\subsection{Non-Conjugate Inference Bayesian Inference}
+\section{Non-Conjugate Bayesian Inference}
 \label{sec:nonconj}
-In the previous section we have only considered cases where the posterior and prior are conjugate, and so tractable closed-form updates can be easily derived. However there are many classes of model where conjugacy is not available. For example, in logistic regression one introduces an \emph{activation function} $f(y) : \mathbb{R} \rightarrow [0, 1]$ which maps the real number line onto the interval $[0,1]$.
+In this chapter we investigate several approximations to the log-sum-exp function which arises when working with the logit. We qualitatively and quantitatively evaluate several approximation techniques on two classes of model: logistic regression and the correlated topic-model (CTM).
+
+In particular while Taylor approximations have been recommended for inference with the \cite{Wang2013} we investigate other families of approximations, and qualitiatively show that one, the Bohning bound\cite{Bohning1988} offers faster and more accurate convergence. 
+
+Finally we provide a proof of convergence when performing inference on the CTM with the Bohning bound, making this the only variational inference scheme for the CTM with convergence guarantees
+\subsection{The Logit}
+In the previous chapter we considered only those cases where the posterior and prior are conjugate, and so tractable closed-form updates can be easily derived. However there are many classes of model where conjugacy is not available. For example, in logistic regression one introduces an \emph{activation function} $f(y) : \mathbb{R} \rightarrow [0, 1]$ which maps the real number line onto the interval $[0,1]$.
 \begin{align*}
-p(t_d = 1) = & f(y_d) & d_n  & \sim \mathcal{B}ern \left( \vv{w}\T\vv{x}_d\right) & \vv{w} & \sim \nor{0}{\alpha^2 I} \\
+p(t_d = 1) = & f(y_d) & d_n  & \sim \mathcal{B} \left( \vv{w}\T\vv{x}_d\right) & \vv{w} & \sim \nor{0}{\alpha^2 I} \\
 \end{align*}
+where $\mathcal{B}(\cdot)$ is the Bernoulli distribution.
+
 We consider inference for two cases of two sigmoidal activation functions for which f(0) = 0.5: the probit $\Phi(a)$ and the logit $\sigma(a)$.
 
 \subsubsection{Inference with the Logit}
@@ -19,7 +27,7 @@ The logit is motivated as a log-odds ratio. Let $y_d = \vv{w}\T\vv{x}_d$. Then:
 & & \implies &  p(t_d = 1)                    & = & \frac{e^{y_d}}{1 + e^{y_d}} = \frac{1}{1+e^{-y_d}}
 \end{alignat}
 
-This leads to an easy interpretation of the weights in logistic regression: each individual weight $w_f$ indicates how much the log-odds of the positive class are increased.
+This leads to an easy interpretation of the weights in logistic regression: each individual weight $w_f$ indicates by how much the log-odds of the positive class are increased.
 
 %The following identities are useful when working with the logit:
 %\begin{align}
@@ -40,14 +48,14 @@ With a Bernoulli distribution on $t_d$ the log-likelihood has the form
 \end{aligned}
 \end{equation}
 
-Making use of the fact that the deriviative $\sigma(y)' = \sigma(y)(1 - \sigma(y))$ and the chain-rule one obtains the following equations for the gradient $\vv{g}_w$ and Hessian $H_w$ of the log-likelihood with respect to $\vv{w}$.
+Making use of the fact that the derivative $\sigma(y)' = \sigma(y)(1 - \sigma(y))$ and the chain-rule one obtains the following equations for the gradient $\vv{g}_w$ and Hessian $H_w$ of the log-likelihood with respect to $\vv{w}$.
 
 \begin{align}
 \vv{g}_w = & X\T (\vv{y} - \vv{t}) \label{eqn:logit-gradient}\\
 H_w      = & X\T R X & R = & \diag{y_d (1 - y_d)} \label{eqn:logit-hessian}
 \end{align}
 
-from which the following Newton-Raphon update is derived
+from which the following Newton-Raphson update is derived
 \begin{align}
 \vv{w}^{(\text{new})} \leftarrow \vv{w}^{(old)} - H_w^{-1} \vv{g}_w
 \end{align}
@@ -68,7 +76,7 @@ t_d | y_d \sim & \mathcal{B}\left( \sigma(y_d) \right) &
 y_d = \vv{w}\T\vv{x}_d  \label{eqn:bayes-logit-model}
 \end{align}
 
-This prior is not conjugate to the Bernoullie likelihood, so the posterior distribution on $\vv{w}$ cannot be derived analytically and is instead approximated by a Taylor approximation of the posterior. As described in \cite{Wang2013} the approximation can be taken about an arbitrary point, the true mean, or the mode; known as the log-concave bound, the delta method and the Laplace approximation respectively. We call these global approximations as we are using a \emph{single} approximation over a posterior distribution derived from the \emph{entire} dataset.
+This prior is not conjugate to the Bernoulli likelihood, so the posterior distribution on $\vv{w}$ cannot be derived analytically and is instead approximated by a Taylor approximation of the posterior. As described in \cite{Wang2013} the approximation can be taken about an arbitrary point, the true mean, or the mode; known as the log-concave bound, the delta method and the Laplace approximation respectively. We call these global approximations as we are using a \emph{single} approximation over a posterior distribution derived from the \emph{entire} dataset.
 
 With reference to the Laplace approximation, the gradient at the mode is by definition zero, so the approximation is defined in terms of a quadratic function of the weights. Thus the Laplace approximation corresponds to the following Gaussian distribution:
 
@@ -76,7 +84,7 @@ With reference to the Laplace approximation, the gradient at the mode is by defi
 p(\vv{w}|X,\vv{t}) \approx q(\vv{w}) = \nor{\wmap}{-\inv{H_w}}
 \end{equation}
 
-Following the central limit theorem, we would expect the Laplace approximation to better approximate the posterior as the number of datapoints increases. The MAP estimate of the weigts $\vv{w}_{MAP}$ is found, as in the MLE case, by some iterative method such as Newton-Raphson. The the Hessian is defined as:
+Following the central limit theorem, we would expect the Laplace approximation to better approximate the posterior as the number of datapoints increases. The MAP estimate of the weights $\vv{w}_{MAP}$ is found, as in the MLE case, by some iterative method such as Newton-Raphson. The the Hessian is defined as:
 
 \begin{align}
 H_w   & = \inv{\Lambda} + X\T R X & R = \diag{y_n(1 - y_n)} 
@@ -85,11 +93,17 @@ H_w   & = \inv{\Lambda} + X\T R X & R = \diag{y_n(1 - y_n)}
 Having obtained a posterior distribution over the weights, it remains to obtain a valid predictive distribution for a new datapoint $\vv{x}_*$
 
 \begin{align}
-p(t_* = 1| \vv{x}_*, X, \vv{t}) & = \int p(t_*|\vv{w}, \vv{x}_*)p(\vv{w}|X,\vv{t}) d\vv{w} \\
- & \approx \int \sigma(\vv{w}\T\vv{x}_*)q(\vv{w}) d\vv{w}
+p(t_* = 1| \vv{x}_*, X, \vv{t}) & = \int p(t_*|\vv{w}, \vv{x}_*)p(\vv{w}|X,\vv{t}) d\vv{w} \label{eqn:log-reg-predict} \\
+ & \approx \int \sigma(\vv{w}\T\vv{x}_*)q(\vv{w}) d\vv{w} \label{eqn:log-reg-predict-approx-q}
 \end{align}
 
-One can approximate this by plugging the posterior mean directly into the sigmoid, by importance sampling, or by the probit approximation\cite{Barber1998} which we outline here. By requiring both functions to have the same slope at the origin we can derive the approximation $\sigma(a) \approx \Phi(\lambda a)$ where $\lambda = \sqrt{\frac{\pi}{8}}$. As the convolution of the probit with a Gaussian is also a probit function\footnote{$\int \Phi(\lambda a)\norp{a}{\mu}{\sigma^2} \text{d}a = \Phi\left(\mu / (\lambda^{-2} + \sigma^2)^{\half} \right)$} we arrive at the following predictive distribution:
+A number of approaches are available. The simplest approach is to assume the posterior is sharply peaked around the mean, and simply plug the posterior mean directly into the sigmoid so $p(t|\vv{x}_*, X, \vv{t}) \approx \sigma(\vv{w}_{\text{MAP}}^\top \vv{x}_*)$
+
+A second approach is to use Monte-Carlo sampling to approximate the integral \eqref{eqn:log-reg-predict} using $q(\vv{w})$ as a proposal distribution.
+
+A third method is the probit approximation\cite{Barber1998} to approximate the integral \eqref{eqn:log-reg-predict-approx-q}. By requiring both functions to have the same slope at the origin we can derive the approximation $\sigma(a) \approx \Phi(\lambda a)$ where $\lambda = \sqrt{\frac{\pi}{8}}$. As the convolution of the probit with a Gaussian is also a probit function\footnote{$\int \Phi(\lambda a)\norp{a}{\mu}{\sigma^2} \text{d}a = \Phi\left(\mu / (\lambda^{-2} + \sigma^2)^{\half} \right)$} we arrive at the following predictive distribution:
+
+\bfshort{Shouldn't this $\sigma(\cdot)$ be a $\Phi(\cdot)$}
 
 \begin{align}
 p(t_* = 1 | \vv{x}_*, X, \vv{t}) = \sigma\left( \kappa(\sigma_y^2) \mu_y \right)
@@ -97,7 +111,7 @@ p(t_* = 1 | \vv{x}_*, X, \vv{t}) = \sigma\left( \kappa(\sigma_y^2) \mu_y \right)
 where
 \begin{align}
 \mu_y       & = \wmap\T\vv{x}_* &
-\sigma_y    & = \vv{x}_* \Sigma \vv{x}_* &
+\sigma_y    & = -\vv{x}_* \inv{H}_{w} \vv{x}_* &
 \kappa(a^2) & = \left( 1 + \frac{\pi a^2}{8}  \right)^{-\half}
 \end{align}
 
@@ -116,7 +130,7 @@ f(x) & \approx f(\xi) + f'(\xi) (x - \xi) + c \\
 \end{align}
 
 giving the classic equation for a line $y(x, m) = mx - c$ where $m = f'(\xi)$ and $c = f'(\xi)\xi - f(\xi)$. As described in \cite{JordanBook1999} this can approach can be taken one step further, where the intercept is defined in terms of the slope such that $y(x, m) = mx - c(m)$ using the following identities
-
+\bfshort{Double-check this}
 \begin{align}
 c(m) = & \max _x mx - f(x) & f(x) = & \max _m mx - c(m)
 \end{align}
@@ -132,7 +146,7 @@ However it is possible to derive a \emph{quadratic} bound which better approxima
 \begin{equation}
 \ln \sigma(x) = -\ln (1 - e^{-x}) = -\ln e^{-\halve{x}} \left( e^{\halve{x}} + e^{-\halve{x}} \right) = \halve{x} - \ln 2 \cosh (\halve{x}) \label{eqn:jaakkola-start-point}
 \end{equation}
- While the log-sigmoid itself is convex neither in $x$ nor $x^2$ it turns out the term $- \ln 2 \cosh (\halve{x})$ \emph{is} convex in $x^2$. One can therefore bound this using the methods outlined above. First note that $c(m) = \max_{x^2} mx^2 - f(\sqrt{x^2})$ 
+ While the log-sigmoid itself is convex neither in $x$ nor $x^2$ it turns out the term $-\ln 2 \cosh (\halve{x})$ \emph{is} convex in $x^2$. One can therefore bound this using the methods outlined above. First note that $c(m) = \max_{x^2} mx^2 - f(\sqrt{x^2})$ 
 
 Taking derivatives, one sees the maximum occurs at $\xi$, the solution to the equation $m + \frac{1}{4 \xi} \tanh (\halve{\xi}) = 0$. As the solution for this is non-trivial, one instead lets the maximum $\xi$ be the free parameter, and instead let the slope be a function of the maximum
 \begin{align}
@@ -272,7 +286,7 @@ The model is therefore
 For the Bohning bound, the multinomial update can be obtained directly by the following update of B\cite{BohningLogReg1988}
 
 \begin{equation}
-B = \frac{1}{4} (I_F + \frac{1}{L}\one \one\T)
+B = \frac{1}{2} (I_F + \frac{1}{L+1}\one \one\T)
 \end{equation}
 where F is the dimension of the feature space.
 
@@ -300,7 +314,7 @@ In the case of the Bouchard bound, these values, for the logistic regression mod
 \end{align}
 whereas for the Bohning bound the definitions are
 \begin{align}
-\Axi & = \half (I_F - \frac{1}{L} \one \one \T) \\
+\Axi & = \half (I_F - \frac{1}{L+1} \one \one \T) \\
 \bxi & = A \vv{\xi} - \sigma(\vv{\xi})\\
 \cxi & = \half \vv{\xi}\T A \vv{\xi} - \sigma(\vv{\xi})\T\vv{\xi} + \lse(\vv{\xi})
 \end{align}
@@ -556,6 +570,11 @@ and for $y_{nk}$ for all $t_{dk} = 0$
 where $Z_d = p(\vv{y}_d \in \mathcal{C}) = \ex{\prod_{j \neq l}\Phi\left(\epsilon + \ex{\vv{w}_l\T\vv{x}_d}{q} - \ex{\vv{w}_i\T\vv{x}_d}{q} \right) }{p(\epsilon)}$. Given these expectations, closed form updates for the weights can be obtained, however the expectation $\ex{y_dk}{q}$ can only be evaluated using quadrature or sampling methods.
 
 
+\subsection{Other Inference methods}
+\begin{enumerate}
+    \item Sampling, reference the large-scale paper
+    \item Discussion of the probit, reference Mark's paper.
+\end{enumerate}
 
 
 %\section{Comparison between the Logit and the Probit}
