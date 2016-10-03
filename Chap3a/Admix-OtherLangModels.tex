@@ -1,6 +1,6 @@
 \input{../header.tex}
 
-\subsubsection{Admixed Distributions of Text}
+\subsection{Admixed Distributions of Text}
 
 While the admixture of multinomials is the best known topic-model, admixtures of other distributions have been proposed as a means to capture useful features of text. 
 
@@ -46,7 +46,7 @@ Less esoteric is the use of a Pitman-Yor Process to model vocabularies, in order
 %
 %Topical keyphrase extraction on twitter\cite{Zhao2011a}
 
-%\subsubsection*{The Von Mises Fisher Distribution}
+%\subsection*{The Von Mises Fisher Distribution}
 %
 %The probabilistic equivalent of a cosine distance for unit-normed vectors is the Von-Mises Fisher distribution, which is a probability distribution on the $\mathbb{S}^{T-1}$ unit-sphere in $\mathbb{R}^{T}$. Its density is given by:
 %
@@ -64,7 +64,7 @@ Less esoteric is the use of a Pitman-Yor Process to model vocabularies, in order
 %
 
 
-%\subsubsection*{Markov Random Fields with Discrete Observations}
+%\subsection*{Markov Random Fields with Discrete Observations}
 %Markov Random Fields have been proposed as a means to  model correlations between words. The method is to consider the vocabulary as a fully connected graph over all possible terms, and by means of a sparsity-inducing regularisation prune out edges, so that what is left is a sparse, disconnected graph of related words.
 %
 %This is achieved by means of a Markov Random Field, a type of undirected graphical model.
@@ -73,7 +73,7 @@ Less esoteric is the use of a Pitman-Yor Process to model vocabularies, in order
 %
 %In both cases scaling is hard, though in the former it is at least well-studied.
 %
-%\subsubsection*{Bernoulli MRF}
+%\subsection*{Bernoulli MRF}
 %The Bernoulli MRF model of \cite{Nallapati2007} assumes that words have been encoded in a binary bag-of-words vector, where for term $t$, if that term occurs \emph{at least once} in the document, then $w_{dt} = 1$ , otherwise $w_{dt} = 0$. For very short texts, where repeated word occurrences are rare in any event, nothing is lost by this construction.
 %
 %In the case of LDA, words are distributed according to a Multinomial distribution, whose parameter $\phi_k$ is drawn from the appropriate Dirichlet according to the topic assigned to that particular word. In the Bernoulli MRF model words are distributed according to a topic-specific Bernoulli MRF, with parameter-matrix $\Lambda^{(k)}$, where $\Lambda^{(k)}$ encodes the edge structure, and an L1 regularlizer encodes a preference for sparse graphs.
@@ -109,7 +109,7 @@ Less esoteric is the use of a Pitman-Yor Process to model vocabularies, in order
 %
 %In the case of the admixture paper using this model, results were reported for just a single experiment for which the number of topics $K=10$ and the the corpus (AP) contains $D=2,246$ documents with a vocabulary $T=10,473$. They ran LDA on this to estimate topics, then for each topic $k$ took those documents with $\theta_{dk} \geq 0.25$ and then ran the given algorithm to determine the word graph for each topic. This is evidently to work around performance issues involved in $K \times T$ logistic regressions of dimension $T$ on each iteration of the algorithm. The result, derived from $\Lambda^{(k)}$, is a graph of the already-determined topic-vocabulary. For the two of the ten topics they choose to present, they had 35,588 and 128,074 edges. The number of non-zero values in $\Lambda^{(k)}$ is twice that. There is no symmetry constraint on $\Lambda^{(k)}$.
 %
-%\subsubsection*{Poisson}
+%\subsection*{Poisson}
 %\newcommand \vl {\vv{\lambda}}
 %\newcommand \bl {\Lambda}
 %\newcommand \blk {\Lambda^{(k)}}
@@ -182,7 +182,7 @@ Less esoteric is the use of a Pitman-Yor Process to model vocabularies, in order
 %They don't really have a clear answer to the scaling problem.
 
 
-\subsubsection*{Admixtures of Language Models}
+\subsection*{Admixtures of Language Models}
 All the models described hitherto have modelled the joint distribution of individual, exchangeable words. As already described with regard to language models, improvements can be gained by considering phrases such as "San Francisco" or "Support Vector Machine" rather than the individual words that comprise them.
 
 The simplest approach is just to model sequences of overlapping n-grams. The natural Bayesian fit for this is the hierarchical Dirichlet language models (HDLMs), which can be incorporated into ordinary LDA\cite{Wallach2006}, though it is more efficient to use  Minka's update algorithm\cite{Minka2002} for the vocabulary and topic hyperparameters instead of the original algorithm proposed in \cite{MacKay1995}. One can consider also whether to learn hyperparameters (lower-order n-grams) individually for each topic, or collectively across all topics. 
@@ -241,7 +241,7 @@ A simpler approach used in practice, is attempt to infer collations as a preproc
 There are many other models using variants of these ideas. In \cite{Griffiths2005} a hidden markov model was employed, where the emission distributions consisted of $S-1$ multinomial distributions and one LDA model. For each word a topic $z_{dn}$ and a hidden state $c_{dn}$ were sampled, with the topic used only if the appropriate LDA emission distribution was used. The intent was that the other emission distributions would capture ``syntax" words. Equally, the idea of employing a markov property was used in \cite{Gruber2007} where a topic was assigned to an entire sentence, and a Bernoulli switch was used to determine whether a new topic should be sampled for the next sentence or not. A variation of these methods have been used in author-topic models of Tweets\cite{Zhao2011}\cite{Zhao2011a} where a single topic was assigned to each tweet, and for each word within that tweet a Bernoulli switch was used to distinguish topic words from ``syntax" words. In this case there was just one fixed distribution for ``syntax words" the empirical distribution of words across the entire corpus.
 
 
-\subsubsection*{A Natural Parameterisation of the Multinomial Admixture}
+\subsection*{A Natural Parameterisation of the Multinomial Admixture}
 As explained in \cite{Buntine2002}, one can re-state the standard LDA model, where the vocabularies are parameters with no distribution, as
 
 \begin{align}
@@ -285,7 +285,7 @@ A disadvantage of this approach is that this \emph{does not} correspond to the s
 %%--- the TopicSeqMem 4 frame -------------------------%
 %
 %
-%\section{Conclusions}
+%\chapter{Conclusions}
 %When dealing with tweets, a particular instance of the class of microtexts, the distinguishing factors are
 %\begin{enumerate}
 %    \item Very short documents

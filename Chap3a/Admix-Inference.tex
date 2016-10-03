@@ -1,6 +1,6 @@
 \input{../header.tex}
 
-\subsubsection{Inference Strategies}
+\subsection{Inference Strategies}
 LDA has proved to be a very popular algorithm in practice, with deployments in Yahoo\cite{Ahmed2011a}, Last.fm\footnote{\url{http://mir-in-action.blogspot.co.uk/2011/04/algorithms-on-hadoop.html}} and others. Considerable effort has been focused on the best possible implementations of LDA for batch, online and distributed computation.
 
 In the following we will use the notation $n_{dkt}$ to indicate the number of instances of term $t$ assigned to topic $k$ in document $d$, and will use a dot to indicate when a summation has occurred, such that $n_{\cdot k t} = \sum_d n_{dkt}$.
@@ -74,7 +74,7 @@ This illustrates that the main difference between the Gibbs sampler and the full
 %Whilst discussing LDA/CVB, it should not noted that an alternative approach to collapsing out terms was taken in \cite{Hensman2012}, where the parameters were marginalized \emph{after} applying the variational bound instead of before. On a small dataset they demonstrated faster convergence relative to LDA/VB, but did not compare to LDA/CVB directly.
 
 
-\subsubsection*{Scaling to Large Datasets}
+\subsection*{Scaling to Large Datasets}
 The issue of how to scale LDA to large datasets has been actively researched. In the variational case, the natural choice is the use of stochastic gradient ascent\cite{Bottou2004}\cite{Bottou2008} to infer each document's topic-distribution, and then immediately use it to perform a gradient update on the vocabulary\cite{Hoffman2010}\footnote{In practice ``mini-batches" of documents are used to minimise the variance}. Performance can be further improved by using Gibbs sampling to get a sparse estimate of the topic distribution, permitting sparse calculations throughout\cite{Mimno2012a}.
 
 The LDA/CVB, algorithm, with just one parameter, does not fit the ``local-global" split exploited by stochastic methods, particularly as the previous value of $\zdnk$ is required to estimate terms such as $\ex{n_{dk\cdot}^{\setminus dn}}{\hat{q}}$. Attempts to scale this\cite{Boyles2013} simply ignore the subtraction and treat counts as random variables updated using gradient steps in the Online EM framework\cite{Cappe2009}. This reduces the memory requirements of LDA/CVB, but not its runtime.
@@ -132,7 +132,7 @@ e^{\kappa_{dk} \rho_{dk}}
 \end{align}
 where $\kappa_{dk} = n_{dk\cdot} - \halve{n_{d\cdot\cdot}}$ and $\lambda_{dk}$ has a Polygamma distribution. With this representation one can derive an exact Gibbs step, instead of resorting to the more usual approach of rejection sampling. Combined with certain approximation steps, this leads to rapid inference\cite{Chen2013}. To use this in a distributed environment one simply uses hierarchical priors as in AD-LDA: specifically the topic strength vectors $\vv{\eta}_d$ for each document $d$ are conditionally independent of one another given the $\mathcal{NIW}\left(\vv{\mu}, \rho, \kappa, \Sigma\right)$ prior. The per-token topic assignments need the global $n_{\cdot k t}$ counts, and these are made available via a blackboard server.
 
-\subsubsection*{Inference of Hyperparameters}
+\subsection*{Inference of Hyperparameters}
 In its original presentation\cite{BleiNgJordan2003} the parameters of the prior distributions on topics and vocabularies ($\vv{\alpha}$ and $\vv{\beta}$ respectively), were inferred using a fast Newton-Raphson update procedure described in \cite{Minka2000}:
 
 \begin{align}

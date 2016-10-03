@@ -1,6 +1,6 @@
 \input{../header.tex}
 
-\subsection{Admixture Models of Text}
+\section{Admixture Models of Text}
 The Hidden Words language mode is an example of a projection of words into a latent space, to address the issues of synonymy and polysemy, and also dimensionality. There has been considerable research into the inference of such projections, typically with a view to finding latent dimensions corresponding to semantic meaning, or ``topics".
 
 The earliest approach is latent semantic analysis\footnote{Sometimes the term latent semantic indexing (LSI) is used, due to the original application to document retrieval. Similarly pLSA is sometimes referred to as pLSI} (LSA)\cite{Deerwester1990} which takes a $D\times T$ document-term matrix $W$ using TF-IDF encodings of words, and decomposes it using a singular value decomposition $W = USV\T$. By ranking the singular values one can identify the subspaces which account for most of the variance, which it is assumed correspond to semantically meaningful topics. However LSA gives rise to documents exhibiting ``negative" scores for topics, which seems counter-intuitive: while it is easy to see how a document might be affected by the addition or absence of a topic, how the subtraction of an absent topic would affect it is not obvious.
@@ -83,7 +83,7 @@ By defining a complete generative model, LDA can make predictions on unseen docu
 
 It worth nothing that in practice, the main difference between the two is regularisation: given symmetric Dirichlet priors parameterised by $\vv{\alpha} = \vv{\beta} = \vv{1}$ LDA simply defines a proper Bayesian estimator for the pLSA model\cite{GiKa2003}.
 
-\subsubsection{Comparison with other Models}
+\subsection{Comparison with other Models}
 More precisely, LDA can be described as an admixture of multinomials, in that it models a corpus as a mixture of document-level mixtures. In fact \cite{BleiNgJordan2003} was not the first time such a model had been presented,  admixtures of multinomials had been used in Bioinformatics previously\cite{Pritchard2000} though that result was little known in machine learning fields. 
 
 The Multinomial PCA algorithm\cite{Buntine2002} is also an independent invention of the LDA model published in advance of \cite{BleiNgJordan2003} It is a word-level mixture, where if one treats $\Phi$ as a parameter with no distribution one can equivalently rewrite the model as
@@ -95,7 +95,7 @@ from which the connection with PCA, where one typically write $x \sim \nor{W\T\v
 LDA can be applied to any case where an admixture of multinomials is an appropriate distribution for the observed data, not just text. It has been used for collaborative filtering\cite{BleiNgJordan2003}, where users and the movie-ratings corresponded to documents and word-counts; interactions between users on social networks where users, social-links and cliques correspond to documents, words and topics\cite{Zhang2007}, or applied to discrete features, or ``visual words" derived from images\cite{Philbin2008}. In particular the link between LDA and probabilistic matrix factorization\cite{Salakhutdinov2007} has been investigated further in\cite{Agarwal2010}. In particular LDA can be seen to be a probabilistic form of non-negative matrix factorisation\cite{Lin2007}, where $W = \Theta \Phi$
 
 
-\subsubsection{Capturing Correlation between Admixture Components}
+\subsection{Capturing Correlation between Admixture Components}
 
 As the Dirichlet prior assumes its components are near-independent\footnote{But not fully independent due to the requirement that samples exist on the simplex}, it does not capture correlations between topics, and so other priors have been suggested.
 

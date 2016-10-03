@@ -4,7 +4,7 @@
 \newcommand \thod {{ \vv{\theta}_{\cdot d} }}
 \newcommand \thko {{ \vv{\theta}_{k \cdot} }}
 
-\subsection{Incorporating Downstream Features}
+\section{Incorporating Downstream Features}
 The division of ``upstream" and ``downstream" models is somewhat artificial, as it is entirely possible to combine the approaches to derive a model predicting $p(\wdoc, \ld | \xd) = \int p(\wdoc, \ld|\thd,\Phi) p(\thd | \xd) d\thd d\Phi$.
 
 One such example is a model for predicting both the words and citations (or ``out-links") of academic papers given certain metadata, such as author, journal or year.

@@ -1,6 +1,6 @@
 \input{../header.tex}
 
-\subsection{Multi-Task Prediction of Admixture Components for Microtexts}
+\section{Multi-Task Prediction of Admixture Components for Microtexts}
 Taking these two aspects, multi-task learning and admixture models with covariates together, we present a new multi-task model for prediction of admixture components.
 
 Both LDA and CTM rely on token co-occurrences in documents, and so have shown poor performance when applied to micro-texts such as individual tweets from Twitter\cite{DeLaRosa2011} where the document size is very small (e.g. 13 words) and much smaller than the number of topics (e.g. $K=100$) learning to an overparameterised model. More successful approaches have involved grouping tweets a-priori, for example by author\cite{Weng2010}\cite{Xu2011}\cite{Hong2010}\cite{Eisenstein2010} and then applying LDA to that group, which is essentially the author-topic model\cite{MacCallum2007}. A disadvantage of this approach is that that not all tweets' topics may be attributable to a single variable -- in this case, author. A simple approach to this was used in \cite{Xu2011} where a Bernoulli switch is used to determine whether a tweet is attributable to an author's long-term interests or not. Inference was performed in the former case, and ignored in the latter case, as the aim was solely to model authors' interests, and not tweets' words.
@@ -10,7 +10,7 @@ Such an approach is unsatisfying when modelling micro-text corpora - clearly an 
 In the following we present a model for predicting component-probabilities in an admixture model. We learn a single matrix which we use to predict all mixture components from a given weight vector, exploiting correlations between mixture components. By use of appropriate matrix-variate priors, we additionally learn a shared covariance matrix over mixture-components and a low-rank covariance over features. We demonstrate the performance of this model on real world dataset of tweets, and -- as a control -- academic papers.
 
 
-%\subsection{The Matrix-Variate Normal Distribution}
+%\section{The Matrix-Variate Normal Distribution}
 %A matrix $A \in \MReal{K}{F}$ which has a matrix-normal distribution\cite{Gupta1999} with row-covariance $\Omega \in \MReal{F}{F}$, column covariance $\Sigma \in \MReal{K}{K}$ and mean-matrix $M \in \MReal{K}{F}$ has the density:
 %
 %\begin{equation}
@@ -23,7 +23,7 @@ In the following we present a model for predicting component-probabilities in an
 %
 %The use of matrix-variate priors for multitask learning has been explored in \cite{Stegle2011}\cite{Bonilla2008} \cite{Archambeau2011}\cite{Yang2011}. Due to the ability to reduce the number of covariance parameters from $(LF)^2$ to $L^2 + F^2$ it has also been explored in other areas such as matrix factorization\cite{Allen2010}.
 
-\subsubsection{Multitask Multinomial Regression}
+\subsection{Multitask Multinomial Regression}
 Let $D$ be the number of documents and $N_d$ the number of words in document $d\in\{1,\ldots,D\}$. The Correlated Topic Model models the mixture $\thd$ for a document $d$ as follows:
 \begin{align}
 \thd &\sim \nor{\mu}{\Sigma}
@@ -50,7 +50,7 @@ The use of matrix-variate priors for multitask learning has been explored in \ci
 
 It is interesting to note that were we to use the distribution $A \sim \mnor{0}{\alpha^2 I_F}{\Sigma}$ and then marginalize out A from the distribution of $\thd$ we would obtain the multi-task Gaussian Process regression algorithm of \cite{Bonilla2008}. In this context, the resulting model would provide a correlated-topic analogue to the Kernelised Topic Model \cite{Hennig2012} which makes the LDA assumption of topic independence. Like KTM however, it would be challenge to scale to large corpora with large numbers of topics.
 
-\subsubsection{Variational Inference}
+\subsection{Variational Inference}
 %\newcommand \Axi { \Lambda_{\xi_d} }
 %\newcommand \bxi { \vv{b}_{\xi_d} }
 %\newcommand \cxi { \vv{c}_{\xi_d} }
@@ -76,7 +76,7 @@ q(\Theta) = & \prod_d \nor{\md}{\Vd} & q(Z) = & \prod_d \prod_n \muln{\vv{\gamma
 
 Where $\Vd$ is a diagonal matrix in all our experiments. Using Jensen's bound, and this approximate posterior, we can approximate the marginal likelihood $p(W | X) \geq \ex{\ln p(W,A,\Theta,Z,\Phi,A,Y| X}{q}$ with a tractable approximation, the ``free energy".
 
-\subsubsection{Resolving Identifiability in the Matrix-Variate Posterior}
+\subsection{Resolving Identifiability in the Matrix-Variate Posterior}
 Taking derivatives of the free-energy and setting to zero in the usual manner initially leads to the following updates for $R_Y$ and $S_Y$.
 
 \begin{align}
@@ -110,7 +110,7 @@ M_Y = & \invb{\rho^{-2} I_P + \alpha^{-2} V V\T}(\alpha^{-2}V M_A) = R_Y (\alpha
 
 The updates for the posterior $q(A)$ follow similarly.
 
-\subsubsection{Non-Conjugate Inference with Quadratic Bounds}
+\subsection{Non-Conjugate Inference with Quadratic Bounds}
 Our posterior is still intractable however as the multinomial distribution over per-token topics $Z$ is not conjugate to the normally distributed prior.
 
 To overcome this we bound the log-sum-exp function with a quadratic function of its arguments, which allows for closed-form updates in the E-Step and M-Step. 
@@ -208,7 +208,7 @@ $\text{ }$\\
     \end{align*}
 \end{algorithm}
 
-%\subsubsection{Low-Rank Covariance}
+%\subsection{Low-Rank Covariance}
 %To address the performance issue with the Bouchard algorithm variant, and further to handle the issue of rank-deficient matrices when topic-counts are high, we propose a modification to the algorithm, where we employ a low-rank decomposition of the topic-covariance matrix in addition to the feature-covariance.
 %
 %To obtain this low-rank covariance we alter the distributions over $Y$, $A|Y$ and $\thd$ as follows:
@@ -227,7 +227,7 @@ $\text{ }$\\
 %
 %We refer to this as the reduced-covariance model.
 
-%\subsection{Inference for the Reduced-Covariance Model}
+%\section{Inference for the Reduced-Covariance Model}
 %One approach to the reduced covariance model is to attempt to use matrix-variate posteriors with separate covariances -- $q(Y) \sim \mnor{M_Y}{R_Y}{S_Y}$, $q(A) \sim \mnor{M_A}{R_A}{S_A}$ --  despite the non-separability of the marginalized prior. However this immediately leads to a Sylvester equation, indicating that the covariance of the variational posterior is non-separable.
 %
 %\begin{align}
@@ -278,7 +278,7 @@ $\text{ }$\\
 %\newcommand \omy  { \Omega_Y }
 %\newcommand \sigy { \Sigma_Y }
 %
-%\subsubsection*{Matrix Calculus for Kronecker Products}
+%\subsection*{Matrix Calculus for Kronecker Products}
 %Solving for $U$ and $V$ requires the use of the vec-transpose \emph{operator} introduced in \cite{Wandell1992} and the \emph {communtation matrix} introduced in \cite{Magnus1988}. These are described here.
 %
 %The vec-transpose of an $m \times n$ matrix $X$, denoted by $\vt{X}{p}$ is composed of $n$ submatrices stacked atop one another, where each $p \times ^m/_p$ sub-matrix is generated by a fortran-order reshaping of each column of X. The matrices are generated from top to bottom from the columns of X read from left to right. It generalizes both the transpose and $\vecf{\cdot}$ operations, as $\vt{X}{1} = X\T$ and $\vt{X}{\text{rows}(X)} = \vecf{X}$.
@@ -301,7 +301,7 @@ $\text{ }$\\
 %
 %The vec-transpose operator and the commutation matrix and their applications to calculus are explained in more detail in \cite{Minka2000a}. The appendix provides a summary of the key points, and the derivations of \eqref{eqn:lhs_kro_derivative_symm} and \eqref{eqn:rhs_kro_derivative_B_is_ident}.
 %
-%\subsubsection*{Derivation of the updates for U and V}
+%\subsection*{Derivation of the updates for U and V}
 %
 %Starting first with V, we can use \eqref{eqn:lhs_kro_derivative_symm} to take the derivative of \eqref{eqn:free_enery_u_and_v} and so derive the following solution
 %
@@ -357,10 +357,10 @@ $\text{ }$\\
 %
 %}
 
-\subsection{Experiments}
+\section{Experiments}
 We empirically tested out model on two very different datasets. The first is the classic ``microtext" dataset: several hundred thousand tweets from twitter; the second is the Association for Computational Linguistics (ACL) corpus of academic papers from 1967 to 2010.
 
-\subsubsection*{Evaluation Methodology}
+\subsection*{Evaluation Methodology}
 The metric we use to evaluate our model is perplexity, a metric popular in language and topic models, which is simply the geometric mean of the reciprocal of the per-token likelihoods. This normalizes for document length when comparing model runs. Using logs, this becomes:
 
 \newcommand \perplx[1] { \mathcal{P} \left( #1 \right) }
@@ -376,8 +376,8 @@ In order to evaluate perplexity, one needs an estimate of the marginal likelihoo
 In the case of our micro-text model, topics are directly predicted as a function of the features, without reference to the words, and so we evaluate the likelihood on \emph{all} words using the inferred topic distribution.
 
 
-\subsubsection{Datasets}
-\subsubsection*{Twitter Dataset}
+\subsection{Datasets}
+\subsection*{Twitter Dataset}
 The Twitter dataset consists of 578,408 tweets, comprising 5,313,438 individual tokens, posted by 363 users. It was collected by manually selecting certain ``seed" users with interests in different sports, political affiliations, or life-style activities and then proceeding recursively in a breadth-first fashion through users lists of users they follow in turn, until we had several thousand users. From these, we selected those users with the highest rate of posts, as measured by the shortness of the interval between their most recent and twentieth most recent posts. We then followed these users over a five month period from May 1st 2013 to September 30th, 2013. 
 
 This dataset is not necessarily characteristic of common Twitter use: while earlier studies of Twitter users suggested a reasonable degree of reciprocity\cite{Java2007}, more recent surveys of Twitter usage has suggested that the reciprocity of Twitter links is nowadays quite low, with a majority quietly listening to an active minority\cite{Kwak2010}. It does however provide a large dataset of ``microtexts".
@@ -389,20 +389,20 @@ Within the text itself, tokens are divided into six categories: addressees, hash
 
 Unlike \cite{Wu2010} and \cite{Han2011} we do not use query-expansion techniques such as spell-checkers or slang dictionaries to undo abbreviations, as abbreviated vocabularies may be a distinct mixture-component in its own right. URLs are included based on the results published in \cite{Michelson2010} which showed they were associated with distinct topics, though use of URL-shorteners makes it impossible to detect what the true URL was post-hoc.
 
-\subsubsection*{ACL Dataset}
+\subsection*{ACL Dataset}
 The second dataset we consider is the ACL corpus consisting of academic papers published between 1965 and 2013. The full dataset contains 20,298 non-empty documents from 2,513 authors comprising 50,142,142 tokens drawn from a vocabulary of 25,477 distinct terms. 
 
 We limit this to a corpus consisting only those documents with a hundred words or more, which have at least one author and year (venue is optional), and for which all associated authors, years and venues had at least 10 documents associated with them in the corpus. With this adjustment, we arrived at a corpus of 13,554 documents comprising 41,009,480 words, associated with 1,060 authors, 41 distinct years and 70 distinct venues. 55\% of papers have one author only, 30\% have two authors, and 10\% three authors. The maximum number of authors for a paper was 13 authors. Conversely, 25\% of authors published at most 13 or fewer papers, 50\% published 15 or fewer papers, and 75\% published 24 or fewer papers. The most prolific author published 251 papers.
 
 This is not a micro-text dataset, but does allow us to check how the model performs with larger volumes of text, and how it scales to larger word-counts.
 
-\subsubsection{Baseline Model}
+\subsection{Baseline Model}
 As a baseline model, we use the correlated topic model, implemented using the Bouchard and Bohning bounds, and LDA, implementing using variational inference as in \cite{BleiNgJordan2003}. In the case of ACL, we use this to infer mixture distributions for each individual document in the usual manner. In the case of Tweets we aggregate tweets by author into single ``documents", creating correlated author-topic models of tweets.
 
 For CTM and LDA, we cross-validate the data, and train a model on the training set. We then partition the words in each document in the test set into estimation words and evaluation words as described perviously. Holding the inferred component-distributions (i.e. vocabularies) fixed, we infer mixture-distributions over each document using the estimation words, then use those distribution with the evaluation words to determine likelihood, and so perplexity, of the test-set.
 
-\subsection{Results}
-\subsubsection*{Twitter}
+\section{Results}
+\subsection*{Twitter}
 The results of the correlated author-topic model of tweets, for both Bouchard and Bohning bounds, and for LDA is given in figure \ref{fig:tweet-all} alongside the results for our model ("STM"). 
 
 With regard to our model firstly, we can see that increasing the size of the latent feature-space does indeed have an effect, up to a dimension of 50 (note the true feature space has a dimension of 594). Our results consistently beat using a simple author topic model, whether correlated or not.
@@ -459,7 +459,7 @@ An issue with this approach is that if two hash-tags belong to the same topic, w
 \end{table}
 
 
-\subsubsection*{ACL}
+\subsection*{ACL}
 The results of running our model, and the CTM, and LDA topic models, on the ACL dataset are given in figure \ref{fig:acl-all}. The CTM (Bouchard) algorithm behaves similarly to the Twitter case. LDA, however, out-performs not only CTM, but also our model, in both training and query.
 
 With such large documents (typically 3,000 words), the use of associated features such as author and year of publication evidently does not help, and merely hinders the inference of meaningful topics, compared to simply inferring topics directly from documents' words. Interestingly, the use of a correlated topic model also shows no benefit, even though there clearly is a sufficient number of documents to reliably infer a covariance matrix for the lower values of $K$. Inspection of the covariance matrix returned by the CTM (Bohning) model does show meaningful links between, for example, topics corresponding to different aspects of machine translation, but this information evidently does not aid model fit.
@@ -508,15 +508,15 @@ Clearly, in the presence of large documents, where all words associated with a t
 \end{table}
 
 
-\subsection{Conclusion}
+\section{Conclusion}
 We have introduced a method employing multi-task learning to predict admixture-components, using quadratic bounds to overcome the non-conjugacy of the model. We have successfully applied this method in the case of a dataset of tweets: obtaining better model fit versus both simple and correlated author-topic models; and demonstrating the ability to employ this model as a query-expansion method for document retrieval. The use of the Bouchard bound failed to deliver any advantage in quality of model fit, and its rapid convergence in the initial iterations is not useful for priming the slower (in terms of iteration-count) Bohning bound algorithm.  Our method is not specific to any particularly dataset, and so can be applied to any dataset where features may be associated with observations which can be fit using an admixture model, though experiments suggest that, as outlined in the introduction, it is better suited to short and micro-texts where the use of a learnt prior can be motivated by a scarcity of words in each document.
 
 
 %\begin{appendices}
-%\section{The Variational Lower Bound}
+%\chapter{The Variational Lower Bound}
 %In this section we provide the variational lower-bound, or free-energy, for the two algorithms. This is taken after the bound has been applies to the likelihood.
 %
-%\subsection{Full-Covariance Model}
+%\section{Full-Covariance Model}
 %The free-energy of the full-covariance bound is the sum of the terms given below.
 %\begin{align}
 %\begin{split}
@@ -527,7 +527,7 @@ We have introduced a method employing multi-task learning to predict admixture-c
 
 
 
-%\section{Matrix Calculus Involving Kronecker Products}
+%\chapter{Matrix Calculus Involving Kronecker Products}
 %This briefly summarises the identities contained in three online resources\footnote{\url{http://research.microsoft.com/en-us/um/people/minka/papers/matrix/}}\footnote{\url{http://www4.ncsu.edu/~pfackler/MatCalc.pdf}}\footnote{\url{http://courses.engr.illinois.edu/cs598ps/CS598PS/Topics_and_Materials_files/Lecture\%201\%20-\%20Intro,\%20Linear\%20Algebra.pdf}} and then explains how these were used to take the derivatives of the expression
 %
 %\begin{equation}
@@ -536,7 +536,7 @@ We have introduced a method employing multi-task learning to predict admixture-c
 %
 %with respect to X and to Y.
 %
-%\subsection{Background}
+%\section{Background}
 %The definition of the Kronecker product and the $\vecf{\cdot}$ operator are assumed to be known. It is noted that in implementation terms, one can trivially implement the $\vecf{\cdot}$ operator using a \texttt{reshape} command, though only if the matrix is stored in column or ``Fortran" order. This is the case for Matlab, but most other numeric packages, including Numpy for Python, assume row or ``C" order. 
 %
 %Standard identites for Kronecker products and the related $\vecf{\cdot}$ operator are readily available\footnote{See for example ``The Matrix Cookbook" at \url{http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/3274/pdf/imm3274.pdf}} but two of note are
@@ -545,7 +545,7 @@ We have introduced a method employing multi-task learning to predict admixture-c
 %\vecf{UXV} & = (V\T \otimes U)\vecf{X} \label{eqn:vec_to_otimes}
 %\end{align}
 %
-%\subsubsection{The Vec-Transpose Operator}
+%\subsection{The Vec-Transpose Operator}
 %Both the $\vecf{\cdot}$ and tranpose operators can be generalized by the vec-transpose operator, introduced in \cite{Wandell1992}. This becomes a necessary tool when taking the derivatives of terms that occur in kronecker products.
 %
 %The vec-transpose of an $m \times n$ matrix $X$ is denoted $\vt{X}{p}$. The resulting matrix is composed of $n$ submatrices stacked atop one another, where each $p \times ^m/_p$ sub-matrix is generated by a fortran-order reshape of each column of X. The matrices are generated from top to bottom from the columns of X read from left to right. This is illustrated in the following examples.
@@ -637,7 +637,7 @@ We have introduced a method employing multi-task learning to predict admixture-c
 %\vt{(\vt{(XY)}{p}Z)}{p} = (Z\T \otimes I)XY = \vt{(\vt{X}{p}Z)}{p}Y
 %\end{equation}
 %
-%\subsubsection{The Commutation Matrix}
+%\subsection{The Commutation Matrix}
 %In the previous section, we illustrated how we can swap-out the left-hand operand of a Kronecker product, enabling us to then apply the standard matrix-calculus identities. In this section we introduce the commutation matrix introduced in \cite{Magnus1988}, which allows us to swap the order of the operands in a kronecker product, moving the right-hand operand to the left from whence it can be swapped out subsequently using the vec-transpose operator.
 %
 %For an $m \times n$ matrix X, define the square matrix $T_{mn} \in \{0,1\}^{(m \times n) \times (m \times n)}$ that transforms $\vecf{X}$ into $\vecf{X\T}$:
@@ -682,7 +682,7 @@ We have introduced a method employing multi-task learning to predict admixture-c
 %\end{equation}
 %
 %
-%\subsection{Connections between the Vec-Transpose Operator and Commutation Matrix}
+%\section{Connections between the Vec-Transpose Operator and Commutation Matrix}
 %Looking at equation \eqref{eqn:vt_example_2}, where the vec-transform operator converts a $6 \times 2$ matrix into a $4 \times 3$ matrix, it is clear that no combination of square transformation matrices could achieve such a change in dimension, regardless of element ordering. Moreover $T_{mn}$ is explicitly defined in terms of the transform from $\vecf{X}$ to $\vecf{X\T}$
 %
 %Therefore rather than consider if one can express the vector-transform operator using commutation matrices, we must instead determine if a commutation matrix could be expressed in terms of the vec-transform operator.
@@ -700,7 +700,7 @@ We have introduced a method employing multi-task learning to predict admixture-c
 %
 %Mathematically this is not a particularly useful result, replacing as it does one matrix multiplication with three applications of the vec-transpose operator. Programmatically, it is also likely that a sparse matrix-multiply is faster than several stacked \texttt{reshape} operations.
 %
-%\subsection{Derivatives of Terms in Kronecker Products}
+%\section{Derivatives of Terms in Kronecker Products}
 %In this section we use the identities above, combined with standard matrix-calculus identities, to derive the derivative of
 %
 %\begin{equation}
@@ -709,7 +709,7 @@ We have introduced a method employing multi-task learning to predict admixture-c
 %
 %where $X \in \MReal{m}{n}$, $Y \in \MReal{k}{l}$, $A \in \MReal{nl}{a}$ and $B \in \MReal{nl}{b}$.
 %
-%\subsubsection{With Respect to the Left-Hand Operand}
+%\subsection{With Respect to the Left-Hand Operand}
 %\newcommand \ddX  { \frac{d}{dX} }
 %
 %This proceeds in a straightforward manner, extending only slightly the example provided by Minka. 
@@ -728,7 +728,7 @@ We have introduced a method employing multi-task learning to predict admixture-c
 %\end{equation}
 %
 %
-%\subsubsection{With Respect to the Right-Hand Operand}
+%\subsection{With Respect to the Right-Hand Operand}
 %This is much the same as before, except that we first employ two commutation matrices to re-arrange the order of the operands in the product.
 %
 %\begin{align}

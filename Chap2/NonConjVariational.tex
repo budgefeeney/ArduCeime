@@ -1,14 +1,14 @@
 \input{../header.tex}
 
 
-\section{Non-Conjugate Bayesian Inference}
+\chapter{Non-Conjugate Bayesian Inference}
 \label{sec:nonconj}
 In this chapter we investigate several approximations to the log-sum-exp function which arises when working with the logit. We qualitatively and quantitatively evaluate several approximation techniques on two classes of model: logistic regression and the correlated topic-model (CTM).
 
 In particular while Taylor approximations have been recommended for inference with the \cite{Wang2013} we investigate other families of approximations, and qualitiatively show that one, the Bohning bound\cite{Bohning1988} offers faster and more accurate convergence. 
 
 Finally we provide a proof of convergence when performing inference on the CTM with the Bohning bound, making this the only variational inference scheme for the CTM with convergence guarantees
-\subsection{The Logit}
+\section{The Logit}
 In the previous chapter we considered only those cases where the posterior and prior are conjugate, and so tractable closed-form updates can be easily derived. However there are many classes of model where conjugacy is not available. For example, in logistic regression one introduces an \emph{activation function} $f(y) : \mathbb{R} \rightarrow [0, 1]$ which maps the real number line onto the interval $[0,1]$.
 \begin{align*}
 p(t_d = 1) = & f(y_d) & d_n  & \sim \mathcal{B} \left( \vv{w}\T\vv{x}_d\right) & \vv{w} & \sim \nor{0}{\alpha^2 I} \\
@@ -17,7 +17,7 @@ where $\mathcal{B}(\cdot)$ is the Bernoulli distribution.
 
 We consider inference for two cases of two sigmoidal activation functions for which f(0) = 0.5: the probit $\Phi(a)$ and the logit $\sigma(a)$.
 
-\subsubsection{Inference with the Logit}
+\subsection{Inference with the Logit}
 The logit is motivated as a log-odds ratio. Let $y_d = \vv{w}\T\vv{x}_d$. Then:
 
 \begin{alignat}{3}
@@ -38,7 +38,7 @@ This leads to an easy interpretation of the weights in logistic regression: each
 %\end{align}
 
 
-\subsubsection*{Maximum Likelihood Estimation}
+\subsection*{Maximum Likelihood Estimation}
 With a Bernoulli distribution on $t_d$ the log-likelihood has the form
 
 \begin{equation}
@@ -67,7 +67,7 @@ With some re-arrangement of \eqref{eqn:logit-gradient} and \eqref{eqn:logit-hess
 \end{align}
 
 
-\subsubsection*{MAP Estimation using Global Approximations}
+\subsection*{MAP Estimation using Global Approximations}
 \newcommand \wmap[0] { \vv{w}_{\text{\tiny \sc MAP}} }
 
 Consider a zero-mean Gaussian prior on the weight
@@ -115,7 +115,7 @@ where
 \kappa(a^2) & = \left( 1 + \frac{\pi a^2}{8}  \right)^{-\half}
 \end{align}
 
-\subsubsection*{MAP Estimation using Local Approximations}
+\subsection*{MAP Estimation using Local Approximations}
 
 We consider the same model as in the previous section, but this time derive \emph{local} bounds on the likelihoods of \emph{individual datapoints}. This allows for greater inferential flexibility and so permits better model fit compared to global approximations\cite{Jaakkola1997}.
 
@@ -222,7 +222,7 @@ In the case of Bayesian logistic regression, $H = \Lambda + X\T R X$ where $R = 
 
 As in the previous section where we used MAP estimation with global bounds, once we obtain an approximate distribution over our posteriors in the form of a normal distribution we can further approximate the likelihood as a probit and thereby obtain our predictive distribution.
 %
-%\subsubsection{Baysian Logistic Regression with Gaussian Processes}
+%\subsection{Baysian Logistic Regression with Gaussian Processes}
 %At the core of logistic regression is a linear regression to infer the utility score $y$, which is then transformed into a probability $\sigma(y)$ via the logit.
 %
 %Consequently, a straightforward alternative is to fully replace the linear regression with a Gaussian process, which fully captures our uncertainty around the weight $\vv{w}$. We start with a quick recap of Gaussian Processes for linear regression.
@@ -271,7 +271,7 @@ As in the previous section where we used MAP estimation with global bounds, once
 %where the first term in \emph{this} integrand is just the usual GP prediction, and in the case of the latter term we can employ the approximation techniques described previously for the MAP case, such as the Laplace approximation \cite{WilliamsBarber1998} or the local Jaakkola approximation \cite{Gibbs2000}.
 
 
-\subsubsection*{Extending the Logit to the Multinomial Case}
+\subsection*{Extending the Logit to the Multinomial Case}
 In the multinomial case,  the scalar $t_n$ is replaced by with a 1-of-$L$ encoding of labels, $\vv{t}_n$ which has a categorical distribution, and learn a separate weight vector $\vv{w}_l$ for each label which are collected into the $L \times F$ matrix W. 
 
 The logistic function is replaced with its multinomial analogue, the \emph{softmax} function $\sigma_l(\vv{y}) = \frac{e^{y_l}}{\sum_j e^{y_j}}$, and denote the vector of such values as $\vv{\sigma}(\vv{y}) = \{ \sigma_l(\vv{y}) \}_{l=1}^{L}$. An issue with the softmax is that it is non-identifiable: $\sigma_l (\vv{y} + \alpha) = \sigma_l(\vv{y})$ as for any scalar $\alpha$. While in practice this rarely an issue, it can nevertheless be addressed by forcing $y_L = 0$, i.e. $\sigma_L(\vv{y}) = \frac{1}{1 + \sum_l^{L-1} e^{y_l}} = 1 - \frac{\sum_l^{L-1} e^{y_l}}{1 + \sum_l^{L-1} e^{y_l}}$, from which the correspondence to the binary logit becomes clear. For reasons of brevity, we will ignore this detail in the following presentation.
@@ -362,7 +362,7 @@ A multivariate ``tilted bound" for the $\lse(\cdot)$ function was proposed by Mi
 \end{equation}
 where $m_l$ and $v_l$ are the posterior mean and variance of $y_l$. Maximisation of $a_l$ can be achieved using the fixed form update $\vv{a} \leftarrow \sigma(\vv{m} + \half(1 - 2 \vv{a})\vv{v})$ where $\sigma(y) = \frac{1}{1 + e^{-y}}$, however the updates for the means and variances have to be estimated using iterative schemes. 
 
-\subsubsection{Inference with the Probit}
+\subsection{Inference with the Probit}
 The probit is the CDF of a standard normal distribution:
 
 \begin{align}
@@ -444,7 +444,7 @@ This metric provides the amount by which probability of the positive class is in
 
 %\fixme{See http://stats.stackexchange.com/questions/42956/how-do-i-interpret-a-probit-model-in-stata}
 
-\subsubsection*{Maximum Likelihood Estimation}
+\subsection*{Maximum Likelihood Estimation}
 With a Bernoulli distribution on $t_d$ our log-likelihood has the form
 
 \begin{align}
@@ -481,7 +481,7 @@ z & = X \vv{w}^{(old)}  - \inv{R} \text{ vec} \left(\left\{ t_d \frac{\phi(y_d)}
 
 
 
-\subsubsection*{MAP Estimation}
+\subsection*{MAP Estimation}
 Consider once again the case of logistic regression with a zero-mean Gaussian prior on the weights $\vv{w}$.
 
 \begin{align}
@@ -518,7 +518,7 @@ p(t_* = 1| X, \vv{t}, x_*) & = \int_{\vv{w}} p(t_* | \vv{w})\int_{\vv{y}} p(\vv{
 & = \Phi(y_*) \qquad \qquad \qquad \text{where }y_* = \vv{w}_{MAP}\T\vv{x}_*
 \end{align}
 
-%\subsubsection*{Gibbs Sampling}
+%\subsection*{Gibbs Sampling}
 %Similar updates can be used for MCMC estimation techniques, where we draw $y_n$ and $t_n$ according to the following posteriors:
 %
 %\begin{align}
@@ -533,11 +533,11 @@ p(t_* = 1| X, \vv{t}, x_*) & = \int_{\vv{w}} p(t_* | \vv{w})\int_{\vv{y}} p(\vv{
 %
 %Where we sample $y_n$ from a truncated normal distribution.
 
-%\subsubsection{Bayesian Probit Regression with Gaussian Processes}
+%\subsection{Bayesian Probit Regression with Gaussian Processes}
 %As with the Logit
 
 
-\subsubsection*{Extending the Probit to the Multinomial Case}
+\subsection*{Extending the Probit to the Multinomial Case}
 In case of the multinomial probit case, as with the multinomial logit, one learns $L$ independent weight vectors $\vv{w}_l$ from which we define the auxiliary variable $\vv{y} \sim \nor{W\vv{x}}{1}$ where $W = \{ \vv{w}_l\T \}_{l=1}^L$. The prediction rule also necessarily changes, becoming:
 
 \begin{align}
@@ -570,14 +570,14 @@ and for $y_{nk}$ for all $t_{dk} = 0$
 where $Z_d = p(\vv{y}_d \in \mathcal{C}) = \ex{\prod_{j \neq l}\Phi\left(\epsilon + \ex{\vv{w}_l\T\vv{x}_d}{q} - \ex{\vv{w}_i\T\vv{x}_d}{q} \right) }{p(\epsilon)}$. Given these expectations, closed form updates for the weights can be obtained, however the expectation $\ex{y_dk}{q}$ can only be evaluated using quadrature or sampling methods.
 
 
-\subsection{Other Inference methods}
+\section{Other Inference methods}
 \begin{enumerate}
     \item Sampling, reference the large-scale paper
     \item Discussion of the probit, reference Mark's paper.
 \end{enumerate}
 
 
-%\section{Comparison between the Logit and the Probit}
+%\chapter{Comparison between the Logit and the Probit}
 %In the following we implement a correlated topic model\cite{Blei2006} using the Bohning-bounded logit and the probit. As the normal distribution has much lighter tails than the logistic distribution (of the order of $\exp(y^2)$ instead of $\exp(y)$), it is much less accommodating of outliers. We would therefore expect slower convergence in the early iterations as we attempt to fit the noise.
 
 \input{../footer.tex}

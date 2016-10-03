@@ -17,7 +17,12 @@
 \newcommand \logjoint { { \ln \joint } }
 \newcommand \exlogjoint[1] { { \ex{\logjoint}{{#1}} } }
 
-\section{Inference in Probabilistic Models}
+\chapter{Inference in Probabilistic Models}
+In this chapter we review the basics of probabilistic inference. We discuss the differences between maximum likelihood, maximum a posteriori and fully Bayesian inference using the Dirichlet distribution as a motivating example.
+
+We further discuss latent variable models, the expectation-maximisation algorithm, and the variational expectation-maximisation algorithm, using two well-known models of text -- a mixture of multinomials and latent Dirichlet allocation -- as motivating examples.
+ \section{Inference Methods}
+
 Probabilistic inference is concerned with two problems: inference, the estimation parameter values $\param$ from a set of observations $\vv{x} \in \xdat$; and prediction, the evaluation of the probability of unobserved variables $p(\xnew | \xdat) = \int p(\xnew | \param) p(\param | \xdat) d\param$. Various methods have been proposed for this purpose.
 
 \emph{Maximum likelihood} finds the parameter value that maximises, $p(\xdat|\param)$, known as the likelihood. For reasons of algebraic convenience, one commonly finds the maximum of the log of the likelihood.\begin{align}
@@ -110,7 +115,7 @@ It is useful to compare the expected value of the posterior with the MAP and max
 
 The Bayesian approach is more affected by the prior than the MAP solution, where the prior is discounted, and the ML approach obviously incorporates no prior information whatsoever.
  
-\subsection{Latent Variable Models}
+\section{Latent Variable Models}
 Oftentimes it is appropriate to assume that there is some unobserved, latent process which determines the distributions of the observed variables. Denoting the latent variables as $\vv{z}$ this gives rise to the following likelihood
 \begin{align}
 p(\xdat|\param) = \int p(\xdat, \zdat|\param) d\zdat
@@ -139,7 +144,7 @@ Letting $\params = \{ \vv{\phi}_{k=1}^K \}$, our MAP solution is
 
 \bflong{Why does the integral have no analytic solution}
 The integral has no analytic solution, so we approximate it, leading to the EM algorithm.
-\subsubsection{Expectation Maximization}
+\subsection{Expectation Maximization}
 Jensen's inequality states that for any \emph{concave} function $f(x)$, $f\left(\ex{x}{}\right) \geq \ex{f(x)}{}$. By introducing a new, wholly arbitrary distribution $q(\zdat)$ we can approximate the previous log-integral
 
 \begin{align}
@@ -186,7 +191,7 @@ p(\xnew | \xdat, \params)  = \sum_k p(\znew = k | \vv{\theta}) p(\xnew, \znew = 
 \end{align}
 
 
-\subsubsection{Variational EM}
+\subsection{Variational EM}
 It is not always feasible to evaluate the posterior distribution $p(\zdat|\xdat, \param)$ exactly. In such cases one needs to either approximate the E-Step update to the distribution (e.g. by parameterising it and taking a gradient step), or approximate the distribution itself.
 
 We consider the latter approach, where one assumes the true distribution $q(\zdat)$ can be approximated by a family of distributions $\qfam$. One popular choice is the family of factorized distributions $q(\zdat) = \prod_m q(\zdat_m)$. Note that this factorization is not derived from the IID principle, as the in prior discussion on EM, rather it is a modelling assumption made by the practitioner. The question then is how to evaluate the variational E-Step
@@ -222,10 +227,10 @@ Unlike the case of EM however, setting the KL divergence to zero does not cause 
 
 
 
-\subsubsection*{Further Methods of Inference}
+\subsection*{Further Methods of Inference}
 For very large datasets, one can partition parameters and distributions into those ``local" parameters directly linked to individual observations, and ``global" parameters, and then infer local parameters one small batch of documents at a time, and use them to perform a gradient update\cite{RobbinsMonro1951} on the global variables, leading to a stochastic variational update scheme\cite{Hoffman2012}. This addresses the case where the whole dataset will not fit in memory. Additionally it allows for global parameters to be while inferring local parameters rather than waiting till all local parameters have been learnt.
  
-%\subsection{Stochastic Variational Learning}
+%\section{Stochastic Variational Learning}
 %In many models, in addition to the IID assumption, we can further consider the set of random variables to be partitioned into two disjoint subsets: one consisting of the ``local" latent variables $\zd$  associated with each datapoint $\xd$, and then ``global" variables $\param$ which are associated with the model overall.
 %
 %In more concrete terms, the joint distribution, including hyperparameters $\alpha$ can be written as
@@ -244,7 +249,7 @@ For very large datasets, one can partition parameters and distributions into tho
 %
 %These two problems are addressed by stochastic gradient descent. First however, we look at gradient descent.
 %
-%\subsubsection*{Gradient Descent}
+%\subsection*{Gradient Descent}
 %Gradient descent is used to find the root of a function $f(x; \param)$ using the update
 %
 %\begin{align}
@@ -256,7 +261,7 @@ For very large datasets, one can partition parameters and distributions into tho
 %
 %This can be used in machine learning where the objective function $f(x; \param)$ is an error-function, or in the case of probabilistic models, the negative log-likelihood.
 %
-%\subsubsection*{Stochastic Gradient Descent}
+%\subsection*{Stochastic Gradient Descent}
 %In order to perform the update in gradient descent one needs to consider the gradient evaluated at the entire dataset, which is still costly. A better approach is to evaluate the gradient at a random function $b(\xdat; \param)$ such that $\ex{b(\xdat; \param)}{} = \sum_{x \in \xdat} f(x; \param)$. One can then perform a stochastic gradient descent of the form
 %
 %\begin{align}
@@ -324,7 +329,7 @@ For very large datasets, one can partition parameters and distributions into tho
 %\end{align}
 %Where samples $x_s$ are drawn from $q$ and we've omitted the detail of $D(x)$ for brevity. If $x_s$ is sampled from the negative samples, its weight $\oneover{q(x_s)}$ will be the large number $\frac{D^-}{\epsilon}$, whereas if it's sampled from the positive group its weight will be the much smaller $\frac{D^+}{1 - \epsilon}$. This method was considerably extended in \cite{Gopalan2013b} (see supplemental material) for the problem of predicting citations within an academic corpus, where the majority of node-pairs had no links between them.
 %
-%\subsubsection*{The Natural Gradient}
+%\subsection*{The Natural Gradient}
 %A final refinement of gradient descent, noted in \cite{Hoffman2012} is to observe that the gradient is the solution to
 %
 %\begin{align}

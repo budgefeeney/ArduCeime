@@ -1,6 +1,6 @@
 \input{../header.tex}
 
-\subsubsection{Priors with Kronecker-Product Covariance Structure}
+\subsection{Priors with Kronecker-Product Covariance Structure}
 An alternative to employing a single multivariate Gaussian prior over many weight \emph{vectors} is to employ a single matrix-variate Gaussian\cite{Gupta1999} prior over a weight \emph{matrix} $W = \left\{\vv{w}_l\right\}_{l=1}^L$ where $W \in \MReal{L}{F}$. This is denoted as as $\mnor{M}{\Omega}{\Sigma}$ where $\Omega \in \MReal{F}{F}$ and $\Sigma \in \MReal{L}{L}$ are called the row and column covariances, $M \in \MReal{L}{F}$ is the mean matrix, and the density is defined as:
 \begin{equation}
 p(W) = (2\pi)^{KF}|\Sigma|^{-F}|\Omega|^{-K} \Etr{\half \inv{\Sigma}\left(W - M\right) \inv{\Omega} \left(W - M \right)\T}
