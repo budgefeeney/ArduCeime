@@ -404,20 +404,20 @@
 \section{Introduction}
 As they grow in size and number, the problem of how to navigate large document networks such as Wikipedia, Arxiv and others is increasingly pressing. \\
 
-One method is employing algorithms to recommend links for given nodes. Such algorithms may consider graph structure on its own\cite{Gopalan2013b}, but one can learn more about each node, and also predict links for new nodes in the graph, if one also takes into account the content of document-nodes. \\
+One solution is using algorithms to recommend links for given documents. Such algorithms may consider graph structure on its own\cite{Gopalan2013b}, but one can learn more about each node, and also predict links for new nodes in the graph, if one also takes into account the content of document-nodes. \\
 
 Typically the latent representation which describes a node's content does not perfectly describe its linkage however. Therefore previous approaches have relied on the addition of extra noise factors\cite{Chang2009a}\cite{Neiswanger2014}. \\
 
-We present a model for recommending links in document networks. We eschew noise factors by using a hierarchical scheme to share information between representations of document's content and linkage. We take into account edge-weights, modelling number of times a document $p$ is linked to by document $d$. We present a deterministic inference algorithm using softmax bounds and variational Bayes which is linear in the number of links.
+We present a model for recommending links in document networks. We eschew noise factors by using a hierarchical scheme to share information between representations of document's content and linkage. We take into account edge-weights, modelling the number of times a document $p$ is linked to by document $d$. We present a deterministic inference algorithm using softmax bounds and variational Bayes which is linear in the number of links.
 
 
 %%% Introduction
 \section{Matrix-Variate Normal Distribution}
-Given a random matrix $X \in \MReal{D}{K} \sim \mnor{M}{\Sigma}{\Omega}$ with row covariance $\Sigma \in \MReal{K}{K}$ and column covariance $\Omega \in \MReal{D}{D}$ its log-pdf under a matrix-variate normal distribution is
+Given a random matrix $X \in \MReal{D}{K}$ drawn from a matrix-variate normal distribution $\mnor{M}{\Sigma}{\Omega}$ with row covariance $\Sigma \in \MReal{K}{K}$ and column covariance $\Omega \in \MReal{D}{D}$, $\ln p(X)$ is given by
 \begin{align*}
 \halve{DK}\ln 2\pi - \halve{D}\ln|\Sigma| - \halve{K} \ln|\Omega| -\Tr{\inv{\Omega}(X - M)\inv{\Sigma}(X - M)\T}
 \end{align*}
-This is mathematically identical writing, $\vecf{X} \sim \nor{\vecf{M}}{\Omega \otimes \Sigma}$; and is far more parsimonious than the naive approach of $\vecf{X} \sim \nor{\vecf{M}}{S}$. The separability assumption,that $S = \Omega \otimes \Sigma$ means that the covariance is:
+This is mathematically identical to writing\\ $\vecf{X} \sim \nor{\vecf{M}}{\Omega \otimes \Sigma}$ and is far more parsimonious than the naive approach of $\vecf{X} \sim \nor{\vecf{M}}{S}$. The separability assumption,that $S = \Omega \otimes \Sigma$ means that the covariance is:
 \begin{align*}
 \cov{X_{dk}, X_{pj}} & = \Omega_{dp} \Sigma_{kj} &
 \cov{X_{d-}} & = \Omega_{dd} \Sigma 
@@ -500,13 +500,13 @@ Employing this bound, and denoting $N^o_d = N^w_d + N^l_d$ we can lower-bound th
 \end{equation*}
 and derive the expectations of the linear and quadratic terms in the usual way.\\
 
-Taking derivatives, we obtain the solution to the bound parameter is $\Ed = \ex{\thdo}{q}$. This indicates that our bound simplifies to $\ex{\lse(\thdo)}{q} \leq \lse(\ex{\thdo}{q})$, however the longer form using $A$, $\vv{b}$ and $c$ avoids the need for nested Newton-Raphson iterations.\\
+Taking derivatives, we find the solution to the bound parameter is $\Ed = \ex{\thdo}{q}$. This indicates that our bound simplifies to $\ex{\lse(\thdo)}{q} \leq \lse(\ex{\thdo}{q})$, however the longer form using $A$, $\vv{b}$ and $c$ avoids the need for nested Newton-Raphson iterations.\\
 
 The distribution over links is similarly bounded by $A_D$, $\vv{f}$ and $g$, but we can rotate it from an equation over $\vv{\phi}_k$ into an equation over $\vv{\phi}_d$ by letting $\hat{L}_{dk} = \sum_p \sum_m y_{pmk} l_{pmd}$ and $N^i = \diag{\sum_d \hat{L}_{d\cdot}}$
 \begin{equation*}
 \begin{aligned}
 p(L|Y) & \geq \sum_k \hat{L}_{\cdot k}\T \phok  - \sum_k N^i_{kk} \left(\half \phok\T A_D \phok - \vv{f}_k\T \phok + g_k\right) \\
-& = \Tr{L \Phi} - \half \Tr{A_D \Phi N^i \Phi} + \Tr{F \Phi} - \one\T G \one \\
+& = \Tr{L \Phi} - \half \Tr{A_D \Phi N^i \Phi} + \Tr{F \Phi} - \one\T G  \\
 & = \sum_d \hat{L}_{d\cdot} \phdo - \half \sum_{p \neq d} A_{dp} \vv{\phi}_{p\cdot}\T N^i \phdo \\
 &-\half A_{dd} \phdo\T N^i \phdo + F_{d\cdot}\T\phdo + G_{d\cdot}
 \end{aligned}
@@ -537,7 +537,7 @@ q(\phdo) &= \mathcal{N}\left(\phdo; \mpd, \spd\right)
 \end{align*}
 All other posteriors have the same functional form as the priors.\\
 
-The factorisation is firstly tractable, since matrix-variate posteriors are unavailable for $\Theta$ and $\Phi$, but it also allows us to perform inference a document at time which could facilitate online learning over larger datasets using stochastic gradient descent. In the batch setting, the use of a multinomial distribution, modelling only observed links, link prediction is linear relative to the number of observations  \\
+The factorisation is firstly tractable, since matrix-variate posteriors are unavailable for $\Theta$ and $\Phi$, but it also allows us to perform inference a document at time which could facilitate online learning over larger datasets using stochastic gradient descent. Further, by choosing to model link incidence using a multinomial distribution, link prediction is linear relative to the number of observations.  \\
 
 The distribution $q(\thdo)$ gives the probability of document $d$ originating a word or link according to topic $k$, while the probability $q(\vv{\phi}_p)$ gives the probability of document $p$ being the target of a link emitted according to topic $k$\\
 
@@ -563,7 +563,7 @@ One can see the similarity between the summands in the covariance terms on the r
 
 \section{Experimental Results}
 
-We use the Association for Computational Linguistics (ACL) corpus of academic papers, from which we have extracted link-counts per document. Excluding documents with fewer than three words or two out-going links, the corpus consists 4,264 documents, comprising 14,864,709 words drawn from a dictionary of 23,769 unique terms. 
+We use the Association for Computational Linguistics (ACL) corpus of academic papers, from which we have extracted link-counts per document. Excluding documents with fewer than three words or two out-going links, the corpus consists of 4,264 documents, comprising 14,864,709 words drawn from a dictionary of 23,769 unique terms. 
 
 The evaluation methodology consists of removing from each document half its links, training on the full corpus, and then evaluating the rank of the held out links.
 
@@ -580,7 +580,7 @@ These all then averaged across all documents in the corpus. We additionally plot
 
 Perplexity is seen to improve even as ranking metrics degrade. This is likely due to the greater preponderance of words versus links.
 
-\section{Discussion}
+\section{Conclusion}
 We have presented a model which links the emission of topics per document, to the emissions of documents per topic, and therefore shares information between these two related tasks. \\
 
 Our model is the first, to our knowledge, which uses the \emph{incidence} rather than mere \emph{existence} of links when modelling relationships between documents. It avoids the quadratic scaling problem of \cite{Chang2009a} and instead uses a deterministic inference algorithm which is linear in the number of links.\\
