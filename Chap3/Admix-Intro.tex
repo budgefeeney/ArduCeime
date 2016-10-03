@@ -65,7 +65,7 @@ The number of parameters grows linearly with the size of the training set $W$, a
 \begin{align}
 p(\vv{w}^*|\Phi) = \sum_d p(d) \prod_n \sum_{z_{dn}} p(w_{dn}^*|z_{dn}, \Phi) p(z_{dn}|d)
 \end{align}
-Unfortuntately this heuristic requires that at least one document in the training set have the same topic proportions as the query document, otherwise the probability will collapse to zero, and as with the mixture of multinomials, such pathological cases will become more likely as K increases.
+Unfortunately this heuristic requires that at least one document in the training set have the same topic proportions as the query document, otherwise the probability will collapse to zero, and as with the mixture of multinomials, such pathological cases will become more likely as K increases.
 
 The Latent Dirichlet Allocation model\cite{BleiNgJordan2003} (LDA) addresses by creating a fully generative model, exploiting the exchangeability assumptions not only of words, but also documents.
 
