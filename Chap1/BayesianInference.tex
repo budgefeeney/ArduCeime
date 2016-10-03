@@ -33,7 +33,7 @@ For prediction one typically employs the approximation
 
 \begin{align}
 p(\xnew | \xdat) 
-&= \int p(\xnew | \param) p(\param | \xdat) d\param \\
+&= \int p(\xnew | \param) p(\param | \xdat) d\param \label{eqn:ml-prediction}\\
 &\approx \int p(\xnew | \ml{\param}) p(\param | \xdat) d\param
 =  p(\xnew | \ml{\param})
 \end{align}
@@ -52,12 +52,18 @@ The MAP solution is:
  & = \arg \max_{\param} p(\xdat | \param)p(\param) \\
  & = \arg \max_\param \ln p(\xdat | \param) + \ln p(\param)
 \end{align}
-\bfshort{This is wrong as it may be solved directly}
-Like Maximum Likelihood, prediction using MAP is approximated with a point-estimate $p(\xnew | \xdat) \approx p(\xnew | \map{\param})$. Such an approximation is appropriate if we assume the posterior is tightly concentrated around the mode.
+Prediction follows similarly to ML
+\begin{align}
+p(\xnew | \xdat) \approx \int p(\xnew | \map{\param})p(\param|\xdat)d\param = p(\xnew | \map{\param})
+\end{align}
+
+
 
 The incorporation of the prior is motivated by two related reasons: firstly it allows a practitioner to supply some prior knowledge to the inference procedure and secondly it prevents a model from overfitting in the presence of limited or noisy data.
 
-The alternative to finding modes is to take a fully \emph{Bayesian} approach and solve Bayes rule directly, and thereby derive a \emph{distribution} over $\param$. This involves evaluating the evidence $p(\xdat) = \int p(\xdat | \param) p(\param) d\param$. In many cases this is intractable, but there are families of prior and likelihood distributions where the prior and posterior have the same functional form for which exact inference is possible. In these cases we say the prior is \emph{conjugate} to the likelihood.
+The alternative to finding modes is to take a fully \emph{Bayesian} approach, solve Bayes rule directly, and thereby derive a \emph{distribution} over $\param$. This in turn means we can evaluate our predictions exactly, by solving the integral \eqref{eqn:ml-prediction} and thereby get a measure of the uncertainty in our predictions.
+
+The Bayesian approach involves evaluating the evidence $p(\xdat) = \int p(\xdat | \param) p(\param) d\param$. In many cases this is intractable, but there are families of prior and likelihood distributions where the prior and posterior have the same functional form for which exact inference is possible. In these cases we say the prior is \emph{conjugate} to the likelihood.
 
 An example is learning a parameter $\param$ with a Dirichlet distribution given multinomial-distributed observations (e.g. throws of a weighted dice). The Dirichlet distribution is given by:
 \begin{align}
@@ -112,15 +118,13 @@ p(\xdat|\param) = \int p(\xdat, \zdat|\param) d\zdat
 
 A common case where latent variables arise is the mixture model, where it is assumed there are $K$ distributions, of which one, identified by a latent categorical variable $\vv{z}_d$ is used to sample an observation $\xd$. 
 
-As an example, consider the problem of modelling a corpus of documents. Let $\xd \in \mathbb{N}^T$ be the count of how often each word occurred in document $d$, for all $T$ words. If we presume each document is about one of K topics, where each topic has a distribution over word-counts $\vv{\phi}_k$, we can associate a latent variable $\vv{z}_d$ with each document indicating which (unobserved) topic it generated its words. This gives rise to the mixture of multinomials model\cite{Nigam2000}
+As an example, consider the problem of modelling a corpus of documents. Let $\xd \in \mathbb{N}^T$ be the count of how often each word occurred in document $d$, for all $T$ words. If we presume each document is about one of K topics, where each topic has a distribution over word-counts $\vv{\phi}_k$, we can associate a latent variable $\vv{z}_d$ with each document indicating which (unobserved) topic generated its words. This gives rise to the mixture of multinomials model\cite{Nigam2000}
 \begin{align}
 \vv{\theta} & \sim \dir{\vv{\alpha}} &
 \vv{z}_d|\vv{\theta} & \sim \muln{\vv{\theta}}{1} & 
 \vv{x}_d|\vv{z}_d, \param & \sim \prod_k \muln{\param}{1}^{z_{dk}} & 
 \param & \sim \dir{\vv{\beta}}
 \end{align}
-
-It should be noted that this model does not simply rely on obsevations being IID. It further relies on their joint distribution being \emph{exchangeable}
 
 Letting $\params = \{ \vv{\phi}_{k=1}^K \}$, our MAP solution is
 \begin{align}
@@ -139,11 +143,10 @@ The integral has no analytic solution, so we approximate it, leading to the EM a
 Jensen's inequality states that for any \emph{concave} function $f(x)$, $f\left(\ex{x}{}\right) \geq \ex{f(x)}{}$. By introducing a new, wholly arbitrary distribution $q(\zdat)$ we can approximate the previous log-integral
 
 \begin{align}
- \ln \int & \joint d\zdat = \ln \int \frac{q(\zdat)}{q(\zdat)} \joint d\zdat\\ 
-     &=  \ln \ex{\oneover{q(\zdat)}\joint}{q} \geq \ex{\ln \oneover{q(\zdat)}\joint}{q}\\
+ \ln p(\xdat|\params) & = \ln \int \joint d\zdat =  \ln \int \frac{q(\zdat)}{q(\zdat)} \joint d\zdat\\ 
+     &=  \ln \ex{\oneover{q(\zdat)}\joint}{q} \geq  \ex{\ln \oneover{q(\zdat)}\joint}{q}\\
      &= \ex{\ln \joint}{q} + \ent{q} \label{eqn:elbo}
 \end{align}
-
 where the entropy $\ent{q} = -\ex{\ln q(\zdat)}{q}$. Equation \eqref{eqn:elbo} is sometimes referred to as the \emph{free energy} or the \emph{evidence lower-bound} (``ELBO").
 
 This leads two a two step maximisation process.
@@ -160,7 +163,7 @@ To determine how to maximise $q(\zdat)$ we observe that, for a fixed $\params$, 
 & = \int q(\zdat) \ln p(\xdat | \para) q\zdat + \int q(\zdat)\ln\frac{p(\zdat|\xdat, \params)}{q(\zdat)} d\zdat \\
 & = \ln p(\xdat | \params) + \kl{q(\zdat)}{p(\zdat|\xdat, \params)}
 \end{align}
-As the Kullback-Leibler divergence is always positive, we can deduce that reducing the divergence will increase the ELBO, whose maximum is $\ln p(\xdat | \params)$. Hence the E-Step maximisation procedure is to set $q(\zdat) = p(\zdat | \xdat, \param)$, since in this case $\kl{q(\zdat)}{p(\zdat|\xdat, \params)} = 0$.
+As the Kullback-Leibler divergence is always positive, reducing the divergence will increase the ELBO, whose maximum is $\ln p(\xdat | \params)$. The E-Step maximisation step is thus is to set $q(\zdat) = p(\zdat | \xdat, \param)$, so that $\kl{q(\zdat)}{p(\zdat|\xdat, \params)} = 0$.
 
 This is the MAP variant of the Expectation Maximization (EM) algorithm\cite{Dempster1977}. 
 Both E and M steps increase the bound. In the M-Step, we maximise the ELBO with respect to $\params$, increasing both the likelihood and the ELBO. In the E-Step by setting $q(\zdat) = p(\xdat|\zdat, \params)$ the KL divergence goes to zero, decreasing the gap between the ELBO and marginal likelihood. Consequently EM is guaranteed to find a local maximum of the marginal likelihood.\fixme{ref}
