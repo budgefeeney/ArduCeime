@@ -28,8 +28,12 @@ Probabilistic inference is concerned with two problems: inference, the estimatio
 \emph{Maximum likelihood} finds the parameter value that maximises, $p(\xdat|\param)$, known as the likelihood. For reasons of algebraic convenience, one commonly finds the maximum of the log of the likelihood.\begin{align}
 \ml{\param} = \arg \max_{\param} \ln p(\xdat | \param)
 \end{align}
-\bflong{Take Marks lecture not about the log and the motivation from information theory}
-As the log of a monotonically increasing function, the log-likelihood and likelihood have the same maxima. For the particular case of independently and identically distributed (IID) observations, the log-likelihood factors into a simple sum.
+
+\emph{Maximum likelihood} finds the parameter value that maximises, $p(\xdat|\param)$, known as the likelihood. For reasons of algebraic convenience\footnote{The log-likelihood can also be motivated from Information Theory, since the mean negative log-likelihood asymptotically converges to the Shannon-Entropy according to $p(x|\param)$, and so encodes the information content of the model. This is discussed in detail in \fixme{ref} }, one commonly finds the maximum of the log of the likelihood.
+
+% For MLE / Info Theory: https://quantivity.wordpress.com/2011/05/23/why-minimize-negative-log-likelihood/
+% http://thirdorderscientist.org/homoclinic-orbit/2013/4/1/maximum-likelihood-and-entropy
+
 \begin{align}
 \ml{\param} = \arg \max_{\param} \sum_d \ln p(\xd | \param)
 \end{align}
