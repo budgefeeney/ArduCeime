@@ -47,7 +47,6 @@ echo "\author{Bryan Feeney}" >> $outfile
 
 echo "\\maketitle" >> $outfile
 echo "\\tableofcontents" >> $outfile
-echo "\\clearpage" >> $outfile
 
 #echo "\\section{Literature Review}" >> $outfile
 
