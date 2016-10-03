@@ -25,9 +25,6 @@ We further discuss latent variable models, the expectation-maximisation algorith
 
 Probabilistic inference is concerned with two problems: inference, the estimation parameter values $\param$ from a set of observations $\vv{x} \in \xdat$; and prediction, the evaluation of the probability of unobserved variables $p(\xnew | \xdat) = \int p(\xnew | \param) p(\param | \xdat) d\param$. Various methods have been proposed for this purpose.
 
-\emph{Maximum likelihood} finds the parameter value that maximises, $p(\xdat|\param)$, known as the likelihood. For reasons of algebraic convenience, one commonly finds the maximum of the log of the likelihood.\begin{align}
-\ml{\param} = \arg \max_{\param} \ln p(\xdat | \param)
-\end{align}
 
 \emph{Maximum likelihood} finds the parameter value that maximises, $p(\xdat|\param)$, known as the likelihood. For reasons of algebraic convenience\footnote{The log-likelihood can also be motivated from Information Theory, since the mean negative log-likelihood asymptotically converges to the Shannon-Entropy according to $p(x|\param)$, and so encodes the information content of the model. This is discussed in detail in \fixme{ref} }, one commonly finds the maximum of the log of the likelihood.
 
