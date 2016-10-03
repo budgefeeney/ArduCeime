@@ -5,17 +5,11 @@ Chap0/research-stmt.tex
 EOF
 
 read -d '' chap1Files <<EOF
-Chap1/BayesianInference.tex	
-Chap1/NonConjVariational.tex
+Chap1/BayesianInference.tex
 EOF
 
 read -d '' chap2Files <<EOF
-Chap2/LangModels.tex
-Chap2/Admix-Intro.tex
-Chap2/Admix-DPs.tex
-Chap2/Admix-OtherLangModels.tex
-Chap2/Admix-Eval.tex
-Chap2/Admix-Inference.tex
+Chap2/NonConjVariational.tex
 EOF
 
 read -d '' chap3Files <<EOF
@@ -26,20 +20,29 @@ Chap3/main.tex
 EOF
 
 read -d '' chap4Files <<EOF
-Chap4/FutureSGD.tex
-Chap4/FutureJointDecomp.tex
-Chap4/FuturePaperRec.tex
-Chap4/FinalPlan.tex
+Chap3a/LangModels.tex
+Chap3a/Admix-Intro.tex
+Chap3a/Admix-DPs.tex
+Chap3a/Admix-OtherLangModels.tex
+Chap3a/Admix-Eval.tex
+Chap3a/Admix-Inference.tex
 EOF
 
+# read -d '' chap4Files <<EOF
+# Chap4/FutureSGD.tex
+# Chap4/FutureJointDecomp.tex
+# Chap4/FuturePaperRec.tex
+# Chap4/FinalPlan.tex
+# EOF
 
 
-outfile="upgrade-bryan.tex"
+
+outfile="thesis-bryan.tex"
 rm -f $outfile
 
 echo "\\input{header.tex}" >> $outfile
 
-echo "\\title{Upgrade Report}" >> $outfile
+echo "\\title{Admixtures of Text Conditioned On Arbitrary Features}" >> $outfile
 echo "\author{Bryan Feeney}" >> $outfile
 
 echo "\\maketitle" >> $outfile
@@ -72,7 +75,7 @@ done
 for chap4File in $chap4Files;
 do
 	echo $chap4File
-	tail -n +2 $chap4File | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap4\/plots\//g" >> $outfile
+	tail -n +2 $chap4File | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap3a\/plots\//g" >> $outfile
 done
 
 echo "\input{footer.tex}" >> $outfile
