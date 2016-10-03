@@ -26,15 +26,21 @@ We further discuss latent variable models, the expectation-maximisation algorith
 Probabilistic inference is concerned with two problems: inference, the estimation parameter values $\param$ from a set of observations $\vv{x} \in \xdat$; and prediction, the evaluation of the probability of unobserved variables $p(\xnew | \xdat) = \int p(\xnew | \param) p(\param | \xdat) d\param$. Various methods have been proposed for this purpose.
 
 
-\emph{Maximum likelihood} finds the parameter value that maximises, $p(\xdat|\param)$, known as the likelihood. For reasons of algebraic convenience\footnote{The log-likelihood can also be motivated from Information Theory, since the mean negative log-likelihood asymptotically converges to the Shannon-Entropy according to $p(x|\param)$, and so encodes the information content of the model. This is discussed in detail in \fixme{ref} }, one commonly finds the maximum of the log of the likelihood.
+\emph{Maximum likelihood} finds the parameter value that maximises, $p(\xdat|\param)$, known as the likelihood. For reasons of algebraic convenience\footnote{Using the log of the likelihood can also be motivated from Information Theory. The mean negative log-likelihood asymptotically converges to the Shannon-Entropy. Minimising this leads to a model that better ``compresses" data. This idea is discussed in detail in \fixme{ref} }, one commonly finds the maximum of the log of the likelihood.
 
 % For MLE / Info Theory: https://quantivity.wordpress.com/2011/05/23/why-minimize-negative-log-likelihood/
 % http://thirdorderscientist.org/homoclinic-orbit/2013/4/1/maximum-likelihood-and-entropy
+\begin{align}
+\ml{\param} = \arg \max_{\param} \ln p(\xdat | \param)
+\end{align}
+
+As the log of a monotonically increasing function, the log-likelihood and likelihood have the same maxima. For the particular case of independently and identically distributed (IID) observations, the log-likelihood factors into a simple sum.
 
 \begin{align}
-\ml{\param} = \arg \max_{\param} \sum_d \ln p(\xd | \param)
+\ml{\param} = \arg \max_{\param} \sum_d \ln p(\xd | \param) \label{eqn:log-like-iid-decomp}
 \end{align}
-\bflong{Which is stronger: exchangeability or IID}
+
+
 For prediction one typically employs the approximation
 
 \begin{align}
@@ -44,7 +50,7 @@ p(\xnew | \xdat)
 =  p(\xnew | \ml{\param})
 \end{align}
 
-\bflong{This is wrong as $\param$ has no distribution, check with Heinrich}
+The same decomposition used in \eqref{eqn:log-like-iid-decomp} can also be derived from the assumption that the data are \emph{exchangeable}.  A finite sequence of random variables $\xdat = \{\xd\}_{d=1}^{D}$ is exchangeable if its joint distribution is invariant to any permutation of its order. An infinite sequence is exchangeable, if all finite subsequences are themselves exchangeable. The link with IID observations is provided by DeFinetti's theorem (extended to the multinomial case in \cite{Hewitt1955}) which states that the joint distribution of an exchangeable sequence of variables is equivalent to sampling a random parameter $\param$ from some prior distribution, then sampling IID random variables conditional on that random parameter such that $p\left(\xdat\right) = \prod_d p(\xd | \param)$.
 
 \emph{Maximum a Posteriori} (MAP) estimation, like maximum likelihood, finds a mode, but of the posterior distribution instead of the likelihood. Given a prior $p(\param)$, the posterior is given by Bayes rule:
 \begin{align}
