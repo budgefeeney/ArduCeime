@@ -1,31 +1,24 @@
-Hello everyone
+## Take 2
 
-On behalf of Kathleen, Helen, and myself, I would like to thank you all for being with us here today. We're aware that many of you have had to travel from some distance, and we hope to see you all later this afternoon at the Kingsley Hotel.
+Before we part today, I'd just like to say a few words, on behalf of Kathleen, Helen and myself, to express our gratitude to those that have helped us over the last few months.
 
- * It is bcause we feel a need to express our gratitude to the many many people who helped us that I am speaking to you hear today.
- * or
- * I'm speaking to you here today, to express our gratitude to all the people that helped Dad, Kathleen, Helen and I over the last few months.
+First and foremost, I would like to thank you, for being with us here today. Your presence here is not just a comfort to us; it is a wonderful testament to the man that my father was and to life he led. Hopefully we will get to see you all, and talk to you all, when we meet at the Kingsley Hotel at X o'clock.
 
-First, we must think Dr. Khan, Dr. Bird and Professor O'Brien, who treated Dad during his illness. We truly appreciate all that they and their teams at the Mater, Bons Secours, and Marymount Hospitals, were did to make Dad comfortable. 
+We are grateful, too, to the medical teams at the Mater, Bons Secours and Marymount hospitals, led by Dr. Khan, Dr. Bird and Professor O'Brien. We particularly would like to thank the staff and volunteers at Marymount. Their dedication and care surpassed our expectations. They created a warm, welcome and homely environment where Dad could spend as comfortable and happy a time as we could wished.
 
-In particular we would like to thank the staff and volunteers at Marymount Hospice, for creating a second home for Dad, where he he could buy his paper, go to mass, and chat with the staff about climbing and the latest news in Cork. It was a huge comfort to us that he could live in such such a happy, inclusive, environment.
+We also thank the friends and family who visited us regularly. It meant a huge amount to Dad that so many people came to visit: people he'd known through climbing with the Cork, Bishopstown and Coconut hiking clubs; people he'd worked with at the Rehab Group; and even people he'd known from the rambling club in Castlebar forty years ago. It deeply touched and impressed him, that so many people from such diverse parts of his life came to say hello, and reminisce about times past. 
 
-We also wish to thank the friends and family who visited us regularly. It meant a huge amount to Dad that so many people came to visit: people he'd known through climbing with the Cork, Bishopstown and Coconut hiking clubs; people he'd known through work at the Rehab Group; and even people he'd known from the Rambling club in Castlebar forty years ago. It deeply touched and impressed him, that so many people from such diverse parts of his life came to say hello, and reminisce about times past. 
+[FIXME: Nothing on _card senders_]
 
-We, too, benefitted from the many kindnesses that our friends and family offered, be they gifts of cooked dinners and cakes, or help with the garden, which Dad never stopped tending to.
+We, too, benefited from these visits by our friends and family. More than the welcome gifts of food and cake, we were comforted by the knowledge that we were surrounded by people willing and eager to help us.
 
-We still benefit, and draw strength, from your presence here today. We would like to thank Geraldine Grennell, for her lovely reflection; Úna Long-McDonagh for her beautiful music; and Fr. Cristeóir for his touching sermon, and his attentiveness to our family in the preceding weeks.
+We would like to thank thos people who have helped us today with our service: Geraldine for her lovely reflection; Úna & Aisling for their beautiful music; and Fr. Cristeóir for his touching sermon, and for his attentiveness to our family in the preceding weeks.
 
-Looking through our photo albums, the earliest photo found of my Dad was of him aged 11 with his dog. It was taken by a friend; Dad didn't own a camera back then, and lived in a house with no garden. He did hiked though: he walked all 'round the local hills with Fr. Charlies's Climbing Club; and kept walking in Ireland and the Netherlands, even after he started working, at 18 years of age. He hadn't had the chance to pursue a degree, but had a plan to do so. 
+Dad was a man of many achievements. In his early life in Castlebar, growing up in a house with small back yard, he wandering around Mayo with Fr. Charlies Climbing Club; and started work straightaway as a clerk at the local factory when he turned 18.
 
-By his sixty-eighth year he was growing his own fruit and vegetables in his own garden; he had hiked all round the world, taking thousands of photos with his treasured camera to add to his collection. He had even climbed Kilimanjaro as a retirement present to himself. He had had a career that saw him manage hundreds of people with the Rehab Group, and introduce them to the President of Ireland; and in between all this he had earned himself a Master of Science degree from UCC.
+Fifty year later, he was growing his own vegetables in his own garden; he had climbed mountains all over the world, even the 19,000 foot peak of Kilimanjaro; and -- of course -- he had documented all these travels with camera. He had managed hundreds of people with the Rehab group, and been introduced to the President of Ireland. And during all this he found time to study graduate with a Masters Degree in XXXX.
 
-Yet perhaps his greatest achievement was in all the lives he touched in his time with us. We miss him dearly, but looking around at all you who have supported us, and are here to commemorate his passing, we can be sure his memory will live on.
+Yet perhaps his greatest achievement was in all the lives he touched in his time with us. We miss him dearly, but looking around at all you who have supported us, and are here to commemorate his passing with us, we can be sure his memory will never be forgotten.
 
-Thank you.
 
-----
 
-### Notes 
-
- * No mention of Mary's effort to see Dad.
