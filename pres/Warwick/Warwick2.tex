@@ -537,7 +537,11 @@ q(\phdo) &= \mathcal{N}\left(\phdo; \mpd, \spd\right)
 \end{align*}
 All other posteriors have the same functional form as the priors.\\
 
+<<<<<<< HEAD
 The factorisation is firstly tractable, since matrix-variate posteriors are unavailable for $\Theta$ and $\Phi$, but it also allows us to perform inference a document at time which could facilitate online learning over larger datasets using stochastic gradient descent. Further, by choosing to model link incidence using a multinomial distribution, link prediction is linear relative to the number of observations.  \\
+=======
+The factorisation is firstly tractable, since matrix-variate posteriors are unavailable for $\Theta$ and $\Phi$, but it also allows us to perform inference a document at time which could facilitate online learning over larger datasets using stochastic gradient descent. In the batch setting, the use of a multinomial distribution which models only observed links ensures the runtime is linear relative to the number of link observations.  \\
+>>>>>>> origin/master
 
 The distribution $q(\thdo)$ gives the probability of document $d$ originating a word or link according to topic $k$, while the probability $q(\vv{\phi}_p)$ gives the probability of document $p$ being the target of a link emitted according to topic $k$\\
 
@@ -563,7 +567,8 @@ One can see the similarity between the summands in the covariance terms on the r
 
 \section{Experimental Results}
 
-We use the Association for Computational Linguistics (ACL) corpus of academic papers, from which we have extracted link-counts per document. Excluding documents with fewer than three words or two out-going links, the corpus consists of 4,264 documents, comprising 14,864,709 words drawn from a dictionary of 23,769 unique terms. 
+
+We use the Association for Computational Linguistics (ACL) corpus of academic papers, from which we have extracted link-counts per document. Excluding documents with fewer than three words or two out-going links, the corpus consists 4,264 documents, each having on average 3486 words and 11 links. \\
 
 The evaluation methodology consists of removing from each document half its links, training on the full corpus, and then evaluating the rank of the held out links.
 

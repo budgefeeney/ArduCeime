@@ -1,0 +1,370 @@
+\input{../header.tex}
+\newcommand \ed { { \vv{\xi}_d } }
+\newcommand \bd { { \vv{b}_d   } }
+
+\section{Appendix}
+
+\subsection{The Variational Lower Bound}
+To recap, our model posits that each for each document $d$ in our corpus, its topic score-vector $\thd \in \VReal{K}$ is a function of an observed vector of document features $\xd \in \VReal{F}$ and an unknown matrix $A$. This is converted to topic-distribution using the softmax function $\vv{\sigma}(\vv{\theta}) = \left\{ \frac{\exp(\theta_k)}{\sum_j \exp(\theta_j)} \right\}_{k=1}^K$. For each position in the document we draw a topic $\zdn$ according to this distribution, and then draw a word from the topic-specific word-distribution $\pk$
+
+\begin{align}
+\thd &\sim \nor{A\T\xd}{\sigma I_K} &
+\zdn &\sim \muln{\vv{\sigma}(\thd)}{1} & 
+\wdn &\sim \prod_k z_{dnk} \muln{\pk}{1}
+\end{align}
+
+The word distributions have a symmetric Dirichlet prior $\pk \sim \dir{\vv{\beta}}$. For $A \in \MReal{F}{K}$ we use a matrix-variate prior conditioned on a latent variable $Y \in \MReal{P}{Q}$ where $P << F$ and $Q << K$.
+
+\begin{align}
+A &\sim \mnor{UYV\T}{\sigma I_K}{\tau I_F} &
+Y &\sim \mnor{0}{\alpha I_Q}{\beta I_P}
+\end{align}
+
+while $U \in \MReal{F}{P}$ and $V \in \MReal{K}{Q}$ are parameters with no distribution. Letting $n_d$ be the total number of words in document $d$, $\Theta = \left\{ \thd\T \right\}_{d=1}^D$, $\mathcal{Z} = \bigcup_{d=1}^D \{ z_{dn} | n \in \{1, \ldots, n_d \} \}$ and $\mathcal{W} = \bigcup_{d=1}^D \{ w_{dn} | n \in \{1, \ldots, n_d \} \}$ we approximate the true posterior $p(Y, A, \Theta, \mathcal{Z} | \mathcal{W})$ with the factorised approximate posterior
+
+\fixme{How to allow for MAP estimation of $\pk$ in this framework}
+
+\begin{align}
+q(Y, A, \Theta, \mathcal{Z}) = q(Y)q(A)\prod_d q(\thd) \prod_n q(\zdn)
+\end{align}
+The posterior factors have the following distributions
+
+\begin{equation}
+\begin{split}
+q(Y) &= \nor{\vecf{M_Y}}{S_y} &
+q(A) &= \mnor{M_A}{R_A}{S_A} \\
+q(\thd) &= \nor{\md}{\diag{\vv{s}_d}} &
+q(\zdn) & = \muln{\gdn}{1} \\
+\end{split}
+\end{equation}
+
+
+Using Jensen's inequality\fixme{citation} with the approximate bound, we obtain the following lower-bound on the log-evidence, $\ln p(W)$
+
+\begin{equation}
+\begin{split}
+\ln p(W) 
+&\geq \ex{\ln p(Y)}{q} + \ex{\ln p(A)}{q} \\
+&+ \sum_d \ex{\ln p(\thd)}{q} + \sum_n \ex{\ln p(\zdn)}{q} + \ex{\ln p(\wdn)}{q} \\
+&+ \ent{Y} + \ent{A} + \sum_d \ent {\thd} + \sum_n \ent{\zdn}
+\end{split}
+\end{equation}
+
+The posterior distributions are
+
+\begin{align}
+\begin{split}
+\ex{\ln p(Y)}{q} 
+    & = -\halve{PQ} \ln 2\pi - \halve{PQ} \ln \alpha \beta - \\
+    & - \half \Tr{ \invb{\alpha \beta} I_P M_Y M_Y\T } \\
+    & - \half \Tr{\invb{\alpha \beta} I_{PQ} S_y }
+\end{split} \\
+\begin{split}
+\ex{\ln p(A)}{q} 
+    & = -\halve{KF} \ln 2\pi - \halve{KF} \ln \sigma - \halve{KF} \ln \tau \\
+    & - \half \Tr{ \inv{\tau} I_F (M_A - U M_Y V\T) \inv{\sigma} I_K (M_A - U M_Y V\T)\T } \\
+    & - \half \Tr{ \inv{\tau} I_F S_A}\Tr{\inv{\sigma} I_K R_A} \\
+    & - \half \Tr{ U\T \inv{\tau}I_F U}\Tr{ V\T \inv{\sigma} I_K V)}
+\end{split} \\
+\begin{split}
+\ex{\ln p(\Theta)}{q} 
+    & = -\halve{DK} \ln 2\pi - \halve{DK} \ln \sigma  \\
+    & - \half \sum_d \left(\md - M_A\T \xd\right)\T \inv{\sigma} I_K \left(\md - M_A\T \xd\right) \\
+    & - \half \sum_d \Tr{ \inv{\sigma} I_K \diag{\vv{s}_d}} \\
+    & - \halve{D} \Tr{ X\T X S_A}\Tr{\inv{\sigma} I_K R_A}
+\end{split}\\
+\begin{split}
+\ex{\ln p(\mathcal{W})}{q} 
+    & = \sum_d \sum_n \sum_k \sum_t \gdnk \wdnt \ln \phi_{kt}
+\end{split}
+\end{align}
+
+Using the Bohning bound\cite{Bohning1988} we can lower bound the expected log-probability of the topic-assignments as
+
+\begin{equation}
+\begin{split}
+\ex{\ln p(\mathcal{Z})}{q} 
+     = & \sum_d \sum_n \sum_k \gdnk m_{dk} - \lse(\md) \\
+    \geq & \sum_d \vv{\gamma}_{d\cdot}\T \md
+      - \sum_d n_d \left( \half \md\T H \md  - \bd \T \md + c_d \right) \\
+      & - \halve{n_d} \Tr{\diag{\vv{s}_d}H}
+\end{split}
+\end{equation}
+
+where $\vv{\gamma}_{d\cdot} = \sum_n \gdn$ and $H$, $\vv{b}_d$ and $c_d$ are additional parameters introduced by the bound.
+
+The entropies are given by
+
+\begin{align}
+\ent{Y} &= \halve{PQ} \ln 2 \pi e + \halve{P}\ln |R_Y| + \halve{Q} |S_Y| \\
+\ent{Y} &= \halve{FK} \ln 2 \pi e + \halve{F}\ln |R_A| + \halve{K} |S_A| \\
+\ent{\thd} &= \half{K} \ln 2 \pi e + \sum_k \ln s_{dk}
+\ent{\zdn} &= -\sum_k \gdnk \ln \gdnk
+\end{align}
+
+
+
+\section{The Posterior Distributions}
+
+\subsection{q(Y)}
+Taking derivatives we obtain the solution
+
+\begin{align}
+-\invb{\alpha \beta} M_Y - U\T U M_Y V V\T + U\T M_A V \mbeq 0
+\end{align}
+
+This Sylvester equation can be solved by means of the transformation $\vecf{ABC} = (C\T \otimes A)\vecf{B}$. This leads to the solution
+
+\begin{align}
+\vecf{M_Y} = \invb{\invb{\alpha \beta} I_{PQ} + U\T U \otimes V\T V}\vecf{U\T M_A V} \label{eqn:dumb-y-soln}
+\end{align}
+
+
+Similar calculations show the posterior covariance to be 
+
+\begin{align}
+S_y = \invb{\invb{\alpha \beta} I_{PQ} + U\T U \otimes V\T V}
+\end{align}
+
+As the dimensions of $S_y \in \MReal{(P\times Q)}{(P \times Q)}$ are excessive, we use the following method to avoid the inverse when deriving the update for $M_Y$.
+
+Given the eigen-decomposition $B = B_A S_B U_B\T$, where $S_A$ is the diagonal matrix of eigenvalues, we can write $\inv{B} = U_B \inv{S_B} U_B\T$. Using the result in \cite{Stegle2011} we can further write that for a matrix $A = \alpha I + B \otimes C$ its eigen-decomposition is given by the matrices
+
+\begin{align}
+A & = U_A S_A U_A\T & U_A & = U_C \otimes U_B & S_A = \alpha I + S_C \otimes S_B
+\end{align}
+
+where the eigen-decomposition of $B$ is $U_B S_B U_B^\top$ and similarly for $C$. Employing this identity, we see that
+
+\begin{align}
+\begin{split}
+((\alpha \beta)^{-1} I_{PQ} & + U\T U \otimes V\T V) \\
+& =  \left(U_V \otimes U_U\right)
+  \invb{\invb{\alpha \beta} I_{PQ} + S_V \otimes S_U}
+  \left(U_V\T \otimes U_U\T\right)
+\end{split}
+\end{align}
+
+where the eigen-decomposition of $V\T V$ is $U_V S_V U_V\T$ and similarly for $U\T U$. For brevity in the following we denote $S_{VU} = \left(\invb{\alpha \beta} I_{PQ} + S_V \otimes S_U\right)$. Note that being a diagonal matrix, its inverse is trivially obtained. This allows us to re-write the solution for $M_Y$ as
+
+\begin{align}
+\vecf{M_Y} 
+    & = \invb{\invb{\alpha \beta} I_{PQ} + U\T U \otimes V\T V}\vecf{U\T M_A V} \\
+    & = \left(U_V \otimes U_U\right) \inv{S_{VU}} \left(U_V \otimes U_U\right)\T \vecf{U\T M_A V}
+\end{align}
+
+By first using the fact that $\inv{S_{VU}}$ is a diagonal matrix, and then the fact that $(C\T \otimes A)\vecf{B} = \vecf{ABC}$ we can simplify the expression 
+\begin{align}
+ &\inv{S_{VU}}(U_V^\top \otimes U_U^\top) \vecf{U\T M_A V} \\
+= & (U_V^\top \otimes U_U^\top)\inv{S_{VU}} \vecf{U\T M_A V} \\
+= & (U_V^\top \otimes U_U^\top)\vecf{\diag{\inv{S_{VU}}}^{(P)} .* (U\T M_A V)} \\
+= & \vecf{U_U (\diag{\inv{S_{VU}}}^{(P)} .* (U\T M_A V)) U_V^\top} = \vecf{\hat S}
+\end{align}
+
+where $.*$ indicates the Hadamard product and the notatiuon $A^{(N)}$ indicates the N-th order \emph{vec-transpose}\cite{Minka2000a} of the matrix $A$, which for a vector is equivalent to a fortran-order reshaping of its contents to form a matrix containing contain $N$ rows.
+
+Once again applying the identity $(C\T \otimes A)\vecf{B} = \vecf{ABC}$ we now can re-write the full update for $\vecf{M_Y}$ as:
+
+\begin{align}
+\vecf{M_Y} & = (U_V \otimes U_U)\vecf{\hat S} = \vecf{U_U^\top \hat S U_V}
+\end{align}
+
+And then remove the $\vecf{\cdot}$ function from both sides and thus obtain our final solution:
+
+\begin{align}
+M_Y = U_U^\top U_U (\diag{\inv{S_{VU}}}^{(P)} .* (U\T M_A V)) U_V^\top U_V
+\end{align}
+
+where `.*` indicates the Hadamard product, and $\hat S$ is an appropriately shaped matrix containing the elements of the diagonal given by $(\alpha I + S_V \otimes S_U)$. The time complexity of this approach is $O(P^3 + Q^3)$ rather than the initial approach in $\eqref{eqn:dumb-y-soln}$ which is $O(P^3Q^3)$
+
+\fixme{What this does mean. }
+
+\subsection{q(A)}
+Denoting $M_\Theta = \{ \vv{m}_d \}_{d=1}^D$, and taking derivatives we arrive at the solution
+
+\begin{align}
+- \inv\tau\inv\sigma M_A 
+- \inv\sigma X\T X M_A
++ \inv\tau \inv\sigma UM_YV\T
++ \inv\sigma X\T M_\Theta
+\mbeq 0\end{align}\begin{align}
+\implies M_A = \invb{\inv\tau I_F + X\T X}\left(\inv\tau UM_YV\T + X\T M_\Theta \right)
+\end{align}
+
+Similarly taking derivatives gives the following updates for column and row covariances $S_A$ and $R_A$. 
+\begin{align}
+\inv{S_A}
+    & = \oneover{K} \left( \Tr{\inv\sigma I_K R_A}\inv\tau I_F + \Tr{\inv\sigma I_K R_A} X\T X  \right) \\
+    & = \oneover{K}  \Tr{(\inv\sigma I_K) R_A}\left(\inv\tau I_F + X\T X\right) \\
+\inv{R_A} 
+    & = \oneover{F} \left( \Tr{\inv\tau I_F S_A}\inv\sigma I_K + \Tr{X\T X S_A}\inv\sigma I_K \right)\\
+    & = \oneover{F} \Tr{\left(\inv\tau I_F + X\T X \right) S_A}\inv\sigma I_K
+\end{align}
+At first glance, these appear coupled, however if we substitute the solution for $R_A$ into $S_A$ we obtain
+
+\begin{align}
+\inv{S_A} & = \oneover{K} \Tr{
+    \frac{
+        \inv\sigma 
+     } {
+         \inv\sigma \Tr{\left(\inv\tau I_F + X\T X \right) S_A}
+     }
+     I_K
+} \left(\inv\tau I_F + X\T X \right) \\
+ &= \oneover{
+         \Tr{\left(\inv\tau I_F + X\T X \right) S_A}
+     } \left(\inv\tau I_F + X\T X \right)
+\end{align}
+
+Pre-multiplying the equation on the left by $\Tr{\left(\inv\tau I_F + X\T X \right) S_A} S_A$ we get
+\begin{align}
+ \Tr{\left(\inv\tau I_F + X\T X \right) S_A} I_F = S_A \left(\inv\tau I_F + X\T X \right)
+\end{align}
+which implies that $S_A \left(\inv\tau I_F + X\T X \right)$ is a multiple of the identity matrix, 
+specifically there exists a family of solutions $\inv{S_A} = \left\{ q\left(\inv\tau I_F + X\T X \right) | q \in \mathbb{R}, q \neq 0 \right\}$. 
+Choosing $q = 1$ and proceeding similarly for $R_A$ we arrive at the simpler pair of updates:
+
+\begin{align}
+S_A & = \invb{\inv\tau I_F + X\T X} &
+R_A & = \sigma I_K
+\end{align}
+
+As the posterior row-covariance is the same as the prior, it cancels out in the update for $M_A$. \fixme{Write up the kronecker learning issue}
+
+\subsection{q($\Theta$)}
+Having applied the bound, taking derivatives and setting to zero gives the following solution for the posterior mean $\md$
+
+\begin{align}
+- \inv\sigma I_K \md - n_d H \md + n_d \vv{b}_d + \inv\sigma M_A\T\xd + \vv{\gamma}_{d\cdot} \mbeq 0
+\end{align}
+\begin{align}
+\implies \md = \invb{\inv\sigma I_K + n_d H}\left(\inv\sigma M_A\T\xd + n_d \vv{b}_d + \vv{\gamma}_{d\cdot} \right)
+\end{align}
+
+Similarly the posterior covariance, which is assumed to be diagonal, is
+
+\begin{align}
+s_{dk}^{-1} \quad =  \quad \inv\sigma + n_d H_{kk} \quad = \quad \inv\sigma + n_d \left(\frac{K-1}{2K}\right)
+\end{align}
+
+\subsection{q(Z)}
+Adding a language multiplier to enforce the constraint that $\sum_k \gdnk = 1$ and collecting terms leads to the solution:
+
+\begin{align}
+& \frac{d}{d \gdnk} \gdnk m_{dk} + \gdnk \ln \phi_{k,w_{dn}} - \gdnk \ln \gdnk + \lambda (1 - \sum_j \gamma_{dnj}) \\
+& = m_{dk} + \ln \phi_{k,w_{dn}} -\lambda - \ln \gdnk - 1 \mbeq 0
+\end{align}
+\begin{align}
+\implies \gdnk = \oneover{e^\lambda} \exp\left(m_{dk} + \ln \phi_{k,{w_{dn}}} -1 \right)
+\end{align}
+
+Using the constraint that $\sum_k \gdnk = 1$ we solve for $\lambda$ and plug in the solution to obtain
+\begin{align}
+\gdnk = \frac{e^{m_{dk}} \phi_{k,w_{dn}}}{\sum_j e^{m_{dj}} \phi_{j,w_{dn}}} \label{eqn:app-zdnk-update}
+\end{align}
+
+\section{Parameters}
+\subsection{U and V}
+The updates for U and V are straightforwardly obtained by taking derivatives and setting to zero:
+
+\begin{align}
+U & = M_A V M_Y\T \invb{M_Y V\T V MY\T} &
+V & = M_A\T U M_Y \invb{M_Y\T U\T U M_Y} \label{eqn:app-v-update}
+\end{align}
+
+There is an identifiability concern with these parameters however, as for any $\alpha$, if we scale $U' = \alpha U$ and $V' = \oneover{\alpha} V$, then $U'Y{V'}\T = U Y V\T$. To address this put a tight Gaussian priors on $\nor{\vv{0}}{0.00001 I}$ on both U and V to render them weakly identifiable\fixme{ref here}.
+
+To rectify this, we enforce a constraint that the top-left element of $U$ should always be 1, essentially setting $\alpha = \oneover{U_{11}}$. In practice this leads to the following update cycle for $U$.
+
+\begin{align}
+U^* &= M_A V M_Y\T \invb{M_Y V\T V MY\T} &
+U &= \frac{1}{U^*_{11}} U^*
+\end{align}
+
+with V updated as in \eqref{eqn:app-v-update}. This is similar to the \fixme{name} method used to \fixme{how} identify the covariance matrices for a matrix-variate normal distribution.
+
+
+\subsection{$\phi_k$}
+The derivation of the update for $\pk$ proceeds similarly to $\gdnk$, with the use of a Lagrange multiplier to ensure the constraint that $\sum_t \phi_{kt} = 1$. This gives the initial solution
+\begin{align}
+\phi_{kt} = \oneover{\lambda} \sum_d \sum_n \sum_k \gdnk \wdnt
+\end{align}
+From which the the final answer is obtained
+\begin{align}
+\phi_{kt} = \frac{\sum_d \sum_n \sum_k \gdnk \wdnt}{\sum_v \sum_d \sum_n \sum_k \zdnk w_{dnv}}
+\end{align}
+
+In practice, to avoid word probabilities collapsing to zero, we put a Dirichlet prior on $\pk$ with a symmetric hyperparameter $\vv{\beta}$, and use maximum-a-posteriori estimation to get the update
+\begin{align}
+\phi_{kt} = \frac{(\beta_t - 1) + \sum_d \sum_n \sum_k \gdnk \wdnt}{\sum_v (\beta_v - 1) + \sum_d \sum_n \sum_k \gdnk w_{dnv}} \label{eqn:app-phi-kt}
+\end{align}
+
+We avoid full variational inference for performance reasons, in particular the fact that \eqref{eqn:app-phi-kt} is trivially vectorised.
+
+\subsection{$\xi_d$}
+The terms involving the bound parameter (once $\vv{b}_d$ and $c_d$ are expanded) are
+
+\begin{align}
+n_d \left( 
+    \ed\T H \md
+    - \vv{\sigma}\left(\ed\right)\T \md 
+        - \half\ed\T H \ed 
+        + \vv{\sigma}\left(\ed\right)\T \ed 
+        - \lse\left(\ed\right)
+\right)
+\end{align}
+
+Making use of the following identites:
+\begin{align}
+\nabla_{\vv{\theta}}\vv{\sigma}\left(\vv{\theta}\right) & = \diag{\vv{\sigma}\left(\vv{\theta}\right) } \left(\one - \vv{\sigma}\left(\vv{\theta}\right) \right) \\
+\nabla_{\vv{\theta}}\lse\left(\vv{\theta}\right) & = \vv{\sigma}\left(\vv{\theta}\right)  \\
+\nabla_{\vv{\theta}} \vv{a}\T\vv{\sigma}\left(\vv{\theta}\right) & = S(\vv{\theta}) \vv{a}\\
+S(\vv{\theta)} & = \diag{\vv{\sigma}\left(\vv{\theta}\right) } - \diag{\vv{\sigma}\left(\vv{\theta}\right) }\diag{\vv{\sigma}\left(\vv{\theta}\right) }
+\end{align}
+
+We can derivatives and set to zero to obtain the following equation:
+
+\fixme{Left Align}
+\begin{align}
+  H\md
+- S(\ed)\md
+- H \ed 
++ \vv{\sigma}\left(\vv{\ed}\right)
++ S(\ed)\ed 
+- \vv{\sigma}\left(\vv{\ed}\right) 
+\mbeq 0
+\end{align}
+
+Simplifying and re-arranging terms we obtain the equation
+\begin{align}
+H (\md -  \ed) = S(\ed)(\md - \ed)
+\end{align}
+
+which has a solution at $\ed = \md$.
+
+The other solution to this equation is given by $\nabla_\ed \vv{\sigma}(\ed) = H$
+
+\section{Vectorised Algorithm}
+
+A key problem with the algorithm is the need to store all values of $\gdnk$, which is prohibitive for our needs. We address this in two ways. First we convert our document representation from a list of word indices $\mathcal{W}$ into a bag-of-words matrix $W$. In this case, we replace $\gdnk$ with $\gamma_{dtk}$ which gives the number of times word $t$ has been generated by topic $k$ in docuemnt $d$. Its update is
+
+\begin{align}
+\gamma_{dtk} = \frac{e^{m_{dk}} \phi_{kt}}{\sum_j e^{m_{dj}} \phi_{jt}}
+\end{align}
+
+We then substitute the update for $\gamma_{dtk}$ (equation \eqref{eqn:app-zdnk-update}) into every place where $\gamma_{dtk}$ is referenced. With this, we can derive the following vectorised algorithm
+
+\begin{align*}
+U^* &= M_A V M_Y\T \invb{M_Y V\T V MY\T}  \qquad\qquad U = \frac{1}{U^*_{11}} U^* \\
+V & = M_A\T U M_Y \invb{M_Y\T U\T U M_Y} \\
+M_Y & = U_U^\top U_U (\diag{\inv{S_{VU}}}^{(P)} .* (U\T M_A V)) U_V^\top U_V \\
+M_A & = \invb{\inv\tau I_F + X\T X}\left(\inv\tau UM_YV\T + X\T M_\Theta \right) \\
+\hat{W} & = \Theta \Phi \\
+R & = W ./ \hat{W} \\
+G & = \Theta .* (R \Phi\T) \\
+\Theta_{d\cdot} & = \invb{\inv\sigma I_K + n_d H}\left(\inv\sigma M_A\T\xd + n_d \vv{b}_d + G_{d\cdot} \right) \\
+\Phi & = \text{normalizerows}\left( \Phi .* (\Theta\T R) + \beta  \right)
+came
+The incorporation of the document length in the update for $\Theta$ can be ameliorated by bucketing documents with the same length and doing bulk updates for each bucket. In the case of micro-documents like tweets, there number of documents vastly exceeds the number of unique document lengths.
+
+\input{../footer.tex}
