@@ -1,5 +1,6 @@
 \input{../header.tex}
 
+\newcommand \xdn  { { \vv{x}_{dn} } }
 \newcommand \zd   { { \vv{z}_d } }
 \newcommand \qfam { { \mathcal{Q} } }
 \newcommand \xdat { { \mathcal{X} } }
@@ -17,16 +18,16 @@
 \newcommand \logjoint { { \ln \joint } }
 \newcommand \exlogjoint[1] { { \ex{\logjoint}{{#1}} } }
 
-\chapter{Inference in Probabilistic Models}
-In this chapter we review the basics of probabilistic inference. We discuss the differences between maximum likelihood, maximum a posteriori and fully Bayesian inference using the Dirichlet distribution as a motivating example.
+\chapter{Probabilistic Inference with Text}
+This chapter reviews of probabilisitic inference from a Bayesian perspective. We introduce maximum-likelihood, maximum-a-posteriori, and fully Bayesian Inference. We describing inference schemes for latent variable models, and extend this to inference on large datasets using stochastic gradient descent (SGD), natural gradients, and biased sampling schemes. Finally, we provide a brief overview on Bayesian non-parametrics.
 
-We further discuss latent variable models, the expectation-maximisation algorithm, and the variational expectation-maximisation algorithm, using two well-known models of text -- a mixture of multinomials and latent Dirichlet allocation -- as motivating examples.
- \section{Inference Methods}
+Throughout, we use inference on text as a motivating example, and introduce language models, mixture-models of text, and admixture models of text, colloquially known as topic models. We empirically show how different models and inference techniques affect the quality of predictions.\fixme{Ascuscion abstract}
+\section{Inference Methods}
 
-Probabilistic inference is concerned with two problems: inference, the estimation parameter values $\param$ from a set of observations $\vv{x} \in \xdat$; and prediction, the evaluation of the probability of unobserved variables $p(\xnew | \xdat) = \int p(\xnew | \param) p(\param | \xdat) d\param$. Various methods have been proposed for this purpose.
+Probabilistic inference is concerned with two problems: inference, the estimation of parameter values $\param$ from a set of observations $\vv{x} \in \xdat$; and prediction, the evaluation of the probability of unobserved variables $p(\xnew | \xdat) = \int p(\xnew | \param) p(\param | \xdat) d\param$. Various methods have been proposed for this purpose.
 
 
-\emph{Maximum likelihood} finds the parameter value that maximises, $p(\xdat|\param)$, known as the likelihood. For reasons of algebraic convenience\footnote{Using the log of the likelihood can also be motivated from Information Theory. The mean negative log-likelihood asymptotically converges to the Shannon-Entropy. Minimising this leads to a model that better ``compresses" data. This idea is discussed in detail in \fixme{ref} }, one commonly finds the maximum of the log of the likelihood.
+\emph{Maximum likelihood} finds the parameter value that maximises, $p(\xdat|\param)$, known as the likelihood. For reasons of algebraic convenience\footnote{The log-likelihood can also be motivated by Information Theory. Since mean negative log-likelihood asymptotically converges to the Shannon-Entropy, minimising it leads to a model that better ``compresses" data. This idea is discussed in detail in \cite{MacKay2005InfoTheory} }, one commonly finds the maximum of the log of the likelihood.
 
 % For MLE / Info Theory: https://quantivity.wordpress.com/2011/05/23/why-minimize-negative-log-likelihood/
 % http://thirdorderscientist.org/homoclinic-orbit/2013/4/1/maximum-likelihood-and-entropy
@@ -50,7 +51,7 @@ p(\xnew | \xdat)
 =  p(\xnew | \ml{\param})
 \end{align}
 
-The same decomposition used in \eqref{eqn:log-like-iid-decomp} can also be derived from the assumption that the data are \emph{exchangeable}.  A finite sequence of random variables $\xdat = \{\xd\}_{d=1}^{D}$ is exchangeable if its joint distribution is invariant to any permutation of its order. An infinite sequence is exchangeable, if all finite subsequences are themselves exchangeable. The link with IID observations is provided by DeFinetti's theorem (extended to the multinomial case in \cite{Hewitt1955}) which states that the joint distribution of an exchangeable sequence of variables is equivalent to sampling a random parameter $\param$ from some prior distribution, then sampling IID random variables conditional on that random parameter such that $p\left(\xdat\right) = \prod_d p(\xd | \param)$.
+The same decomposition used in \eqref{eqn:log-like-iid-decomp} can also be derived from the assumption that the data are \emph{exchangeable}.  A finite sequence of random variables $\xdat = \{\xd\}_{d=1}^{D}$ is exchangeable if its joint distribution is invariant to any permutation of its order. An infinite sequence is exchangeable, if all finite subsequences are themselves exchangeable. The link with IID observations is provided by DeFinetti's theorem (extended to the multinomial case\bfshort{What is the ``multinomial case"} in \cite{Hewitt1955}) which states that the joint distribution of an exchangeable sequence of variables is equivalent to sampling a random parameter $\param$ from some prior distribution, then sampling IID random variables conditional on that random parameter such that $p\left(\xdat\right) = \prod_d p(\xd | \param)$.
 
 \emph{Maximum a Posteriori} (MAP) estimation, like maximum likelihood, finds a mode, but of the posterior distribution instead of the likelihood. Given a prior $p(\param)$, the posterior is given by Bayes rule:
 \begin{align}
@@ -84,19 +85,19 @@ B(\vv{\beta}) & = \frac{\prod_k \Gamma(\beta_k)}{\Gamma(\sum_k \beta_k)}
 \end{align}
 where $B(\cdot)$ is the multivariate beta function, and $\Gamma(\beta)$ is the Gamma function, which can be thought of as a continuous generalisation of the factorial function such that $x! = \Gamma(x+1)$. The multinomial is given by:
 \begin{align}
-p(\vv{x}|\param) = \frac{(\sum_k x)!}{\prod_k x!} \prod_k \phi_k^{x_k}
+p(\vv{x}|\param) = \frac{(\sum_k x_k)!}{\prod_k x_k!} \prod_k \phi_k^{x_k}
 \end{align}
-though for a single draw, the binomial coefficient evaluates to one. A single-draw multinomial distributions is known as a \emph{categorical} distribution. The joint distribution of several, exchangeable observations using a categorical likelihood is \bfshort{Used exchangeable before introducing it}
+though for a single draw, the  quotient evaluates to one. A single-draw multinomial distribution is known as a \emph{categorical} distribution, and will be denoted in this thesis with the notation $\vv{x}|\param \sim \cat{\param}$. The joint distribution of several, exchangeable observations using a categorical likelihood is 
 \begin{align}
 p(\xdat|\param) & = \prod_d \prod_k \phi_k^{x_{dk}} = \prod_k \phi_k^{n_k} &
 n_k = \sum_d x_{dk}
 \end{align}
-The evidence $p(\xdat)$ for a Categorical-Dirichlet mixture is therefore:
+Using this we can analytically evaluate the evidence $p(\xdat)$:
 \begin{align}
 p(\xdat) & = \frac{1}{B(\beta)} \int \prod_k \phi_k^{n_k} \prod_k \phi_k^{(\beta_k - 1)} d\param  = \frac{1}{B(\beta)} \int \prod_k \phi_k^{n_k + \beta_k - 1} \\
-& = \frac{B(\vv{n} + \vv{\beta})}{B(\vv{\beta})}.
+& = \frac{B(\vv{n} + \vv{\beta})}{B(\vv{\beta})} \label{eqn:polya-is-evidence}
 \end{align}
-The analytic solution arises from observing that the integrand is an unnormalised Dirichlet distribution parameterised by $\vv{n} + \vv{\beta}$. This marginal distribution is sometimes known as the P\'{o}lya distribution, or the Dirichlet-compound-Multinomial distribution \cite{Madsen2005}.\label{polya}
+The analytic solution arises from observing that the integrand is an unnormalised Dirichlet distribution parameterised by $\vv{n} + \vv{\beta}$ where $\vv{n} = \{ n_k \}_{k=1}^K$. This marginal distribution is sometimes known as the P\'{o}lya distribution, or the Dirichlet-compound-Multinomial distribution \cite{Madsen2005}.\label{polya}
 
 Putting this together we can analytically derive an expression for the posterior:
 
@@ -110,49 +111,137 @@ p(\phi|\xdat)
 & = \oneover{B(\vv{n} + \vv{\beta})} \prod_k \phi_k^{n_k + \beta_k - 1}
 \end{split}
 \end{align}
-which is a Dirichlet distribution parameterised by $\vv{n} + \vv{\beta}$, where $\vv{n} = \{ n_k \}_{n=1}^K$
+which is a Dirichlet distribution parameterised by $\vv{n} + \vv{\beta}$
 
 It is useful to compare the expected value of the posterior with the MAP and maximum likelihood solutions.
 
 \begin{align}
-\ex{\param}{}  &= \frac{n_k + \beta_k}{\sum_j n_j + \beta_j} &
-\map{\param} &= \frac{n_k + \beta_k - 1}{\sum_j n_j + \beta_j - 1} &
-\ml{\param}  &= \frac{n_k}{\sum_j n_j}
+\ex{\phi_k}{}  &= \frac{n_k + \beta_k}{\sum_j n_j + \beta_j} &
+\phi_k^{\text{MAP}} &= \frac{n_k + \beta_k - 1}{\sum_j n_j + \beta_j - 1} &
+\phi_k^{\text{ML}}  &= \frac{n_k}{\sum_j n_j}
 \end{align}
 
-The Bayesian approach is more affected by the prior than the MAP solution, where the prior is discounted, and the ML approach obviously incorporates no prior information whatsoever.
+The Bayesian approach is more affected by the prior than the MAP solution, where the prior is discounted, and the ML approach obviously incorporates no prior information whatsoever. 
+
+\subsubsection*{A Note on Categorical and Multinomial Distributions}
+In this thesis, we will frequently posit models where we sample words one at a time. 
+
+One representation is to use a scalar $x \in \{1 \ldots T\}$ whose value indicates the word chosen. This gives rise to a \emph{categorical} distribution parameterised by a vector $\vv{\phi} \in \VReal{T}$
+\begin{align}
+x &\sim \cat{\vv{\phi})}&
+p(x) = \prod_t \phi_t^{[x = i]}
+\end{align}
+where $[x = i]$ is the Iverson bracket -- an extension of the Dirac delta -- which evaluates to 1 if the condition is true, and zero otherwise. 
+
+An equivalent representation is a 1-of-T vector $\vv{x}$, where all elements are set to zero except one which is set to 1, one whose index indicates the word chosen. This gives rise to a multinomial distribution parameterised by a vector $\vv{\phi} \in \VReal{T}$ for which the number of trials is fixed at 1.
+\begin{align}
+\vv{x} &\sim \muln{\vv{\phi}}{1} &
+p(x) = \frac{1!}{\prod_t x_t!}\prod_t \phi_t^{x_t} = \prod_t \phi_t^{x_t}
+\end{align}
+In all cases in this thesis, when we say a variable has a \emph{categorical distribution}, we mean to say it is a 1-of-T vector with a multinomial distribution for which the number of trials is fixed at one. 
+
+ 
+\subsection*{Example: Language Models}
+ \label{sec:langmodels}
+An example of conjugate inference is the language-modelling problem. This is the problem of predicting the next word in a sequence of discrete observations from a finite vocabulary (e.g a sentence) given all previous observations. Common use-cases are predictive keyboards, spell-checkers and speech recognition.\bfshort{Cite use-cases}
+
+As vocabularies are normally quite large (typically of the order of 30,000 terms), raising this to the power of two or three can lead to models that are over-parameterised: in particular maximum likelihood estimates will often collapse to zero in the absence of training data. ``Laplace smoothing", equivalent to MAP inference using a symmetric Dirichlet prior, is a simple remedy, but unsatisfying in that it does not take into account the information available in the lower-order n-grams.
+
+Using conjugate Bayesian inference it is possible to create a first-order (i.e. bigram) language model\cite{MacKay1995} that uses unigram statistics. Given a sequence of observations $x_1, \ldots, x_D$, where each $x_d \in \{1 \ldots T\}$, we can define for each of the $T$ words a distribution over the next possible word $\vv{\phi}_t \in \VReal{T}$.
+
+\begin{align}
+x_i | x_{i - 1} 
+& \sim \cat{\vv{\phi}_{x_{i-1}}}
+& \vv{\phi}_t 
+& \sim \dir{\vv{\beta}}
+\end{align}
+
+As before, used a corpus W to estimate our parameters, the \emph{exact} predictive distribution is
+\begin{align}
+p(w_i = t | w_{i-1}, W)
+& = \ex{\phi_{w_{i-1},t}}{}
+  = \frac{n_{w_{i-1},t} + \beta_t}{\sum_v n_{w_{i-1},v} + \beta_v}
+\end{align}
+where $n_{w_{i-1},t}$ denotes the number of times value $t$ was observed immediately after the value of $w_{i-1}$. The preceding sequence (in this case a single term) is known as the \emph{context}
+
+Since the prior term $\beta_v$ will occur in all contexts, one can incorporate unigram probabilities in our bigram estimates by learning the prior $\vv{\beta}$. This approach, of sharing information between contexts in an inference task, is sometimes known as \emph{multi-task learning} and will be discussed in detail in Chapter 3.
+
+Marginalising out the parameters $\vv{\phi}_t$ provides the model evidence $p(W|\vv{\beta})$ as in equation \eqref{eqn:polya-is-evidence}. The derivative of this with respect to $\beta_v$ is:
+\begin{align}
+\frac{d \ln p(W|\vv{\beta})}{d\beta_v} =
+\sum_t
+     \Psi(\sum_u \beta_u) 
+     - \Psi(n_{\cdot|t} + \sum_u \beta_u)
+     + \Psi(n_{v|t} + \beta_v)
+     - \Psi(\beta_v)
+\end{align}
+where $n_{v|t}$ is the number of times word $v$ has been seen after word $t$ and $n_{\cdot|t} = \sum_v n_{v|t}$. The digamma function $\Psi(\cdot)$ is the derivative of the gamma function $\Gamma(\cdot)$. This leads to a simple re-estimation method for $\beta_v$
+
+\begin{align}
+\beta^{new}_v = \beta_v \frac{
+        \sum_t \Psi(n_{v|t} + \beta_v) - \Psi(\beta_v)
+    }{
+        \sum_t \Psi(n_{\cdot|t} + \sum_u \beta_u) - \Psi(\sum_u \beta_u)
+    }
+\end{align}
+
+
+There are in fact a variety of methods of inferring a Dirichlet distribution, which are explored more fully in \cite{Minka2000}. For example, taking the fully Bayesian perspective, one might want to regulate inference over $\vv{\beta}$ by putting priors on it in turn. In this case it's useful to reformulate the Dirichlet as being parameterised by a concentration parameter $\beta$ with a Gamma prior and a base measure $\vv{u}$ on the simplex with a symmetric Dirichlet prior, such that $\vv{\phi}_t  \sim \dir{\beta \cdot \vv{u}}$.
+
+
+This Bayesian model builds on the frequentist Jelinek Mercer\cite{JelinekMercer1980} interpolated language model, wherein the probability of an n-gram was a weighted combination of the probabilities of all m-grams for $m \in \{n, (n-1), \ldots, 1\}$. In the case of a bigram $p(w_i|w_{i-1}) = \lambda p(w_i|w_{i-1}) + (1 - \lambda) p(w_i)$. Jelinek Mercer required different $\lambda$ for each distinct context (sequence of words $w^i_{i-n+1}$), learned through cross-validation. By contrast, the Baysesian perspective leads to a model that neatly balances between the two based on the number of bigram and unigram observations.
+
+An alternative to interpolation models are ``back-off" language-models. One ``backs off" to a simpler estimate if no data exists to support a higher order estimate, i.e the n-gram count is zero. Back-off models typically use a form of discounting, removing a portion of counts from frequently occurring n-grams and assigning the resultant spare probability mass to lower-order n-grams. The best performing back-off model is Knesser-Ney \cite{Chen1999} , which defines the probability of a word as 
+\begin{align}
+p_\text{KN}(w_i | w^{i-1}_{i-n+1}) = \left\{ \begin{array}{lr}
+     \frac{\max\{c(w^i_{i-n+1}) - D, 0\}}{\sum_{w_i} c(w^i_{i-n+1})} & \text{if } c(w_i, w_{i-1}) > 0 \\
+     \lambda(w^{i-1}_{i-n+1}) p_\text{KN}(w_i | w^{i-1}_{i-n+2}) & \text{otherwise}
+ \end{array}
+\right.
+\end{align}
+where $c(\cdot)$ denotes how often the word sequence was observed in the data. In order to accumulate enough probability mass to assign to the unobserved n-grams, mass is ``skimmed" off the observed n-grams using the discount term $D$. This is then used in the normalisation term $\lambda(w^{i-1}_{i-n+1}) = \frac{D}{\sum_{w_i} c(w^{i-1}_{i-n+1})}$ which ensures all probabilities sum to 1. The value of $D$ is normally found using cross validation.
+
+One can augment back-off models with interpolation. An interpolated variant of Knesser-Ney called ``modified Knesser-Ney"\cite{Chen1999} is one of the best performing language models currently in use, and performs better than the Bayesian approach described above\cite{Teh2002}. This is defined as
+
+\begin{align}
+\begin{split}
+p_\text{KN}(w_i | w^{i-1}_{i-n+1}) & = 
+\frac{\max\{c(w^i_{i-n+1}) - D, 0\}}{\sum_{w_i} c(w^i_{i-n+1})} \\
+& + \lambda(w^{i-1}_{i-n+1}) N_{1+}(w^{i-1}_{i-n+1}, *) p_\text{KN}(w_i | w^{i-1}_{i-n+2})
+\end{split}
+\end{align}
+where $N_{1+}(w^{i}_{i-n}, *)$ is the number of unique contexts (i.e. prefixes) in which the n-gram $w^{i}_{i-n}$ has occurred.  This is a unique feature of interpolated Knesser-Ney: given the sentence ``He left San Francisco via San Francisco airport" a higher unigram probability will be assigned to ``San" as it occurs in two contexts (``left" and ``via") than "Francisco" which only occurs after ``San". Later in this chapter we will introduce a probabilistic alternative to Knesser-Nye when discussing non-parametric Bayesian methods\bfshort{Follow up on this}
+
+A further discussion of language-modeling -- including other interpolation and backoff models such as Katz-Smoothing, Witten-Bell Smoothing, Good-Turing Estimation and Absolute Discounting -- is provided by \cite{Goodman2001}.
+
+
  
 \section{Latent Variable Models}
-Oftentimes it is appropriate to assume that there is some unobserved, latent process which determines the distributions of the observed variables. Denoting the latent variables as $\vv{z}$ this gives rise to the following likelihood
+Oftentimes it is appropriate to assume that there is some unobserved, latent process which determines the distributions of the observed variables. Denoting the latent variables as $\zdat$ this gives rise to the following likelihood
 \begin{align}
-p(\xdat|\param) = \int p(\xdat, \zdat|\param) d\zdat
+p(\xdat|\params) = \int p(\xdat, \zdat|\params) d\zdat
 \end{align}
 
 A common case where latent variables arise is the mixture model, where it is assumed there are $K$ distributions, of which one, identified by a latent categorical variable $\vv{z}_d$ is used to sample an observation $\xd$. 
 
-As an example, consider the problem of modelling a corpus of documents. Let $\xd \in \mathbb{N}^T$ be the count of how often each word occurred in document $d$, for all $T$ words. If we presume each document is about one of K topics, where each topic has a distribution over word-counts $\vv{\phi}_k$, we can associate a latent variable $\vv{z}_d$ with each document indicating which (unobserved) topic generated its words. This gives rise to the mixture of multinomials model\cite{Nigam2000}
-\begin{align}
-\vv{\theta} & \sim \dir{\vv{\alpha}} &
-\vv{z}_d|\vv{\theta} & \sim \muln{\vv{\theta}}{1} & 
-\vv{x}_d|\vv{z}_d, \param & \sim \prod_k \muln{\param}{1}^{z_{dk}} & 
-\param & \sim \dir{\vv{\beta}}
-\end{align}
-
-Letting $\params = \{ \vv{\phi}_{k=1}^K \}$, our MAP solution is
+Our MAP solution is
 \begin{align}
 \begin{split}
 \params 
     &= \arg \max_\params \ln p(\params) + \ln p(\xdat|\params) \\
-    &= \arg \max_\params \ln p(\params) + \ln \int \joint d\zdat
+    &= \arg \max_\params \ln p(\params) + \ln \int \joint d\zdat \label{eqn:em-problem}
 \end{split}
 \end{align}
 
+In this case of a mixture model, since mixture assignments $\vv{z}_d$ have a categorical distribution
+\begin{align}
+\ln \int \joint d\zdat = \ln \left(\sum_Z \joint\right)
+\end{align}
 
-
-\bflong{Why does the integral have no analytic solution}
-The integral has no analytic solution, so we approximate it, leading to the EM algorithm.
-\subsection{Expectation Maximization}
-Jensen's inequality states that for any \emph{concave} function $f(x)$, $f\left(\ex{x}{}\right) \geq \ex{f(x)}{}$. By introducing a new, wholly arbitrary distribution $q(\zdat)$ we can approximate the previous log-integral
+\bfshort{Why does the integral have no analytic solution}
+In many cases either the integral in \eqref{eqn:em-problem} has no analytic solution, or evaluating it is simply not tractable. In this case one uses an approximation, leading to the Expectation-Maximisation algorithm.
+\subsection{Expectation Maximisation}
+Jensen's inequality states that for any \emph{concave} function $f(x)$, $f\left(\ex{x}{}\right) \geq \ex{f(x)}{}$. By introducing an arbitrary distribution $q(\zdat)$ over the latent variables, we can employ the inequality to approximate log-integral in equation \eqref{eqn:em-problem}
 
 \begin{align}
  \ln p(\xdat|\params) & = \ln \int \joint d\zdat =  \ln \int \frac{q(\zdat)}{q(\zdat)} \joint d\zdat\\ 
@@ -161,47 +250,96 @@ Jensen's inequality states that for any \emph{concave} function $f(x)$, $f\left(
 \end{align}
 where the entropy $\ent{q} = -\ex{\ln q(\zdat)}{q}$. Equation \eqref{eqn:elbo} is sometimes referred to as the \emph{free energy} or the \emph{evidence lower-bound} (``ELBO").
 
-This leads two a two step maximisation process.
+This leads two a two-step, iterative, maximisation process, where at each iteration $i$ we first find the distribution over our latent variables that maximises the ELBO, and then secondly use that to approximate the integral and find the distribution over our parameters that maximise the likelihood.
 
 \begin{align}
-\text{E-Step:} & & q^t(\zdat) & = \arg \max_{q(\zdat)} \ex{\ln p(\xdat, \zdat|\params^{t-1})}{q^{t-1}} + \ent{q} \label{eqn:estep} \\
-\text{M-Step:} & & \params^t & = \arg \max_{\params} \ex{\ln \joint}{q^{t}} + \ln p(\params) \label{eqn:mstep}
+\text{E-Step:} & & q^i(\zdat) & = \arg \max_{q(\zdat)} \ex{\ln p(\xdat, \zdat|\params^{i-1})}{q^{i-1}} + \ent{q} \label{eqn:estep} \\
+\text{M-Step:} & & \params^i & = \arg \max_{\params} \ex{\ln \joint}{q^{i}} + \ln p(\params) \label{eqn:mstep}
 \end{align}
 To determine how to maximise $q(\zdat)$ we observe that, for a fixed $\params$, the difference between the ELBO and the marginal log-likelihood is given by
  the Kullback Leibler divergence between $q(\zdat)$ and the posterior $p(\zdat|\xdat, \params)$.
 \begin{align}
 \int q(\zdat) \ln \frac{p(\xdat, \zdat|\params)}{q(\zdat)} d\zdat
 & = \int q(\zdat) \ln \frac{p(\zdat|\xdat, \params)p(\xdat | \params)}{q(\zdat)} d\zdat \\
-& = \int q(\zdat) \ln p(\xdat | \para) q\zdat + \int q(\zdat)\ln\frac{p(\zdat|\xdat, \params)}{q(\zdat)} d\zdat \\
+& = \int q(\zdat) \ln p(\xdat | \params) q\zdat + \int q(\zdat)\ln\frac{p(\zdat|\xdat, \params)}{q(\zdat)} d\zdat \\
 & = \ln p(\xdat | \params) + \kl{q(\zdat)}{p(\zdat|\xdat, \params)}
 \end{align}
-As the Kullback-Leibler divergence is always positive, reducing the divergence will increase the ELBO, whose maximum is $\ln p(\xdat | \params)$. The E-Step maximisation step is thus is to set $q(\zdat) = p(\zdat | \xdat, \param)$, so that $\kl{q(\zdat)}{p(\zdat|\xdat, \params)} = 0$.
+As the Kullback-Leibler divergence is always positive, reducing the divergence will increase the ELBO. Its maximum, $\ln p(\xdat | \params)$, is attained when $\kl{q(\zdat)}{p(\zdat|\xdat, \params)} = 0$. Therefore the  E-Step maximisation step is to set $q(\zdat) = p(\zdat | \xdat, \param)$.
 
 This is the MAP variant of the Expectation Maximization (EM) algorithm\cite{Dempster1977}. 
-Both E and M steps increase the bound. In the M-Step, we maximise the ELBO with respect to $\params$, increasing both the likelihood and the ELBO. In the E-Step by setting $q(\zdat) = p(\xdat|\zdat, \params)$ the KL divergence goes to zero, decreasing the gap between the ELBO and marginal likelihood. Consequently EM is guaranteed to find a local maximum of the marginal likelihood.\fixme{ref}
+Both E and M steps increase the bound. In the M-Step, we maximise the ELBO with respect to $\params$, increasing both the likelihood and the ELBO. In the E-Step by setting $q(\zdat) = p(\xdat|\zdat, \params)$ the KL divergence goes to zero, decreasing the gap between the ELBO and marginal likelihood. Consequently EM is guaranteed to find a local maximum of the marginal likelihood.\bfshort{Reference for convergence}
 
-For a mixture of multinomials model, the updates can be derived using the method of partial derivatives with Lagrange multipliers and are as follows:
+\subsection*{Example: A Mixture of Multinomials}
+\bflong{Add Poisson to Multinomial Here}
+As an example, consider the problem of modelling a corpus of documents. Let $\xd \in \mathbb{N}^T$ be the count of how often each word occurred in document $d$, for all $T$ words (known as the bag-of-words model). If we presume each document is about one of K topics, where each topic has a distribution over word-counts $\vv{\phi}_k$, we can associate a latent categorical variable $\vv{z}_d$ with each document indicating which (unobserved) topic generated its words. Denoting document d's word-count as $n_d = \sum_t x_{dt}$, and letting $\params = \{ \vv{\phi}_{k=1}^K \}$, this gives rise to the mixture of multinomials model\cite{Nigam2000}
+\begin{align}
+\vv{\theta} & \sim \dir{\vv{\alpha}} &
+\zd|\vv{\theta} & \sim \cat{\vv{\theta}} & 
+\xd|\zd, \params & \sim \prod_k \muln{\param_k}{n_d}^{z_{dk}} & 
+\param_k & \sim \dir{\vv{\beta}}
+\end{align}
+\bflong{Need to note and explain that $\muln{\param_k}{n_d} = \prod_n \cat{\param_k}$}
+Note that in this model the Dirichlet hyper-parameters $\vv{\alpha}$ and $\vv{\beta}$ are coupled: small symmetric values of $\vv{\alpha}$ will encode a preference for fewer topics, and therefore require denser vocabularies -- and so larger values of $\vv{\beta}$ -- to generate the observations. 
+
+For brevity we will not consider hyper-parameter inference. 
+
+For a mixture of multinomials model, once we add the constraints that $\sum_k \theta_k = 1$ and $\sum_t \phi_{kt} = 1$, the updates can be derived using the method of partial derivatives with Lagrange multipliers:
+
 
 \begin{align}
 \text{E-Step:} & & q(z_{dk}) 
 & = \frac{p(\xd|z_d = k, \param)p(z_d = k)}{\sum_j p(\xd|z_d = j, \param)p(z_d = j)} 
 = \frac{p(\xd | \param_k) \theta_k}{\sum_j p(\xd | \param_j) \theta_j} \label{eqn:mom-estep} \\
 \text{M-Step:} 
-& & \phi_{kt} & = \frac{1}{N_k} \sum_d \ex{z_{dk}}{q} x_{dt} + \beta_t - 1, \qquad N_k = \sum_d \ex{z_{dk}}{} \\
-& & \theta_k & =  \frac{N_k + \alpha_k - 1}{\sum_j N_j + \alpha_j - 1} \label{eqn:mom-mstep}
+& & \phi_{kt} & =
+    \frac{
+        \sum_d \ex{z_{dk}}{q}x_{dt} + \beta_t - 1
+    }{
+        n_k + \sum_v \left( \beta_v - 1 \right)
+    } \qquad n_k = \sum_d \ex{z_{dk}}{} \\
+& & \theta_k & =  
+    \frac{
+        n_k + \alpha_k - 1
+    }{
+        \sum_j n_j + \alpha_j - 1
+    } \label{eqn:mom-mstep}
 \end{align}
 where $\ex{z_{dk}}{q} = q(z_{dk})$. The predictive distribution for a new observation $\xnew$ is:
 \bfshort{$\phi_{kt}$ denom looks wrong, it needs normalisation}
 \begin{align}
 p(\xnew | \xdat, \params)  = \sum_k p(\znew = k | \vv{\theta}) p(\xnew, \znew = k | \param_k) 
-= \sum_k \theta_k \cdot p(\xnew | \param_k)
+\approx \sum_k \theta_k \cdot p(\xnew | \param_k)
 \end{align}
+where we have approximated the distributions by substituting the MAP estimates for parameter values in our likelihood.
+
+In practical terms, individual word probabilities will be very small, since in even small corpora (e.g. the NIPS dataset\bfshort{reference}) there are usually in excess of 10,000 distinct words. Consequently there is a risk of underflow and catastrophic cancellation when evaluating the likelihood in equation \eqref{eqn:mom-estep}. This is avoided by using log-probabilities wherever possible, leading to the following re-writing of the E-Step above:
+
+\begin{align}
+\hat{z}_{dk} = \ln \theta_k + \sum_t w_{dt} \ln \phi_{kt} \\
+\ln p(z_{dk} | w_d) = \hat{z}_{dk} - \ln (\sum_j \exp(\hat{z}_{dj})) \label{eqn:mom-lnz-update}
+\end{align}
+The second term in equation \eqref{eqn:mom-lnz-update} is the log-sum-exp function, which we will discuss in some detail in Chapter 2. In this case, we would like to avoid evaluating the term $\exp(\hat{z}_{dk})$ since that would trigger the underflow problem once more. Fortunately by observing that
+\begin{align}
+\log(a + b) = \log(a \times (1 + \frac{b}{a})) = \log(a) + \log (1 + \frac{b}{a})
+\end{align}
+and therefore that
+\begin{align}
+\ln(e^a + e^b) = \ln (e^a) + \ln (1 + \frac{e^b}{e^a}) = a + \ln(e^{a-a} + e^{b-a})
+\end{align}
+One can derive the recursive solution
+\begin{align}
+\ln(\sum_j \exp(\hat{z}_{dj})) = z_{d*} + \ln(\sum_j \hat{z}_{dj})
+\end{align}
+Where $\hat{z}_{d*} = \arg \max_j \hat{z}_{dj}$
+
+A weakness of mixture-models is that \bfshort{Mixture model problems}
+
 
 
 \subsection{Variational EM}
-It is not always feasible to evaluate the posterior distribution $p(\zdat|\xdat, \param)$ exactly. In such cases one needs to either approximate the E-Step update to the distribution (e.g. by parameterising it and taking a gradient step), or approximate the distribution itself.
+It is not always feasible to evaluate the posterior distribution $p(\zdat|\xdat, \param)$ exactly. In such cases one needs to either approximate the E-Step update to the distribution (e.g. by parameterising it and taking a gradient step\bfshort{Citation}), or approximate the distribution itself.
 
-We consider the latter approach, where one assumes the true distribution $q(\zdat)$ can be approximated by a family of distributions $\qfam$. One popular choice is the family of factorized distributions $q(\zdat) = \prod_m q(\zdat_m)$. Note that this factorization is not derived from the IID principle, as the in prior discussion on EM, rather it is a modelling assumption made by the practitioner. The question then is how to evaluate the variational E-Step
+We consider the latter approach, where one assumes that a good approximation to the true distribution $q(\zdat)$ exists within a family of distributions $\qfam$. One popular choice is the family of factorised distributions $q(\zdat) = \prod_m q(\zdat_m)$. Note that this factorisation is not derived from the IID principle, as the in prior discussion on EM, rather it is a modelling assumption made by the practitioner. The question then is how to evaluate the variational E-Step
 
 
 \begin{align}
@@ -227,11 +365,52 @@ Where $\tilde{p}(\xdat, \zdat|\param)$ is the distribution corresponding to
 As the KL divergence is always non-negative, the bound is maximised when it is set to zero, from which the following update is derived: 
 
 \begin{align}
-q(\zdat) \propto \exp\left( \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}}  \right)
+q(\zdat_n) \propto \exp\left( \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}}  \right)
 \end{align}
 
-Unlike the case of EM however, setting the KL divergence to zero does not cause the free-energy to become equal to the likelihood for a fixed $\params$. This is because the true posterior $p(\zdat | \xdat, \params)$ may not be in the family of distributions $\qfam$ which we have chosen. Consequently, the variational E-Step is not guaranteed to maximise the bound, and so the algorithm is not guaranteed to converge to a local maximum as with EM. Optimising the bound will still improve the likelihood however, and may therefore find useful parameter values. Fuller descriptions of variational learning are given in \cite{Jordan1999a}\cite{Bishop2006}\cite{Tzikas2008}. 
+Unlike the case of EM however, setting the KL divergence to zero does not cause the ELBO to become equal to the likelihood for a fixed $\params$. This is because the true posterior $p(\zdat | \xdat, \params)$ may not be in the family of distributions $\qfam$ which we have chosen. Consequently, the variational E-Step is not guaranteed to maximise the bound, and so the algorithm is not guaranteed to converge to a local maximum as with EM. Optimising the bound will still improve the likelihood however, and may therefore find useful parameter values. Fuller descriptions of variational learning are given in \cite{Jordan1999a}\cite{Bishop2006}\cite{Tzikas2008}. 
 
+\subsubsection*{Example: Latent Dirichlet Allocation - an Admixture of Multinomials}
+An example of variational EM is the latent Dirichlet allocation (LDA) algorithm\cite{BleiNgJordan2003}. Where the mixture of multinomials considered each observation (a document in this example) to be generated by a \emph{single} topic, LDA considers each document to be a generated by a mixture of topics, themselves a subset of the mixture of topics forming the overall corpus, leading to an \emph{admixture} model. 
+
+The inference procedure draws a mixture of topics $\thd$ for a document $d$, then for the each position $n$ in the document, draws a topic $\zdn$ and from it a word $\xdn$
+\begin{align}
+\thd & \sim \dir{\vv{\alpha}} &
+\zdn|\thd & \sim \cat{\thd} & 
+\xdn|\zdn, \param & \sim \prod_k \cat{\param_k}^{\zdnk} & 
+\param_k & \sim \dir{\vv{\beta}}
+\end{align}
+Note that whereas $\vv{\theta}$ represented our corpus-level distribution over topics in the mixture of multinomials, $\thd$ now represents our document-level mixture. The corpus-level information is represented by the hyper-parameter $\vv{\alpha}$. 
+
+Letting $\Theta = \{ \thd \}_{d=1}^D$ our MAP algorithm therefore is to evaluate
+
+\begin{align}
+\begin{split}
+\params 
+    &= \arg \max_\params \ln p(\params) + \ln p(\xdat|\params) \\
+    &= \arg \max_\params \ln p(\params) + \ln \int \int p(\xdat|\zdat, \Phi)p(\zdat|\Theta) d\zdat d\Theta \label{eqn:vem-lda-problem}
+\end{split}
+\end{align}
+
+Since it is no longer possible to analytically evaluate the posterior $p(\zdat, \Theta | \xdat)$ we use the variational approximation $p(\zdat, \Theta | \xdat) \approx  q(\zdat)q(\Theta)$. Using this we can derive a lower-bound on the evidence, determine the approximate posteriors and solve for $\params$. Inspection of the ELBO shows the approximation further decomposes as $q(\Theta)q(\zdat) = \prod_d q(\thd)\prod_n q(\zdn)$ from which the following updates arise:
+
+\begin{align}
+q(\zdn) & = \cat{\ex{\thd}{q}} \\
+q(\thd) &=  \dir{\sum_d \sum_n \ex{\zdnk}{q} + \vv{\alpha} - 1} \\
+\phi_{kt} & =
+    \frac{
+        \sum_d \sum_n \ex{\zdnk}{q}x_{dnt} + \beta_t - 1
+    }{
+        n_k + \sum_v \left( \beta_v - 1 \right)
+    } \qquad n_k = \sum_d \sum_n \ex{z_{dnk}}{q}
+\end{align}
+
+As with our discussion of the mixture of multinomials, we have omitted any inference of the hyper-parameters. While this is common, with practitioners frequently fixing the hyperparameters at the symmetric values $\alpha = \frac{50}{K}, \beta=0.001$ based on results quoted in \cite{Griffiths2004}, research has shown\cite{Wallach2009a} that the model's predictive accuracy improves when hyper-parameter inference is performed, particularly for the hyper-parameter of the topic prior $\vv{\alpha}$. In particular, it was shown that some topics are much more likely a priori than others, and recent work has \fixme{Cite PYP} has built on this replacing the Dirichlet prior with a Pitman-Yor Process, encoding a preference for \fixme{log-log distribution} distributions over topics.
+
+Prediction is
+\bflong{Prediction}
+
+\bflong{Extend MAP to hyper-parameters}
 
 
 \subsection*{Further Methods of Inference}
