@@ -19,9 +19,9 @@
 \newcommand \exlogjoint[1] { { \ex{\logjoint}{{#1}} } }
 
 \chapter{Probabilistic Inference with Text}
-This chapter reviews of probabilisitic inference from a Bayesian perspective. We introduce maximum-likelihood, maximum-a-posteriori, and fully Bayesian Inference. We describing inference schemes for latent variable models, and extend this to inference on large datasets using stochastic gradient descent (SGD), natural gradients, and biased sampling schemes. Finally, we provide a brief overview on Bayesian non-parametrics.
+This chapter reviews of probabilisitic inference from a Bayesian perspective. We introduce maximum-likelihood, maximum-a-posteriori, and fully Bayesian Inference. We describing inference schemes for latent variable models, and extend this to inference on large datasets using stochastic gradient descent (SGD), natural gradients, and biased sampling schemes. Finally, we provide a brief overview on Bayesian non-parametrics, and discuss the problem of evaluating model-fit.
 
-Throughout, we use inference on text as a motivating example, and introduce language models, mixture-models of text, and admixture models of text, colloquially known as topic models. We empirically show how different models and inference techniques affect the quality of predictions.\fixme{Ascuscion abstract}
+Throughout, we use inference on text as a motivating example, and introduce language models, mixture-models of text, and admixture models of text, the last known colloquially as ``topic models". We quantitatively evaluate the effect that choices in models and inference schemes may have, and demonstrate the effect of different choices of evaluation metric.
 \section{Inference Methods}
 
 Probabilistic inference is concerned with two problems: inference, the estimation of parameter values $\param$ from a set of observations $\vv{x} \in \xdat$; and prediction, the evaluation of the probability of unobserved variables $p(\xnew | \xdat) = \int p(\xnew | \param) p(\param | \xdat) d\param$. Various methods have been proposed for this purpose.
@@ -412,136 +412,635 @@ Prediction is
 
 \bflong{Extend MAP to hyper-parameters}
 
+\subsubsection*{Alternative Language Models}
+While the admixture of multinomials is the best known topic-model, admixtures of other distributions have been proposed as a means to capture useful features of text. 
 
-\subsection*{Further Methods of Inference}
-For very large datasets, one can partition parameters and distributions into those ``local" parameters directly linked to individual observations, and ``global" parameters, and then infer local parameters one small batch of documents at a time, and use them to perform a gradient update\cite{RobbinsMonro1951} on the global variables, leading to a stochastic variational update scheme\cite{Hoffman2012}. This addresses the case where the whole dataset will not fit in memory. Additionally it allows for global parameters to be while inferring local parameters rather than waiting till all local parameters have been learnt.
+Po\'lya (or ``Dirichlet-Compound-Multinomial (DCM)) distributions has been used to model word ``burstiness"\cite{Madsen2005}. The idea is that documents may only specify a certain subset of words in a topic, such as a football topic listing every football team, but a document about a match will only mention two. In such cases, it may be useful to specialise topics to particular documents so  that given a topic assignment $z_{dn}$ a word is generated according to
+\begin{align}
+w_{dn} & \sim \muln{\vv{\phi}_{dk}}{1} &
+\vv{\phi}_{dk} & \sim \dir{\alpha \vv{m}_k} &
+\vv{m}_k & \sim \dir{\vv{\beta}}
+\end{align}
+Overfitting is handled by collapsing out the document-level and global vocabularies, giving rise to sampling distribution defined solely in terms of counts and hyper-parameters. 
+
+Remaining with the multinomial, LDA does not model the lengths of documents according to topics. One can replace the multinomials over per-token topic assignments, and words with Poissons using Gamma priors to take into account lengths, and thereby model a ``budget" of words per topics\cite{Gopalan2013}. 
+
+If one uses a logistic-normal distribution instead of a multinomial, one can model the idea of vocabularies being permuted according to some covariate. For example to capture regional variation, topic vocabularies can be modelled modelled using a two-level hierarchical model of prior, global topic-specific vocabulary distribution, and thence regional topic-specific vocabulary distributions, as used in \cite{Eisenstein2010} to model regional variation in language used by Twitter users, and to thereby to predict locations of users with unknown locations given their tweets.
+
+For cases where one wants to permute vocabularies over time, one can generate words according to
+\begin{align}
+w_{dn} & \sim \muln{\sigma(\vv{\phi}_k^t)}{1} &
+\vv{\phi}_k^t & \sim \nor{\vv{\phi}_k^{t-1}}{\tau^2 I_T} & \ldots\quad
+\vv{\phi}_k^0 & \sim \nor{\vv{\beta}}{\tau^2 I_T}
+\end{align}
+Using the same prior over topics, one can derive a topic model that allows for drift over topic usage and topic-specific vocabulary over time\cite{Blei2006a}. 
+
+As mentioned in the section section \ref{sec:langmodels}, the Von-Mises Fisher distribution, unlike the multinomial, penalises missing words, and a topic model based on this was proposed in \cite{Reisinger2010}
+
+\begin{align}
+\vv{\mu} | \kappa_0 & \sim  vMF(\vv{m}, \kappa_0) &
+\vv{\phi}_k | \vv{\mu}, \xi & \sim  vMF(\vv{\mu}, \xi) \\
+\thd & \sim  \dir{\vv{\alpha}} &
+\wdoc & \sim  vMF(\text{WAvg}(\thd, \Phi), \kappa) 
+\end{align} 
+
+Where the mixing function WAvg$(\thd, \Phi) = \frac{\thd\T\Phi}{||\thd\T\Phi||}$ is used to blend the individual component distributions, though it is not clear that this constitutes a valid mixture distribution.  The WAvg formula does not yield the vector that minimizes the weighted sum of geodesic distances to the mean, that would be the  Buss \& Fillmore spherical average $BFAvg(\thd,\Phi) = \arg \min_{\vv{q}} \sum_k \thdk \delta_\mathbb{S}(\vv{\phi}_k, \vv{q})$ where $\delta_\mathbb{S}(\vv{x}, \vv{y})$ is the geodesic distance between $\vv{x}, \vv{y} \in \mathbb{S}^T$. 
+
+There are two variants one can employ: a straightforward admixture of vMF distributions, and an admixture of ``truncated" vMF distributions restricted to the positive othant of the unit sphere only. Despite the fact that the latter variant respects the support of the TF-IDF vectors used as an input to the model, in \cite{Reisinger2010} the plain admixture of vMFs gave better results when the topics were used as features to a logistic regression, though the model has never been compared to LDA using standard metrics like perplexity.
+
+Less esoteric is the use of a Pitman-Yor Process to model vocabularies, in order to capture the power-law distribution of text originally used in \cite{Sato2010}. The generative story of the vocabulary, under a Chinese Restaurant Process, involves choosing a table for a word, and assigning it a topic. This means that there can be may tables with the same word-topic combination. PYPs can also by used in conjunction with the burstiness model\cite{Buntine2014}.
+
+
+%LDA-PYP\cite{Lindsey2012}. 
+%
+%Recall that the LDA-HDLM\cite{Wallach2006} makes use of Minka's\cite{Minka2000} updates.
+%
+%Topical keyphrase extraction on twitter\cite{Zhao2011a}
+
+%\subsection*{The Von Mises Fisher Distribution}
+%
+%The probabilistic equivalent of a cosine distance for unit-normed vectors is the Von-Mises Fisher distribution, which is a probability distribution on the $\mathbb{S}^{T-1}$ unit-sphere in $\mathbb{R}^{T}$. Its density is given by:
+%
+%\begin{equation}
+%c_T(\kappa)\exp(\kappa \vv{\mu}\T\vv{x})
+%\end{equation}
+%
+%where $||\vv{\mu}||_2 = ||\vv{x}||_2 = 1$. The normaliser $c_T(\kappa)$ is defined as
+%
+%\begin{equation}
+%\frac{\kappa ^{T\!/\!2-1}}{(2\pi)^{T-2} I_{T\!/\!2-1}(\kappa)}
+%\end{equation}
+%
+%where $I_r(\cdot)$ is the modified Bessel function of the third kind and the r-th order.
+
+
+
+%\subsection*{Markov Random Fields with Discrete Observations}
+%Markov Random Fields have been proposed as a means to  model correlations between words. The method is to consider the vocabulary as a fully connected graph over all possible terms, and by means of a sparsity-inducing regularisation prune out edges, so that what is left is a sparse, disconnected graph of related words.
+%
+%This is achieved by means of a Markov Random Field, a type of undirected graphical model.
+%
+%Two methods have been considered: one uses a multivariate Bernoulli distribution for words, from which the standard Ising model is derived. In the case of microtexts, where repeated words are rare, little is lost by substituting a multivariate Bernoulli in place of a Multinomial. The other approach is more general and attempts to use multivariate Poisson distributions for words, for which of course the standard Multinomial/Poisson model is a special case. However by capturing graph structure, the Poisson MRF penalizes missing words and captures correlations.
+%
+%In both cases scaling is hard, though in the former it is at least well-studied.
+%
+%\subsection*{Bernoulli MRF}
+%The Bernoulli MRF model of \cite{Nallapati2007} assumes that words have been encoded in a binary bag-of-words vector, where for term $t$, if that term occurs \emph{at least once} in the document, then $w_{dt} = 1$ , otherwise $w_{dt} = 0$. For very short texts, where repeated word occurrences are rare in any event, nothing is lost by this construction.
+%
+%In the case of LDA, words are distributed according to a Multinomial distribution, whose parameter $\phi_k$ is drawn from the appropriate Dirichlet according to the topic assigned to that particular word. In the Bernoulli MRF model words are distributed according to a topic-specific Bernoulli MRF, with parameter-matrix $\Lambda^{(k)}$, where $\Lambda^{(k)}$ encodes the edge structure, and an L1 regularlizer encodes a preference for sparse graphs.
+%
+%\newcommand \vertices { { \mathcal{V} } }
+%\newcommand \edges    { { \mathcal{E} } }
+%
+%The actual model of the MRF begins with the usual energy function over $T$ possible vertices in $\vertices$ and edges in $\edges$ is
+%
+%\begin{equation}
+%p(\vv{w}_d|\Lambda^{(k)}) = \exp\left(
+%    \sum_{t\in\vertices}\Lambda^{(k)}_{\emptyset t} w_{dt}
+%    + \sum_{t,v \in \edges}\Lambda^{(k)}_{st} w_{dt} w_{dv}
+%    - A(\Lambda^{(k)})
+%\right)
+%\end{equation}
+%where $\Lambda^{(k)} \in \mathbb{R}^{(T+1) \times T}$ and $A(\Lambda^{(k)})$ is the log normalizer. 
+%
+%With some re-arranging, we can see how this can be decomposed into T logistic regressions, one for each possible term $t \in {1\ldots T}$. 
+%
+%\begin{align}
+%\hat{\Lambda}^{(k)}_t = & \arg \max_{\Lambda^{(k)}_t} \sum_d \ln p(w_{dt}|\vv{w}_{d \setminus t}, \Lambda^{(k)}_t) - \rho ||\Lambda^{(k)}_{\setminus t}||_1 \\
+% = &  \arg \max_{\Lambda^{(k)}_t} \sum_d w_{dt} \Lambda^{(k)}_t \vv{w}_{d \setminus t} - \ln(1 + \exp(\Lambda_t^{(k)\top}\vv{w}_{d \setminus t}) - \rho ||\Lambda^{(k)}_{\setminus t}||_1
+%\end{align}
+%
+%In a topic model, there will therefore by $T \times K$ T-dimensional logistic regressions. While expensive in pure computational terms, it's worth nothing how trivially parallelizable this model is.
+%
+%In the above $\vv{w}_{d \setminus t}$ is $\vv{w}_d$ with the t-th element set to 1, which is equivalent to \emph{removing} the t-th value and adding an intercept value in its place. As the t-th value of $\Lambda^{(k)}$ now corresponds to a bias term, it is not regularized, so the regularizer operates on $\Lambda^{(k)}_{\setminus t}$ which is $\Lambda^{(k)}$ with $\Lambda^{(k)}_{tt}$ ``removed", i.e. it is not included in the evaluation of the norm.
+%
+%\fixme{In light of the MTL focus on what I've done thus far, it would be interesting to consider this as an MTL learning problem, using a Gaussian scale mixture to enforce sparsity on $\Lambda^{(k)}$. The number of parameters is huge however.}
+%
+%Reading the original Bernoulli MRF paper from \fixme{Wainwright et al} they claim that their convergence proof requires that the dataset grow logarithmically with the ``graph size", which is a condition most larger corpora will should meet. 
+%
+%In the case of the admixture paper using this model, results were reported for just a single experiment for which the number of topics $K=10$ and the the corpus (AP) contains $D=2,246$ documents with a vocabulary $T=10,473$. They ran LDA on this to estimate topics, then for each topic $k$ took those documents with $\theta_{dk} \geq 0.25$ and then ran the given algorithm to determine the word graph for each topic. This is evidently to work around performance issues involved in $K \times T$ logistic regressions of dimension $T$ on each iteration of the algorithm. The result, derived from $\Lambda^{(k)}$, is a graph of the already-determined topic-vocabulary. For the two of the ten topics they choose to present, they had 35,588 and 128,074 edges. The number of non-zero values in $\Lambda^{(k)}$ is twice that. There is no symmetry constraint on $\Lambda^{(k)}$.
+%
+%\subsection*{Poisson}
+%\newcommand \vl {\vv{\lambda}}
+%\newcommand \bl {\Lambda}
+%\newcommand \blk {\Lambda^{(k)}}
+%
+%The first attempt to use MRFs actively for topic modelling instead of just as a post-hoc visualization tool was by Inouye et al\cite{Inouye2014}.
+%
+%This uses a formulation of an MRF with Poisson observations introduced and then refined by Yang et al in \cite{Yang2012} and \cite{Yang2013a}, which states that given independent parameters $\vv{\lambda}$ and $\Lambda$ the probability of an observation $\wdoc$ is:
+%
+%\begin{align}
+%p(\wdoc|\vl,\bl) = \exp\left(\vl\T\wdoc + \wdoc\T\bl\wdoc - \sum_t \ln (w_t ! ) \right)
+%\end{align}
+%
+%where $\diag{\bl} = 0$. Under this model, the distribution of a single observation given all other observations is:
+%
+%\begin{align}
+%w_t | \vv{w}_{\setminus t}, \vl, \bl  \sim \pois{\exp(\lambda_t + \Lambda_t \vv{w})}
+%\end{align}
+%
+%Knowing the relationship between the Poisson and its canonical definition as a member of the exponential family, we can see that this distribution's natural parameter is $\eta_t = \lambda_t + \Lambda_t \vv{w}$. 
+%
+%The matrix $\bl$ is equivalent to the precision matrix in a Gaussian MRF. If it is set to zero, then the resulting distribution is a multivariate Poisson distribution, similar to the pure Poisson model discussed earlier. The matrix can contain negative or positive values (the latter the refinement Yang introduced in \cite{Yang2013a}). This allows one to capture the fact that words rarely co-occur, as well as the converse.
+%
+%As with the straightforward multinomial distribution, they implement the admixture by defining the parameters as a convex optimisation of the component parameters and the topic assignments.
+%\begin{align} 
+%\begin{split}
+%\thd, &\wdoc, \vl_1, \ldots, \vl_k, \bl^{(1)}, \ldots \blk  \sim \\
+%& \mathcal{P}_{\text{MRF}}\left(\wdoc;  \hat{\vl} = \sum_k \thdk \vl_k, \hat{\bl} = \sum_k \thdk \blk \right)\dir{\thd; \vv{\alpha}}\prod_k \pi_{\text{MRF}}(\vl_k, \blk; \vv{\beta}, \gamma, \rho_\lambda, \rho)
+%\end{split}
+%\end{align}
+%
+%where $\pi_{\text{MRF}}(\vl_k, \blk; \vv{\beta}, \gamma, \rho_\lambda, \rho)$ is the conjugate prior over the parameters of the poisson MRF and is proportional to
+%
+%\begin{align}
+%\begin{split}
+%\pi_{\text{MRF}}(\vl_k, &\blk; \vv{\beta}, \gamma, \rho_\lambda, \rho) \propto \\
+%& \exp\left( \vv{\beta}\T\blk\vv{\beta} - \gamma A(\vl_k, \blk) - \rho_\lambda||\vl_k||_2^2 - \rho||\vecf{\blk}||_1 \right)
+%\end{split}
+%\end{align}
+%
+%where $\beta_t > 0$, $\gamma \geq 0$, $\rho_\lambda > 0$, $\rho > \max_{t,v}\beta_t\beta_v$. Note that this prior encodes a preference for a sparse graph structure.
+%
+%The posterior update follows an intuitive pseudo-count scheme where
+%\begin{align}
+%\hat{\vv{\beta}} = \vv{\beta} + \vv{w}
+%\hat{\gamma}     = \gamma + 1
+%\end{align}
+%
+%and the norm weightings $\rho_\lambda$ and $\rho$ are kept fixed.
+%
+%One issue the the paper does not dwell on the consequences of mixing in the exponential space instead of the mean parameter space. A weighted combination of the natural parameters is not the same as a weighted combination of the mean parameters, as will be shown later in this section
+%
+%For inference to be tractable, they optimise the pseudo-likelhood instead of the likelihood. This gives rise to the following approximate log-posterior:
+%
+%\begin{align}
+%\begin{split}
+%\ln p(\Theta, & \vl_1, \ldots, \vl_k, \bl^{(1)}, \ldots, \blk | W) \\
+%& \approx \sum_d \left[ \left( \sum_t \eta_{dt} \hat{w}_{dt} - (\gamma - 1)A(\eta_{dt}) \right) + (\vv{\alpha - 1})\T\ln(\thd) \right]
+%\end{split}
+%\end{align}
+%
+%where $\hat{\wdoc} = \vv{\beta} + \wdoc$ and $\eta_{dt} = \sum_k \thdk (\lambda_{kt} + \Lambda^{(k)}_t \vv{w}_{d \setminus t})$ is the the canonical parameter of the univariate Poisson.
+%
+%
+%Once one incorporates the $l_1$ norm constraint on the $\blk$ matrices, the resulting objective is no longer differentiable. In the admixture of PMRF paper they therefore use a proximal optimization method.
+%
+%An alternative to this, inspired by Cedric's work, would be to use Gaussian scale mixtures with the GMGIG prior \cite{Yang2013} on $\blk$ to attempt to enforce sparsity, but how we'd fit this in with the PMRF prior distribution is unclear.
+%
+%Results are only reported for the case where $K=5$ topics and $T=500$ terms and $D=31,000$ documents. This is due to the fact that the algorithm scales quadratically with respect to vocabulary size. 
+%
+%They don't really have a clear answer to the scaling problem.
+
+
+\subsection*{Admixtures of Language Models}
+All the models described hitherto have modelled the joint distribution of individual, exchangeable words. As already described with regard to language models, improvements can be gained by considering phrases such as "San Francisco" or "Support Vector Machine" rather than the individual words that comprise them.
+
+The simplest approach is just to model sequences of overlapping n-grams. The natural Bayesian fit for this is the hierarchical Dirichlet language models (HDLMs), which can be incorporated into ordinary LDA\cite{Wallach2006}, though it is more efficient to use  Minka's update algorithm\cite{Minka2002} for the vocabulary and topic hyperparameters instead of the original algorithm proposed in \cite{MacKay1995}. One can consider also whether to learn hyperparameters (lower-order n-grams) individually for each topic, or collectively across all topics. 
+
+Modelling documents solely using bi-grams, as outlined above, is very restrictive. In practice documents consist of (such as ``SVM"), bigrams (such as ``machine learning"), trigrams (such as ``support vector machines") and so on. If one starts with an LDA model, one can add a Bernoulli switch to retain topics across words, leading to two sets of topic-specific word-distributions, one for unigrams, $\Phi = \left\{ \vv{\phi}_k^{(1)} \right\}_{k=1}^K$ and one for bigrams $Phi^{(2)} = \left\{\left\{ \vv{\phi}_{k,t}^{(2)} \right\}_{k=1}^K\right\}_{t=1}^T$. The resulting algorithm is\cite{Wang2007}
+
+\begin{align*}
+\thd & \sim \dir{\vv{\alpha}} &
+c_{dn} & \sim \mathcal{B}er \left( p \right) &
+z_{dn} & \sim \left\{
+    \begin{array}{lr}
+        z_{d,(n-1)} & c_{dn} = 1 \\
+        \muln{\thd}{1} & \text{otherwise}
+    \end{array}
+\right. \\
+& &
+& &
+w_{dn} & \sim \left\{
+    \begin{array}{lr}
+        \muln{\vv{\phi}_{z_{dn},w_{d,(n-1)}}^{(2)}}{1} & c_{dn} = 1 \\
+        \muln{\vv{\phi}_{z_{dn}}^{(1)}}{1} & \text{otherwise}
+    \end{array}
+\right.
+\end{align*}
+
+By tying together sequences where $c_{dn}=1$ higher-order n-grams are obtained.
+
+The issue then is that having fused together several unigrams into a single n-gram, how should one choose a single topic for the n-gram from the individual topics that were assigned to each unigram, Empirically it has been found that retroactively setting all topics to the topic of the last word works best, but no theoretical justification has been found.
+
+A theoretically sound alternative is the to use an Admixture of PYP language models \cite{Lindsey2012}, using hierarchical Pitman-Yor language models to generate text. In this case a single topic is generated, and fixed, until $c_{dn}=1$ -- essentially a form of Bayesian change-point detection -- at which point a new topic is sampled. Employing the notation in \ref{sec:langmodels}, words are sampled condition on their topic according to:
+
+\begin{align}
+w_{dn} | \vv{u} &\sim \muln{G_{\vv{u}}}{1} &
+G_{\vv{u}} &\sim \text{PYP}\left( a_{|\vv{u}|}, b_{|\vv{u}|}, G_{\pi(\vv{u})} \right) &
+G_{\emptyset} &\sim \text{PYP}\left( a_{0}, b_{0}, H \right)
+\end{align}
+
+with topics sampled according to
+
+\begin{align}
+c_{dn} | w_{d,n-1}, z_{d,n-1}, \vv{\pi} &\sim \mathcal{B}ern \left(\pi_{ w_{d,n-1}, z_{d,n-1}}\right) \\
+z_{dn} | c_{dn}, z_{d,n-1}, \thd & \sim \left\{ \begin{array}{lr}
+     \delta_{z_{d,n - 1}} & c = 0 \\
+     \muln{\thd}{1} & c = 1
+ \end{array}\right.
+\end{align}
+
+with Beta priors for $a_{|\vv{u}|}$ and $\pi_{zw}$, a Gamma prior for  $b_{|\vv{u}|}$ and $\thd \sim \dir{\vv{\alpha}}$.
+
+This particular model was not evaluated using perplexity as is common, but rather Amazon's Mechanical Turk was used to compare this in a phrase-intrusion test with LDA and with chained bigram model described above, in which this particular model gave best results..
+
+Both of these methods are interested in ``collocations", i.e. the idea that a unique concept is represented by more than one word, but that such collocations only exist for certain topics. An example is that the words ``White" and "House" should always be fused together except in the case of a topic centred on real-estate say, where they should be kept separate. The most recent extension of these methods used for the purposes of topical collocation is that of \cite{Johnson2010} which uses an admixture of adaptor grammars, described as a hierarchical, non-parametric Bayesian extension of probabilistic context-free grammars. 
+
+A simpler approach used in practice, is attempt to infer collations as a preprocessing step, feeding fused n-grams to a model that presumes its inputs are unigrams. Obviously this fails to address the topical collocation problem mentioned in the preceding paragraph. A word pair $\left(w_1, w_2\right)$ can be thought of as a bigram if $p(w_1, w_2) \neq p(w_1)p(w_2)$. An obvious approach to this is mutual information, but as discussed in \cite{Dunning1993} mutual information estimates may not be reliable given the very small probabilities involved; they found better decisions were made using a log-likelihood ratio test to disprove the independence hypothesis. The same approach can be extended to higher-order n-grams.
+
+There are many other models using variants of these ideas. In \cite{Griffiths2005} a hidden markov model was employed, where the emission distributions consisted of $S-1$ multinomial distributions and one LDA model. For each word a topic $z_{dn}$ and a hidden state $c_{dn}$ were sampled, with the topic used only if the appropriate LDA emission distribution was used. The intent was that the other emission distributions would capture ``syntax" words. Equally, the idea of employing a markov property was used in \cite{Gruber2007} where a topic was assigned to an entire sentence, and a Bernoulli switch was used to determine whether a new topic should be sampled for the next sentence or not. A variation of these methods have been used in author-topic models of Tweets\cite{Zhao2011}\cite{Zhao2011a} where a single topic was assigned to each tweet, and for each word within that tweet a Bernoulli switch was used to distinguish topic words from ``syntax" words. In this case there was just one fixed distribution for ``syntax words" the empirical distribution of words across the entire corpus.
+
+
+\section{Non-Parametric Bayesian Priors}
+\label{sec:DPs}
+In both mixture and admixture models, a problem is how to determine the appropriate number of components, $K$. The simplest possible method is to train a model on a number of different values of $K$, and then evaluate the model on held out data using some evaluation metric, perhaps using a heuristic such as canopy-clustering\cite{McCallum2000} to determine an appropriate range of values of $K$ in advance.
+
+In Bayesian inference, one can use priors to encode a preference for $K$. For example, if one employs a Dirichlet prior with a very small symmetric hyperparameter such $\alpha = 10^{-3}$ this encodes a preference for sparse models, where extra redundant clusters may never be used. 
+
+Consider the two-parameter definition of a Dirichlet distribution (used in \cite{MacKay1995}\cite{Wallach2006}\cite{Wallach2009a} among others), where one writes $\vv{\theta} \sim \dir{\alpha \vv{m}}$ where $\vv{m}$ is the ``base-measure" on the simplex, and $\alpha$ is a ``concentration" parameter. This reflects the fact that two Dirichlet distributions may represent the distribution (e.g. $(2, 6, 10, 4)$ and $(0.2, 0.6, 1, 0.4)$) which differ only in ``concentration", i.e. by how much will a single observation affect the posterior. The manner in which the prior ``pseudo-counts" are transformed by the likelihood is sometimes described as ``Polya Urn" model.
+
+Thus the difference between a very small and very large symmetric hyperprior (where $\vv{m}=\vv{1}$) is only in the scale of the \emph{concentration parameter} $\alpha$, with small concentrations encoding a preference for sparse models
+
+To infer an appropriate number of mixture components automatically from the data, one can replace Dirichlet prior over mixture components with a Dirichlet process, which can be thought of as a the limit of a Dirichlet distribution over $K$ topics as $K \rightarrow \infty$. Formally, the Dirichlet Process is a distribution over distributions $G$, parameterised by a concentration parameter $\alpha$ and a base-measure $G_0$, such that
+\begin{align*}
+G \sim \text{DP}\left(\alpha, G_0\right)
+\end{align*}
+In order to describe the Dirichlet process it is useful to consider to related processes used for inference with DPs: the Chinese-Restaurant Process (CRP) and and the Stick-Breaking Process (SBP).
+
+In the CRP\cite{Neal2000} a sequence of customers arrive to a restaurant, and for each customer, the restaurant can sit them at a newly prepared table, or else sit them a an existing table alongside other customers sat there previously. If we define a concentration parameter $\alpha$, the number of customers sat at a table $k$ as $n_k$ and the total number of customers as $n = \sum_k n_k$, then we can define the probability that the $(n+1)$-th customer will be sat at a new table as $\frac{1}{\alpha + 1}$ and the probability that a customer will be sat at table $k$ as $\frac{n_k + 1}{N + \alpha}$. 
+
+For large values of $\alpha$ each customer is more likely to be sat at a new table, while for small values of $\alpha$ it is more likely that each customer will be sat at an existing table with other customers, which encodes a preference for fewer tables overall. The probability that a customer will be sat at a new table is never zero. Further, the more customers that are sat at a table, the more likely a new customer will also be sat at that table, encoding a ``rich get richer" property.
+
+Therefore the CRP is a distribution over partitions of $n$ datapoints. Additionally, each  partition (i.e. table) can be assigned distribution $\phi_k \sim G_0$ drawn from a prior $G_0$, called ``base distribution". Note that many tables may have the same distribution (a metaphorical ``meal") assigned to them.
+
+The stick-breaking process (SBP) handles the case of a CRP run without stop, i.e. for an infinite number of customers. The problem the stick-breaking process solves is determining which proportion of customers overall are sat at each table in the Chinese restaurant. The process starts by defining a ``stick" of length 1. A point is chosen between $0$ and $1$ where the stick should be broken, equivalent to making a draw $\pi_1 \sim \mathcal{B}eta\left(1, \alpha\right)$. The leftmost stick fragment is the first proportion. For the second proportion we break the remaining rightmost fragment, equivalent to making another draw $\pi_2 \sim \mathcal{B}eta\left(1, \alpha\right)$, and then rescaling it by the rightmost stick's length $1-\pi_1$. This can be applied recursively to generate an infinite number of stick subdivisions:
+\begin{align}
+\hat{\pi}_k & \sim \mathcal{B}eta\left(1, \alpha\right) & \pi_k = \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \pi_j)
+\end{align}
+
+Since our stick was of length 1 to begin with, we know that $\sum_{k=1}^{\infty} \pi_k = 1$ and so it defines a valid probability distribution. From the properties of the Beta distribution, we know that for small values of $\alpha$ the initial stick breaks will be quite large, and so that most of the customers will be sat at the first few tables, whereas for large values, small breaks will be created so fewer customers will be sat at more tables.
+
+With this we can begin to describe the Dirichlet Process. For the purposes of inference, one can use CRPs or SBPs to implement draws from DP priors. For example, suppose we want to generate a sample $\wdoc$ from $G$. One approach would be to implement a CRP\cite{Neal2000}, where each $\wdoc$ to arrive at the restaurant is sat at a table $k$ according to the CRP with concentration parameter $\alpha$, and each table is associated with some ``atom" $\phi_k \sim G_0$.
+
+Equally, one could use a SBP\cite{Sethuraman1994} to generate weights $\pi_k$ with associated atoms $\phi_k$ and assign $\phi_k$ to observation $\wdoc$ with probability $\pi_k$. In practice, the total number of weights is generally truncated at some upper limit less than or equal to the size of the corpus. 
+
+As should be clear from the presentation, the atoms associated with each table or stick-fragment can correspond to distributions, such as component distributions in a mixture model. The CRP naturally lends itself to the design of Gibbs sampling algorithms, whereas the SBP is typically used with deterministic inference methods. 
+
+\subsubsection*{Example: Non-Parametric Admixture of Multinomials}
+A non-parametric equivalent to LDA called the Hierarchical Dirichlet Process (HDP) was derived in \cite{Teh2006b} using DPs. The model is specified as
+\begin{align}
+G_0 | \gamma, H & \sim \DP{\gamma, H } &
+G_d | \alpha, G_0 & \sim \DP{\alpha, G_0} \\
+\phi_{dn} |G_d &\sim G_d & w_{dn} | \phi_{dn} & \sim F(\phi_{dn})
+\end{align}
+
+Despite the superficial similarities to LDA, it should be noted that the whereas in LDA the parameters $\phi_{dn}$ are keys into a matrix of per-component probability-distributions, in HDP $\phi_{dn}$ is an atom from which a distribution over words is formed: specifically the base measure $H$ is the prior over \emph{words} (or other discrete observations), and takes the place of the $\dir{\vv{\beta}}$ prior over component distributions in LDA. Implementations using CRPs and SBPs are presented in\cite{Teh2006b}, while an in-depth description of DPs, CRPs, SBPs and their applications is given in\cite{JordanMichael2005a}
+
+In practice, the distributions of topics often has a ``long" tail, there are few topics are very likely and many topics are less likely\cite{Wallach2009a}. In such cases one may make sense to use a Pitman-Yor Process, which captures, a power-law distribution over topics. Inference is achieved using a CRP augmented with a discount parameter, and this method has delivered better results than a HDP in experiments.\cite{Buntine2014}. However it is dependent on the dataset, and typically visible only when large numbers of topics are employed. 
+
+Dirichlet processes, like Dirichlet distributions assume that components are near-independent\footnote{The requirement that samples like on the simplex means they cannot be considered \emph{fully} independent}. The Discrete Infinite Logistic Normal (DILN) distribution\cite{Paisley2012}\cite{Paisley2012b} incorporates a HDP into CTM in order to capture correlations amongst a potentially infinite number of components. The derivation proceeds in several stages. 
+Firstly, one should note that one can implement a HDP using a combination of stick-breaking processes and gamma-processes, the latter analogous to the usual approach for sampling from a (finite) Dirichlet
+\begin{align}
+G_0 & = \sum_{k=1}^\infty \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j)\delta_{\phi_k} & 
+\hat{\pi}_k & \sim \mathcal{B}eta\left(1, \gamma\right) &
+\delta_{\phi_k} & \sim H \\
+G_d|G_0, Z & = \sum_{k=1}^\infty \frac{Z_k^{(d)}}{\sum_{j=1}^\infty Z_j^{(d)}} \delta_{\phi_k} &
+Z_k^{(d)} | G_0 &\sim \gam{\beta \pi_k}{1} &
+\pi_k & = \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j)
+\end{align}
+
+To capture a sense of correlation, each atom $\phi_k$ is associated with a location $\vv{l}_k \in \VReal{d}$, where $d$ is set equal to $K$ for the purposes of inference
+\begin{align}
+G_0 | \gamma, H, L & \sim \DP{\gamma H \times L } &
+G_d^{\text{DP}} | \alpha, G_0 & \sim \DP{\alpha, G_0} \\
+\eta_d(l) & \sim \GP{\vv{m}(l)}{K(l, l')} &
+G_d\left(\{\phi, l\}\right) & \propto G_d^{\text{DP}}\left(\{\phi, l\}\right) \exp\left(\eta_d(l) \right) \\
+\phi_{dn} |G_d &\sim G_d & w_{dn} | \phi_{dn} & \sim F(\phi_{dn})
+\end{align}
+
+Noting that if $y = bx$ for $x \sim \gam{a}{1}$, then $y \sim \gam{a}{b^{-1}}$, we see we can fold in the exponentiated draw from the GP into the Gamma Process, and thus arrive at this model.
+
+\begin{align}
+\hat{\pi}_k & \sim \mathcal{B}\left(1, \gamma\right) &
+\delta_{\phi_k} & \sim H,\quad \delta_{l_k} \sim L \\
+G_0 & = \sum_{k=1}^\infty \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j)\delta_{\phi_k} & 
+\pi_k & = \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j) \\
+G_d|G_0, Z & = \sum_{k=1}^\infty \frac{Z_k^{(d)}}{\sum_{j=1}^\infty Z_j^{(d)}} \delta_{\phi_k, l_k} &
+Z_k^{(d)} | G_0 &\sim \gam{\beta \pi_k}{e^{-\eta_{dk}}} \\
+\eta_{dk} & \sim \GP{\vv{m}}{K} \\
+\phi_{dn} |G_d &\sim G_d & w_{dn} | \phi_{dn} & \sim F(\phi_{dn})
+\end{align}
+
+A variational inference procedure is given in \cite{Paisley2012b} where a truncated Dirichlet was used to model the DP. Rather than learn a kernel function, the kernel (i.e. covariance) matrix was learnt directly from the values of $\eta_{dk}$ using the usual form $K = \frac{1}{D} \sum_d (\vv{\mu}_d - \vv{m})(\vv{\mu}_d - \vv{m}) + \diag{\vv{v}_d}$ where the variational posterior over the location for document d was $q(\vv{\eta}_d) = \nor{\vv{\mu}}{\diag{\vv{v}_d}}$. With regard to variational posterior over location, its parameters are found using gradient descent, where the gradients are
+\begin{align}
+\frac{\delta \mathcal{L}}{\delta \mu_{dk}} & = \lambda_{dk} - \beta \pi_k - K^{-1}_{k,:} \left( \vv{\mu}_d - \vv{m}\right) &
+\frac{\delta \mathcal{L}}{\delta v_{dk}} & = -\half \left( \lambda_{dk} - K^{-1}_{k,k} + \oneover{v_{dk}}\right)
+\end{align}
+and $\lambda_{dk} = \ex{Z_{dk}}{q} \times \ex{\exp(-\eta_{dk})}{q}$, and these expectations follow the usual form for gamma and log-normal distributions respectively. 
+
+A variant of this approach was additionally used in \cite{Virtanen2012a}
+
+
+
+%The nHDP is a generalization of the nested Chinese restaurant process (nCRP) that allows each word to follow its own path to a topic node according to a document-specific distribution on a shared tree. This alleviates the rigid, single-path formulation of the nCRP \cite{Paisley2012a}
+%Data-dependent CRP relaxes exchangeability assumption\cite{Kim2011}
  
-%\section{Stochastic Variational Learning}
-%In many models, in addition to the IID assumption, we can further consider the set of random variables to be partitioned into two disjoint subsets: one consisting of the ``local" latent variables $\zd$  associated with each datapoint $\xd$, and then ``global" variables $\param$ which are associated with the model overall.
-%
-%In more concrete terms, the joint distribution, including hyperparameters $\alpha$ can be written as
-%
-%\begin{align}
-%p(\xdat, \zdat, \param) = p(\param | \beta)  \prod_d \prod_n p(\xd, \zd | \param)\end{align}
-%
-%Note that compared to the previous sections, $\param$ may be a set of random variables in this setting like $\zdat$ and not simply a parameter with no distribution.
-%
-%Inference can of course be carried out using EM or variational inference, however there are two issues that arise:
-%
-%\begin{enumerate}
-%    \item On the first iteration, we take a full run through the dataset with what is essentially a nonsense value of $\param$ - convergence speed may be improved by updating it during the run.
-%    \item The update for $\param$ requires a calculation involving the entire dataset, which may be prohibitive with large datasets.\
-%\end{enumerate}
-%
-%These two problems are addressed by stochastic gradient descent. First however, we look at gradient descent.
-%
-%\subsection*{Gradient Descent}
-%Gradient descent is used to find the root of a function $f(x; \param)$ using the update
-%
-%\begin{align}
-%\param^{t+1} & \leftarrow \param^t - \rho_t \nabla_\param f(x; \param^t) &
-%\text{where } \rho_t = (\tau_0 + t)^{-\kappa}
-%\end{align}
-%
-%where $\kappa \in (0.5,1]$ controls the learning rate and $\tau_0 \geq 0$ slows down this rate in the early stages of the algorithm. Other kinds of step-size function $\rho_t$ can be used: so long as $\sum_t \rho_t = \infty$ and $\sum_t \rho^2_t < \infty$ the algorithm should converge to a local minimum\cite{RobbinsMonro1951}. 
-%
-%This can be used in machine learning where the objective function $f(x; \param)$ is an error-function, or in the case of probabilistic models, the negative log-likelihood.
-%
-%\subsection*{Stochastic Gradient Descent}
-%In order to perform the update in gradient descent one needs to consider the gradient evaluated at the entire dataset, which is still costly. A better approach is to evaluate the gradient at a random function $b(\xdat; \param)$ such that $\ex{b(\xdat; \param)}{} = \sum_{x \in \xdat} f(x; \param)$. One can then perform a stochastic gradient descent of the form
-%
-%\begin{align}
-%\param^{t+1} \leftarrow \param^t - \rho_t \nabla_\param b_t(\xdat; \param^t)
-%\end{align}
-%
-%Note that in this formula above we sample a different instance of this function at each time step. The issue is how to choose $b(\xdat; \param)$.
-%
-%Assume that we are interested in $\ex{f(x)}{}$, the expectation of the given function (a loss function say) across all possible inputs according to the data-generating distribution. Since the data-generating distribution is unknown, we approximate it using the empirical distribution of the dataset
-%
-%\begin{align}
-%p(x) = \frac{1}{D} \sum_d \delta(x, x_d)
-%\end{align}
-%where D is the size of our dataset, and additionally we define $D(x)$ to be the number of copies of input $x$ in the dataset. With this formulation we can write the following.
-%
-%\begin{align}
-%\ex{\frac{D}{D(x)} f(x)}{}
-%& = \sum_d \frac{D}{D(x_d)} f(x_d) p(x_d) \\
-%& = \sum_d \frac{D}{D(x_d)} f(x_d) \left(\frac{1}{D} \sum_p \delta(x_d, x_p)\right) \\ 
-%& = \sum_d \frac{D}{D(x_d)} f(x_d) \frac{D(x_d)}{D} = \sum_d f(x_d)
-%\end{align}
-%
-%In the case where we assume all data-points are different, this simplifies to
-%
-%\begin{align}
-%\ex{D f(x)}{} = \sum_d f(x_d)
-%\end{align}
-%
-%Thus any approximation of the expectation (e.g. by sampling from the data-distribution) is an approximation of the sum, providing us with a definition for $b(\xdat; \param)$ of $\sum_{x \in \xdat} f(x;param)$
-%
-%\begin{align}
-%b(x) = \frac{D}{S} \sum_s f(x_s) \approx \sum_d f(x_d)
-%\end{align}
-%
-%where S is the number of samples. In theory one could evaluate the gradient a sample at a time, however in practice, to minimise the variance of the gradient estimates, the number of samples (often called the ``batch size") is usually set to a reasonably large number. The resulting stochastic EM algorithm is therefore
-%
-%\begin{enumerate}
-%    \item Initialise latent variables $\zdat$ and parameters $\param$
-%    \item Iterate until converged, time-step is $t$:
-%    \begin{enumerate}
-%        \item Sample a batch of $S$ observations $\{ x_s \}_{s=1}^S$ and infer the (factored\footnote{Note that this is not necessarily a variational mean-field factorization; for example in mixture-models using ordinary EM, the posterior naturally factors over the IID datapoints}) posterior:
-%        \begin{align}
-%            q(z_s) = \arg \max_{q_s} \fqt{q_s, \param}
-%        \end{align}
-%        \item Use the posteriors to perform a gradient update of the parameters
-%        \begin{align}
-%        \param \leftarrow \param + \rho_t \nabla_\param \left(\sum_s \ex{\ln p(x_s, z_s|\param)}{q(z_s)}\right)
-%        \end{align}
-%        \end{enumerate}
-%\end{enumerate}
-%
-%While stochastic gradient descent has been motivated thus far as a means to handle datasets too large to fit into memory, and as a means update global parameters during  -- rather than after -- inference of ``local" variables, stochastic gradient descent is also useful in unbalanced classification problems.
-%
-%Consider a binary recommendation problem where the majority of products have never been consumed by customers, and so the number of negative datapoints $D^-$ vastly outnumbers the number of positive datapoints $D^+$. It is possible to develop a \emph{weighted} stochastic gradient algorithm such that relatively few negative datapoints are visited, without breaking the convergence guarantees. 
-%
-%As an example, consider a sampling distribution $q(x)$ such that with some very small probability $\epsilon$ we choose one of the $D^-$ negative datapoints, and with high probability $1 - \epsilon$ we choose one of the $D^+$ positive datapoints. We can re-write our expectation as
-%
-%\begin{align}
-%\ex{D f(x)}{} \quad
-%&= \quad \sum_d D f(x_d) \frac{p(x_d)}{q(x_d)} q(x_d) 
-%& = \quad & \ex{D f(x) \frac{p(x)}{q(x)}}{q} \\
-%& & \approx & \frac{D}{S} \sum_s f(x_s) \frac{p(x_s)}{q(x_s)} \\
-%& & = & \frac{D}{S} \sum_s \frac{f(x_s)}{q(x_s)} \frac{1}{D} \\
-%& & = & \frac{1}{S} \sum_s \frac{f(x_s)}{q(x_s)}
-%\end{align}
-%Where samples $x_s$ are drawn from $q$ and we've omitted the detail of $D(x)$ for brevity. If $x_s$ is sampled from the negative samples, its weight $\oneover{q(x_s)}$ will be the large number $\frac{D^-}{\epsilon}$, whereas if it's sampled from the positive group its weight will be the much smaller $\frac{D^+}{1 - \epsilon}$. This method was considerably extended in \cite{Gopalan2013b} (see supplemental material) for the problem of predicting citations within an academic corpus, where the majority of node-pairs had no links between them.
-%
-%\subsection*{The Natural Gradient}
-%A final refinement of gradient descent, noted in \cite{Hoffman2012} is to observe that the gradient is the solution to
-%
-%\begin{align}
-%\lim_{\epsilon \rightarrow 0} \arg \max_{d\param} f(\param + d\param) \qquad \text{where } ||d\param|| < \epsilon
-%\end{align}
-%And thus implicitly works on the idea of a Euclidean distance, which is inappropriate in the case of probability distribution parameters. If one were to use the symmetric KL divergence instead of the 2-norm:
-%
-%\begin{align}
-%\symmkl{\param}{\param'}
-% = \ex{\ln \frac{p(x; \param)}{p(x; \param'}}{\param}
-% + \ex{\ln \frac{p(x; \param')}{p(x; \param}}{\param'}
-%\end{align}
-%
-%one can obtain a ``natural gradient" instead. In practice one can convert a Euclidean gradient to a natural gradient by premultiplying the former by a Riemannian matrix, which for probability distributions is the Fisher information matrix. As noted in \cite{Bottou2004} gradient descent convergence is unaffected by premultiplying the gradient by a matrix, so long as that matrix is positive semi-definite.
-%
-%However as first observed in \cite{Hoffman2010}, and then fully explained in \cite{Hoffman2012}, for conditionally conjugate models composed of distributions in the exponential family, the formula for the the natural gradient is identical to the formula for the posterior, and so one need not determine the Fisher information. For example, in a variational mixture of multinomials model, where one infers a full posterior $q(\param_k)$ over the parameters instead of a MAP estimate, the batch update is:
-%
-%\begin{align}
-%q(\param_k) = \dir{\vv{\beta} + \sum_d z_{dk} \vv{x}_{d}}
-%\end{align}
-%
-%while the natural gradient update, where we parameterise the posterior $q(\param; \hat{\param})$ by $\hat{\param}$ is 
-%
-%\begin{align}
-%\hat{\param} \leftarrow \hat{\param} + \rho_t \left(\vv{\beta} + \frac{D}{S} \sum_s z_{sk} \vv{x}_s\right)
-%\end{align}
+\section{Stochastic Variational Bayesian Inference}
+In many models, in addition to the IID assumption, we can further consider the set of random variables to be partitioned into two disjoint subsets: one consisting of the ``local" latent variables $\zd$  associated with each datapoint $\xd$, and then ``global" variables $\param$ which are associated with the model overall.
+
+In more concrete terms, the joint distribution, including hyperparameters $\alpha$ can be written as
+
+\begin{align}
+p(\xdat, \zdat, \param) = p(\param | \beta)  \prod_d \prod_n p(\xd, \zd | \param)\end{align}
+
+Note that compared to the previous sections, $\param$ may be a set of random variables in this setting like $\zdat$ and not simply a parameter with no distribution.
+
+Inference can of course be carried out using EM or variational inference, however there are two issues that arise:
+
+\begin{enumerate}
+    \item On the first iteration, we take a full run through the dataset with what is essentially a nonsense value of $\param$ - convergence speed may be improved by updating it during the run.
+    \item The update for $\param$ requires a calculation involving the entire dataset, which may be prohibitive with large datasets.\
+\end{enumerate}
+
+These two problems are addressed by stochastic gradient descent. First however, we look at gradient descent.
+
+\subsection*{Gradient Descent}
+Gradient descent is used to find the root of a function $f(x; \param)$ using the update
+
+\begin{align}
+\param^{t+1} & \leftarrow \param^t - \rho_t \nabla_\param f(x; \param^t) &
+\text{where } \rho_t = (\tau_0 + t)^{-\kappa}
+\end{align}
+
+where $\kappa \in (0.5,1]$ controls the learning rate and $\tau_0 \geq 0$ slows down this rate in the early stages of the algorithm. Other kinds of step-size function $\rho_t$ can be used: so long as $\sum_t \rho_t = \infty$ and $\sum_t \rho^2_t < \infty$ the algorithm should converge to a local minimum\cite{RobbinsMonro1951}. 
+
+This can be used in machine learning where the objective function $f(x; \param)$ is an error-function, or in the case of probabilistic models, the negative log-likelihood.
+
+\subsection*{Stochastic Gradient Descent}
+In order to perform the update in gradient descent one needs to consider the gradient evaluated at the entire dataset, which is still costly. A better approach is to evaluate the gradient at a random function $b(\xdat; \param)$ such that $\ex{b(\xdat; \param)}{} = \sum_{x \in \xdat} f(x; \param)$. One can then perform a stochastic gradient descent of the form
+
+\begin{align}
+\param^{t+1} \leftarrow \param^t - \rho_t \nabla_\param b_t(\xdat; \param^t)
+\end{align}
+
+Note that in this formula above we sample a different instance of this function at each time step. The issue is how to choose $b(\xdat; \param)$.
+
+Assume that we are interested in $\ex{f(x)}{}$, the expectation of the given function (a loss function say) across all possible inputs according to the data-generating distribution. Since the data-generating distribution is unknown, we approximate it using the empirical distribution of the dataset
+
+\begin{align}
+p(x) = \frac{1}{D} \sum_d \delta(x, x_d)
+\end{align}
+where D is the size of our dataset, and additionally we define $D(x)$ to be the number of copies of input $x$ in the dataset. With this formulation we can write the following.
+
+\begin{align}
+\ex{\frac{D}{D(x)} f(x)}{}
+& = \sum_d \frac{D}{D(x_d)} f(x_d) p(x_d) \\
+& = \sum_d \frac{D}{D(x_d)} f(x_d) \left(\frac{1}{D} \sum_p \delta(x_d, x_p)\right) \\ 
+& = \sum_d \frac{D}{D(x_d)} f(x_d) \frac{D(x_d)}{D} = \sum_d f(x_d)
+\end{align}
+
+In the case where we assume all data-points are different, this simplifies to
+
+\begin{align}
+\ex{D f(x)}{} = \sum_d f(x_d)
+\end{align}
+
+Thus any approximation of the expectation (e.g. by sampling from the data-distribution) is an approximation of the sum, providing us with a definition for $b(\xdat; \param)$ of $\sum_{x \in \xdat} f(x;param)$
+
+\begin{align}
+b(x) = \frac{D}{S} \sum_s f(x_s) \approx \sum_d f(x_d)
+\end{align}
+
+where S is the number of samples. In theory one could evaluate the gradient a sample at a time, however in practice, to minimise the variance of the gradient estimates, the number of samples (often called the ``batch size") is usually set to a reasonably large number. The resulting stochastic EM algorithm is therefore
+
+\begin{enumerate}
+    \item Initialise latent variables $\zdat$ and parameters $\param$
+    \item Iterate until converged, time-step is $t$:
+    \begin{enumerate}
+        \item Sample a batch of $S$ observations $\{ x_s \}_{s=1}^S$ and infer the (factored\footnote{Note that this is not necessarily a variational mean-field factorization; for example in mixture-models using ordinary EM, the posterior naturally factors over the IID datapoints}) posterior:
+        \begin{align}
+            q(z_s) = \arg \max_{q_s} \fqt{q_s, \param}
+        \end{align}
+        \item Use the posteriors to perform a gradient update of the parameters
+        \begin{align}
+        \param \leftarrow \param + \rho_t \nabla_\param \left(\sum_s \ex{\ln p(x_s, z_s|\param)}{q(z_s)}\right)
+        \end{align}
+        \end{enumerate}
+\end{enumerate}
+
+While stochastic gradient descent has been motivated thus far as a means to handle datasets too large to fit into memory, and as a means update global parameters during  -- rather than after -- inference of ``local" variables, stochastic gradient descent is also useful in unbalanced classification problems.
+
+Consider a binary recommendation problem where the majority of products have never been consumed by customers, and so the number of negative datapoints $D^-$ vastly outnumbers the number of positive datapoints $D^+$. It is possible to develop a \emph{weighted} stochastic gradient algorithm such that relatively few negative datapoints are visited, without breaking the convergence guarantees. 
+
+As an example, consider a sampling distribution $q(x)$ such that with some very small probability $\epsilon$ we choose one of the $D^-$ negative datapoints, and with high probability $1 - \epsilon$ we choose one of the $D^+$ positive datapoints. We can re-write our expectation as
+
+\begin{align}
+\ex{D f(x)}{} \quad
+&= \quad \sum_d D f(x_d) \frac{p(x_d)}{q(x_d)} q(x_d) 
+& = \quad & \ex{D f(x) \frac{p(x)}{q(x)}}{q} \\
+& & \approx & \frac{D}{S} \sum_s f(x_s) \frac{p(x_s)}{q(x_s)} \\
+& & = & \frac{D}{S} \sum_s \frac{f(x_s)}{q(x_s)} \frac{1}{D} \\
+& & = & \frac{1}{S} \sum_s \frac{f(x_s)}{q(x_s)}
+\end{align}
+Where samples $x_s$ are drawn from $q$ and we've omitted the detail of $D(x)$ for brevity. If $x_s$ is sampled from the negative samples, its weight $\oneover{q(x_s)}$ will be the large number $\frac{D^-}{\epsilon}$, whereas if it's sampled from the positive group its weight will be the much smaller $\frac{D^+}{1 - \epsilon}$. This method was considerably extended in \cite{Gopalan2013b} (see supplemental material) for the problem of predicting citations within an academic corpus, where the majority of node-pairs had no links between them.
+
+\subsection*{The Natural Gradient}
+A final refinement of gradient descent, noted in \cite{Hoffman2012} is to observe that the gradient is the solution to
+
+\begin{align}
+\lim_{\epsilon \rightarrow 0} \arg \max_{d\param} f(\param + d\param) \qquad \text{where } ||d\param|| < \epsilon
+\end{align}
+And thus implicitly works on the idea of a Euclidean distance, which is inappropriate in the case of probability distribution parameters. If one were to use the symmetric KL divergence instead of the 2-norm:
+
+\begin{align}
+\symmkl{\param}{\param'}
+ = \ex{\ln \frac{p(x; \param)}{p(x; \param'}}{\param}
+ + \ex{\ln \frac{p(x; \param')}{p(x; \param}}{\param'}
+\end{align}
+
+one can obtain a ``natural gradient" instead. In practice one can convert a Euclidean gradient to a natural gradient by premultiplying the former by a Riemannian matrix, which for probability distributions is the Fisher information matrix. As noted in \cite{Bottou2004} gradient descent convergence is unaffected by premultiplying the gradient by a matrix, so long as that matrix is positive semi-definite.
+
+However as first observed in \cite{Hoffman2010}, and then fully explained in \cite{Hoffman2012}, for conditionally conjugate models composed of distributions in the exponential family, the formula for the the natural gradient is identical to the formula for the posterior, and so one need not determine the Fisher information. For example, in a variational mixture of multinomials model, where one infers a full posterior $q(\param_k)$ over the parameters instead of a MAP estimate, the batch update is:
+
+\begin{align}
+q(\param_k) = \dir{\vv{\beta} + \sum_d z_{dk} \vv{x}_{d}}
+\end{align}
+
+while the natural gradient update, where we parameterise the posterior $q(\param; \hat{\param})$ by $\hat{\param}$ is 
+
+\begin{align}
+\hat{\param} \leftarrow \hat{\param} + \rho_t \left(\vv{\beta} + \frac{D}{S} \sum_s z_{sk} \vv{x}_s\right)
+\end{align}
+
+\section{Evaluating Model Fit}
+\label{sec:eval}
+
+A number of methods have been proposed to evaluate admixture models. By far the most popular is perplexity, which is defined as the geometric mean of the reciprocals of token likelihoods. Assuming exchangeability of words, the perplexity for a model $\model$ is defined as
+
+\begin{align}
+\perplexity{\model} = \sqrt[n_{d}]{\prod_d \prod_n \frac{1}{p(w_{dn}|\model)}} = \exp \left( \frac{-\sum_d \sum_n \ln p(w_{dn}|\model)}{n_{d\cdot\cdot}} \right) \label{eqn:perp_def}
+\end{align}
+
+As explained n \cite{Goodman2001} one can consider that a simple model that assigned uniform probability to 100 words would have a perplexity score of 100. The actual distribution, being non-uniform would be significantly \emph{lower}. Perplexity can also be linked to information theory: the log of a perplexity score gives the entropy of the word likelihoods, and as the entropy (base 2) specifies the average number of bits required to encode each word according to Shannon's source-coding theorem, lower perplexity values indicate better compression schemes.
+
+Taking this further, perplexity can be shown to be a special case of the cross-entropy function $\text{H}[p,q]$ where $p(w_{dv})$ is the empirical distribution of the word, $q(w_{dv})$ is the distribution we've inferred (confusingly denoted $p(w_{dn})$ in \eqref{eqn:perp_def}), and we use $e$ as the base and the natural log in the exponent. 
+
+To evaluate perplexity, one needs to determine the probability of a query (i.e. test) set $\WQuery$ given the training set $\WTrain$. Consider an LDA model in which the document-level topic distributions $\thd$ have been marginalised out, leaving a Polya distribution over the latent per-token topic-assignments $\zdn$, parameterised by a prior $\vv{\alpha}$.
+
+\begin{align}
+p(\WQuery|\WTrain) = \int p(\WQuery|\Phi, \vv{\alpha})p(\Phi,\vv{\alpha} | \WTrain) d\Phi d\vv{\alpha}
+\end{align}
+
+where due to the assumed exchangeability of documents $p(\WQuery|\Phi, \vv{\alpha}) = \prod_ p(\vv{w}_d^{q}|\Phi, \vv{\alpha})$. Leaving aside the first term in the integrand, one can approximate this integral either by substituting in point estimates for $\Phi$ and $\vv{\alpha}$ or sampling from the posterior - the latter being particularly easy in cases where the model parameters have been fit using Gibbs sampling.
+
+The issue that remains however is how to evaluate $p(\vv{w}_d|\Phi, \vv{\alpha})$, which is dependant on the latent variables $\zdnk$. There are a number of ways in which this can be evaluated, of which two have been used frequently in the literature.
+
+The harmonic mean method has been used in\cite{Griffiths2004}\cite{Griffiths2005}\cite{Wallach2006}, all of which performed inference using collapsed Gibbs samplers. The approach is defined as
+\begin{align}
+\oneover{p(w)} = \sum_z \frac{p(z|w)}{p(w|z)} \approx \oneover{S} \sum_s \oneover{p(w|\samp{z})}
+=  \text{HM}\left[ \left\{ p(\vv{w}|\samp{\vv{z}}, \Phi \right\}_{s=1}^{S}  \right]
+\end{align}
+where HM is the Harmonic Mean and the approximation comes from implementing an importance sampler using the target $p(z|w)$ as the proposal distribution. Implementing this we can see that 
+
+The sampling distribution over $\zdnk$ is given by
+
+\begin{align}
+p(z_{dn} = k | \vv{w}_d, \vv{z}_d^{\setminus n}, \Phi, \vv{\alpha}) \propto \phi_{k,{w_{dn}}}\frac{n_{dk\cdot} + \alpha_k}{n_{d\cdot\cdot} + \sum_j \alpha_j}
+\end{align}
+
+The second approach is the left-to-right method, which has been used in \cite{Mimno2011} and \cite{Mimno2012a}. By factorising the likelihood as
+
+\begin{align}
+p(\vv{w}|\Phi, \vv{\alpha}) & = \prod_n p(w_n | \vv{w}_{<n}, \Phi, \vv{\alpha}) \\
+& = \prod_n \sum_{\vv{z}_{<n}} p(w_n, \vv{z}_{<n}| \vv{w}_{<n}, \Phi, \vv{\alpha})
+\end{align}
+it is possible to approximate the likelihood using a variant a sequential Monte-Carlo, where each particle $p$ iteratively draws samples of $z^{(p)}_{dn'}$ for $n' \in 1 \ldots n_{d\cdot\cdot}$, and uses these samples to evaluate the overall probability of the likelihood. The full algorithm is given in \cite{Wallach2009}.
+
+When the harmonic mean, left-to-right and several other methods including importance sampling and annealed importance sampling where compared in \cite{Wallach2009} it was found that the harmonic mean method tended to ``wildly overestimate" the true likelihood, while the left-to-right method gave the most accurate estimate.
+
+A method of evaluating perplexity which tests the model's predictive power is ``document-completion" which has been used in \cite{Virtanen2012a}\cite{Asuncion2012}\cite{RosenZvi2004} and measure's the model's predictive power. Each document in the test-set is partitioned into two halves\footnote{Given that words are assumed exchangeable within documents, and that long documents may exhibit structure affecting which topics can be inferred where, one can, and indeed should, permute the word order before splitting each document}: an estimation fragment, $\vv{w}_d^{(e)}$, from which a topic distribution is inferred; and an evaluation document, $\vv{w}_d^{(l)}$, whose likelihood given the inferred topic distribution is calculated. Formally writing this as
+\begin{align}
+p(\vv{w}_d^{(l)}|\vv{w}_d^{(e)}, \Phi, \vv{\alpha}) = \frac{p(\vv{w}_d^{(l)},\vv{w}_d^{(e)} |\Phi, \vv{\alpha})}{p(\vv{w}_d^{(e)}|, \Phi, \vv{\alpha})}
+\end{align}
+
+it should be clear that the methods used above can be used to infer both $p(\vv{w}_d^{(e)}|, \Phi, \vv{\alpha})$ and $p(\vv{w}_d^{(l)},\vv{w}_d^{(e)} | \Phi, \vv{\alpha}) = p(\vv{w}_d | \Phi, \vv{\alpha})$. However the most  popular method used in this case is topic-estimation which involves sampling $\vv{z}_d^{(e,s)} \sim p(\vv{z}_n^{(e)} | \vv{w}^{(e)}, \Phi, \vv{\alpha})$ and then evaluating $\vv{\theta}_d^{(e)}$ as
+
+\begin{align}
+\theta^{(e,s)}_{dk} = p(k | \vv{z}^{(e,s)}, \vv{\alpha}) = \frac{n^{(e,s)}_{dk\cdot} + \alpha_k}{n^{(e)}_{d\cdot\cdot} + \sum_j \alpha_j}
+\end{align}
+
+from which one can then evaluate the probability of the evaluation document:
+
+\begin{align}
+p(\vv{w}_d^{(l)}|\vv{w}_d^{(e)}, \Phi, \vv{\alpha}) \approx
+\oneover{S} \sum_s \prod_n \sum_k \phi_{k,w^{(l)}_{dn}}\theta_{dk}^{(e,s)}
+\end{align}
+
+In practice, particularly with variational approaches, a single point estimate of $\vv{\theta}_d^{(e)}$ is often used instead\cite{Asuncion2012}, though when evaluating document completion \cite{Wallach2009} found that the topic-estimation method, even when implemented via sampling, compared ``poorly" with left-to-right sampling. 
+
+Thus measures of perplexity are highly dependant on how the held-out likelihood is evaluated, which is rarely described well in the literature. Furthermore, many implementors use hard-coded symmetric priors for baseline topic models, even though the performance of topic models is highly sensitive to the configuration of hyper-parameters\cite{Asuncion2012}\cite{Wallach2006}. Consequently is is difficult to compare different measures of perplexity across different models in different publications.
+
+It does not always follow that models with good (i.e. low) perplexity scores are always interpretable. In\cite{Chang2009} human testers were asked to inspect the topic vocabularies generated by different topic models (LDA, CTM and PLSA). In a ``word-intrusion" test they were asked which word, in a list of words belonging to a single topic, was the wrong word from another topic added by the experimenters. In a ``document-intrustion" they were similarly asked to identify the intruded document in a list of document excerpts belonging to a single topic. The CTM model, despite achieving the best perplexity score, faired worst in both of these tasks. 
+
+%In   \cite{Azzopardi2003} it was shown that when using language-models to aid information retrieval, language models with the best perplexity scores did not always lead to the best precision scores. 
+
+In light of this, some more recent publications such as \cite{Li2006}\cite{Wang2007}\cite{Lindsey2012} have used similar intrusion tests via Mechanical Turk to test the performance of their models.
+
+There are metrics which don't rely on the likelihood. The ``topical coherence" metric, introduced in \cite{Mimno2011} and additionally used in \cite{Mimno2012a} addresses the word-intrusion problem. Assume that if a set of words all belong to a single topic, one would them concentrated in documents belonging to that topic, rather than distributed uniformly across all documents and all topics. Therefore letting $D(t)$ be the number of documents where word $t$ occurs at least once, and $D(t,v)$ be the number of documents containing at least one occurrence each of both $t$ and $v$, the coherence metric is defined as
+\begin{align}
+C(k; V^{(m)}) = \sum_{t \in V^{(m)}_k} \sum_{v \in V^{(m)}_k,  v \neq t} \ln \frac{D(t, v) + 1}{D(v)}
+\end{align}
+where $V^{(m)}_k$ is the set of the $m$ most probable words in topic $k$, and the addition of $1$ to the numerator is to avoid taking the log of zero. 
+
+%\fixme{Read this some more. Also pointwise mutual info}
+
+The \emph{empirical likelihood} of \cite{Li2006} tests the generative ability of a model. For each test document, this involves using the model to generate, say, 1,000 synthetic documents, deriving an empirical (in this case multinomial) distribution from each document, and then evaluating the average of the probabilities of the test document according to each of these empirical distributions. This has additionally been used in \cite{Doyle2009}\cite{Mimno2008}. In \cite{Wallach2009} it was shown that this method is an approximation to $p(\vv{w}_d|\Phi, \vv{\alpha}) = \int p(\vv{w}_d, \thd | \Phi)p(\thd|\vv{\alpha})d\thd$ using importance sampling with true posterior employed as a proposal distribution. Were the synthetic documents infinitely long, the two methods would be identical. This analogy points to a potential deficiency of this method however, which is that one would expect the variance of an estimate derived from importance sampling to be very high when sampling from high-dimensional distributions: consequently for very high topic-counts (cases with over 200-topic are common) this may not be a reliable estimator.
+
+\subsection*{Evaluation Against Labelled Data}
+With labelled data, specified with a 1-of-$L$ labelling $\vv{t}_d$, one may choose to evaluate the model by comparing it to the inferred topics, $\thd \in \VReal{K}$, where $K$ need not necessarily equal $L$. Many metrics exist for this purpose, of which the most well known is the F1-Score, $F_1 = 2 \frac{p \cdot r}{p + r}$, which is the harmonic mean of precision, $p=\frac{TP}{TP+FP}$ and recall, $r=\frac{TP}{TP+FN}$, and $TP, FP, TN, FN$ refer to the true and false positives and negatives respectively.
+
+%In the presence of soft-clustering and multiple labels one can\footnote{See https://facwiki.cs.byu.edu/nlp/images/2/25/ClusterEvaluation.ppt} define an $F_1$ score for a single topic $k$ and a single label $l$ thusly.
+
+Letting \emph{precision} be the ``number of documents in a cluster that belong there", and recall be be ``did all the documents that should be in this cluster make it in" we derive the following:
+\begin{align}
+p_{kl} & = \frac{n_{kl}}{n_k} = \frac{\sum_d \theta_{dk} t_{dl}}{\sum_d \theta_{dk}}  & r_{kl} & = \frac{n_{kl}}{n_l} = \frac{\sum_d \theta_{dk} t_{dl}}{\sum_d t_{dl}} \label{eqn:myrecall}
+\end{align}
+
+where $n_{kl}$ is the number of documents in cluster $k$ which have the label $l$ and $n_k$ is the number of documents in cluster $k$. We can, for a single topic $k$ and a single label $l$ specify the $F_1$ score as $F_1^{(k,l)} = 2 \frac{p_{kl} \cdot {r_{kl}}}{p_{kl} + {r_{kl}}}$
+
+For a single label $l$ one can take the max across topics $F_1^{(l)} = \max_{k \in 1\ldots K} F_1^{(k,l)}$ and then finally describe the entire corpus using a weighted average of label specific $F_1$ scores, with the weights proportional to the number of documents with each label where $D' = \sum_d \sum_l t_{dl}$ is the total number of label instances, to account for the fact that there may be documents with more than one label, and so $D' \geq D$.
+
+
+\begin{figure}
+  \centering
+    \includegraphics[width=0.9\textwidth]{../Chap3a/plots/20news-2013-03-25.pdf}
+  \caption{Results using different accuracy metrics for a mixture of multinomials and LDA on a subset of the 20-news dataset. Trendlines and shading are from a LOESS fit to the points. A variation of the soft F1 measure described in the text is shown where we average over label-specific F1 scores instead of taking the maximum. Held-out likelihood was evaluating using the document-completion metric with inferred topics.}
+  \label{fig:eval-metrics-shootout}
+\end{figure}
+
+
+A different approach to comes from the intuition that given two equivalent labelings, one would expect label pairs $z=k$ and $t=l$ to co-occur, and so expect that $p(z,t) \neq p(z)p(t)$, which opens the door to a number of information theoretic measures such as normalised mutual information (NMI) and the Variation of Information (VI) distance..
+
+\newcommand{\TopDist}{\Theta}
+\newcommand{\LabDist}{\mathbb{C}}
+\newcommand{\NMI}{\text{NMI}}
+
+Given a corpus-wide distribution over topics $\TopDist$ and a corpus wide distribution over labels $\LabDist$ the NMI is defined as a function of the mutual information $\mut{\TopDist}{\LabDist}$
+
+\begin{align}
+\NMI & = \frac{\mut{\TopDist}{\LabDist}}{1/2(\ent{\TopDist} + \ent{\LabDist})} &
+\mut{\TopDist}{\LabDist} & = \sum_k \sum_l p(\theta_{\cdot k}, t_{\cdot l}) \ln \frac{p(\theta_{\cdot k}, t_{\cdot l})}{p(\theta_{\cdot k})p(t_{\cdot l})}
+\end{align}
+and the entropies are defined as
+\begin{align}
+\ent{\TopDist} & = - \sum_k p(\theta_{\cdot k}) \ln (\theta_{\cdot k}) &
+\ent{\LabDist} & = - \sum_l p(t_{\cdot l}) \ln p(t_{\cdot l})
+\end{align}
+
+In the case of LDA these distributions would be defined as
+\begin{align}
+p(\theta_{\cdot k}) & =  \frac{1}{D} \sum_d \theta_{dk} ,&
+p(t_{\cdot l}) &= \frac{1}{D'} \sum_d t_{dl} ,& 
+p(\theta_{\cdot k}, t_{\cdot l}) & = \frac{1}{D'} \sum_d \theta_{dk} t_{dl}
+\end{align}
+where again $D' = \sum_d \sum_l t_{dl}$ is the total number of label instances, such that $D' \geq D$
+
+
+The VI distance\cite{Meila2003} is another information-theoretic measure defined over a topic distribution $\TopDist$ and labelling distribution $\LabDist$ as:
+\begin{equation}
+\dvi{\TopDist}{\LabDist} = \ent{\LabDist} + \ent{\TopDist} - 2 \mut{\LabDist}{\TopDist}.
+\end{equation}
+
+$\dvi{\TopDist}{\LabDist}$ is a true metric: it is always non-negative, becomes zero if and only if $\LabDist = \TopDist$, is symmetric, and observes the triangle inequality, $\dvi{X}{Z} + \dvi{Z}{Y} \geq \dvi{X}{Y}$. However the range over which VI distance scores will take is dataset-dependant, and so to compare scores across datasets one can use the \emph{normalized VI distance}\cite{Reichart2009} which is defined as. 
+
+\begin{align}
+\text{NVI}\left[ \TopDist, \LabDist \right] = \left\{ \begin{array}{lr}
+     \frac{1}{\ent{\TopDist}}\dvi{\TopDist}{\LabDist} & \ent{\TopDist} \neq 0 \\
+     \ent{\LabDist} & \text{otherwise}
+ \end{array}\right.
+\end{align}
+
+
+The VI distance has been used to compare topics inferred by LDA with manual labelling of over 20,000 news-stores in \cite{HeinrichEtAl2005}. 
+
+
+A well-known metric from the field of clustering is the rand Rand Index, which determines how similar are two ways of partitioning data. It counts fours classes of document-pairs: (a) those which have the same cluster and have the same label; (b) those which have different clusters but share the same label; (c) those which have the same cluster but have different labels; and (d) those which which are not in the same cluster and have different labels.
+
+Given these definitions the index is then $\text{RI} = \frac{a + d}{a + b + c + d}$. This is broadly similar to the idea of accuracy traditionally defined as being $\frac{TP + TN}{TP + FN + FP + TN}$
+
+For the kind of soft-clustering featured in LDA, one would define these counts as
+\begin{equation}
+\begin{aligned}
+a & = \sum_k \sum_{d, {p>d}} \theta_{dk} \theta_{pk} \sum_l t_{dl}t_{pl} & \quad
+b & = \sum_k \sum_{d, {p>d}} \theta_{dk} (1 -\theta_{pk}) \sum_l t_{dl}t_{pl}\\
+c & = \sum_k \sum_{d, {p>d}} \theta_{dk} \theta_{pk} \sum_{l,m \neq l} t_{dl}t_{ml} & \quad
+d & = \sum_k \sum_{d, {p>d}} \theta_{dk} (1- \theta_{pk}) \sum_{l,m \neq l} t_{dl}t_{ml}
+\end{aligned}
+\end{equation}
+
+Plots of all these metrics, for different topic counts, are given in figure \ref{fig:eval-metrics-shootout} for documents taken from four very different newsgroups from the overall 20-newsgroups dataset.
+
 
 
 \input{../footer.tex}
