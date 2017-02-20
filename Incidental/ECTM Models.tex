@@ -1,7 +1,367 @@
-\input{../header.tex}
-\newcommand \mnord[4]  { \mathcal{N}_{{#1}} \left(#2, #3, #4\right) }
+\documentclass[10pt,fleqn]{article}
 
-\chapter{Correlated Topic Models with Associated Features}
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{enumerate}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{bm}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{todonotes}
+\usepackage{dsfont}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{appendix}
+\usepackage{subcaption}
+\usepackage{fancyvrb}
+\usepackage{subfigure}
+\usepackage{graphicx,xcolor}
+\usepackage{pifont,mdframed}
+\usepackage{tikz}
+\usetikzlibrary{fit,positioning}
+
+
+\newcommand{\specialcell}[2][c]{%
+  \begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}
+
+\newcommand \etr[0] {
+    \text{etr}
+}
+
+\newcommand \Etr[1] {
+    \text{etr}\left( { #1 } \right)
+}
+
+\newcommand \tinymath[1] {{  \mbox{\tiny ${#1}$ }  }}
+
+%
+% Macros
+%
+\newcommand \cashort[1] { {\todo[color=yello]{#1 -- Cedric}} }
+\newcommand \calong[1]  { { \todo[inline,color=yellow]{#1 -- Cedric} } }
+\newcommand \gbshort[1] { {\todo[color=cyan!40]{#1 -- Guillaume}} }
+\newcommand \gblong[1]  { { \todo[inline, color=cyan!40]{#1 -- Guillaume} } }
+\newcommand \mgshort[1] { {\todo{#1 -- Mark}} }
+\newcommand \mglong[1]  { { \todo[inline]{#1 -- Mark} } }
+\newcommand \bfshort[1] { {\todo[color=green!40]{#1 -- Bryan}} }
+\newcommand \bflong[1]  { { \todo[inline,color=green!40]{#1 -- Bryan} } }
+
+
+% Adds a plus const to the end of a math expression
+\def \pcst{+\text{const}}
+
+% A fancy version for capital R
+\def \Rcal{\mathcal{R}}
+
+% A fancy version for r
+\def \rcal{\mathbf{r}}
+
+% Loss function / log likelihood as appropriate
+\def \L{\mathcal{L}}
+
+% KL divergence [Math Mode]
+\newcommand{\kl}[2] {
+	\text{KL}\left[#1||#2\right]
+}
+
+\newcommand{\symmkl}[2] {
+	\text{KL}^{symm}\left[#1||#2\right]
+}
+
+\newcommand \vecf[1] {
+    \text{vec}\left(#1\right)
+}
+
+\newcommand \ent[1] {
+    \text{H} \left[ #1 \right]
+}
+
+\newcommand \mut[2] {
+    \text{I} \left[ #1 ; #2 \right]
+}
+
+\newcommand \dvi[2] {
+    \text{D}_\text{VI} \left[ #1; #2 \right]
+}
+
+% Starts an expected value expresses [Math Mode]
+\newcommand{\starte}[1] {%
+	\mathbb{E}_{#1}\left[
+}
+
+% Ends an expected value expression [Math Mode]
+\def \ende{\right]}
+
+% Starts an varianc expresses [Math Mode]
+\newcommand{\startv}[1] {%
+	\mathbb{V}\text{ar}_{#1}\left[
+}
+
+% Ends an variance expression [Math Mode]
+\def \endv{\right]}
+
+%\newcommand \ex[2] {
+%    \bigl\langle #1 \bigr\rangle_{#2}
+%}
+\newcommand \ex[2] {
+    \mathbb{E}_{ { #2 } }\left[ #1 \right]
+}
+\newcommand \var[2] {
+    \mathbb{V}\text{ar}_{ { #2 } }\left[ #1 \right]
+}
+\newcommand \cov[1] {
+    \mathbb{C}\text{ov}[ #1 ]
+}
+
+\newcommand \halve[1] {
+	\frac{#1}{2}
+}
+
+\newcommand \half {
+    \halve{1}
+}
+
+\newcommand \tr { \text{tr} }
+
+\newcommand \T { ^\top }
+
+\newcommand \fixme[1] {
+    {\color{red} FIXME: #1}
+}
+
+\newcommand \vv[1] { \bm #1 }
+
+\newcommand{\mbeq}{\overset{!}{=}}
+
+\def\app#1#2{%
+  \mathrel{%
+    \setbox0=\hbox{$#1\sim$}%
+    \setbox2=\hbox{%
+      \rlap{\hbox{$#1\propto$}}%
+      \lower1.1\ht0\box0%
+    }%
+    \raise0.25\ht2\box2%
+  }%
+}
+\def\approxpropto{\mathpalette\app\relax}
+
+\newcommand \diag[1] { \text{diag} \left( {#1} \right) }
+\newcommand \diagonal[1] { \text{diagonal} \left( {#1} \right) }
+
+\newcommand \Ed {{ \vv{\xi}_d}}
+\newcommand \Edj {{\xi_{dj}}}
+\newcommand \Edk {{\xi_{dk}}}
+\newcommand \AEdj {{\Lambda(\xi_{dj})}}
+\newcommand \AEdk {{\Lambda(\xi_{dk})}}
+\newcommand \AEd  {{ \bm{\Lambda}(\bm{\xi}_d) }}
+
+\newcommand \Axi { { \Lambda_{\xi} } }
+\newcommand \bxi { { \vv{b}_{\xi} } }
+\newcommand \cxi { { c_{\xi} } }
+
+
+\newcommand \wdoc      { { \vv{w}_d } }
+\newcommand \wdt[0]  { { w_{dt} } }
+\newcommand \wdn[0]  { { \vv{w}_{dn} } }
+\newcommand \wdnt[0]  { { w_{dnt} } }
+\newcommand \wdd[0]   { { \vv w_{d} } }
+\newcommand \zd[0]   { { \vv z_{d} } }
+\newcommand \zdn[0]  { { \vv{z}_{dn} } }
+\newcommand \zdnk[0] { { z_{dnk} } }
+\newcommand \zdk[0]  { { z_{dk} } }
+\newcommand \thd[0]  { { \vv \theta_d } }
+\newcommand \thdk[0] { { \theta_{dk} } }
+\newcommand \thdj[0] { { \theta_{dj} } }
+\newcommand \epow[1] { { e^{#1} } }
+\newcommand \pkt     { { \phi_{kt}  } }
+\newcommand \pk      { { \vv \phi_k } }
+\newcommand \lmd     { { \vv \lambda_d } }
+\newcommand \lmdk    { { \lambda_{dk} } }
+\newcommand \xd      { { \vv x_d } }
+\newcommand \atxd     { A ^\top \bm x_d}
+\newcommand \axd     { A\bm x_d}
+\newcommand \tsq      { { \tau^2 } }
+\newcommand \ssq      { { \sigma^2 } }
+\newcommand \tmsq     { { \tau^{-2} } }
+\newcommand \asq      { { \alpha^2 } }
+\newcommand \amsq     { { \alpha^{-2} } }
+\newcommand \sgsq     { { \sigma^2 } }
+\newcommand \xvec     { { \vv{x} } }
+\newcommand \omk      { { \bm \omega _k } }
+\newcommand \omkt     { { \omega_{kt} } }
+\newcommand \oma     { { \Omega_A } }
+\newcommand \gdn      { { \vv{\gamma}_{dn} } }
+\newcommand \gdnk     { { \gamma_{dnk} } }
+\newcommand \gdk      { { \gamma_{dk} } }
+\newcommand \isigt   { { \Sigma^{-1}_{\bm \theta} } }
+
+\newcommand \nd { { n_{d\cdot\cdot} } }
+
+
+\newcommand \halfSig { \frac{1}{2\sigma^2} }
+
+\newcommand \cat[1]   { \mathcal{C} \left( {#1} \right) }
+\newcommand \nor[2]   { \mathcal{N} \left( {#1}, {#2} \right) }
+\newcommand \nord[3]   { \mathcal{N}_{#1} \left( {#2}, {#3} \right) }
+\newcommand \mnor[3]  { \mathcal{N} \left(#1, #2, #3\right) }
+\newcommand \norp[3]  { \mathcal{N} \left(#1; #2, #3\right) }
+\newcommand \mnorp[4] { \mathcal{N} \left(#1; #2, #3, #4\right) }
+\newcommand \mul[1]   { \mathcal{M} \left( {#1} \right) }
+\newcommand \muln[2]  { \mathcal{M} \left( {#1},{#2} \right) }
+\newcommand \dir[1]   { \mathcal{D} \left( {#1} \right) }
+\newcommand \pois[1]  { \mathcal{P} \left( {#1} \right) }
+\newcommand \gp[2]    { \mathcal{GP} \left( {#1}, #2 \right) }
+\newcommand \dir[1]   { \mathcal{D} \left( {#1} \right) }
+\newcommand \gam[2]   { \mathcal{G} \left( {#1}, {#2} \right) }
+\newcommand \beta[1]  { \mathcal{B}eta \left( {#1}, {#2} \right) }
+\newcommand \DP[1]    { \text{DP} \left( {#1} \right) }
+\newcommand \GP[2]    { \text{GP} \left( {#1}, {#2} \right) }
+
+\newcommand \lne[1]  { { \ln \left( 1 + e^{ #1 } \right) } }
+\newcommand \Tr[1]   { \tr \left(  {#1}  \right) }
+
+\newcommand \roud  { \vv{\rho}_{d}  }
+\newcommand \rodk { \rho_{dk} }
+
+\newcommand \exA[1]  { \ex{#1}{q(A)} }
+\newcommand \exV[1]  { \ex{#1}{q(V)} }
+\newcommand \exT[1]  { \ex{#1}{q(\Theta)} }
+\newcommand \extd[1] { \ex{#1}{q(\thd)} }
+\newcommand \exTV[1] { \ex{#1}{q(\Theta)q(V)} }
+
+\newcommand \Real[0]  { { \mathbb{R} } }
+\newcommand \VReal[1] { { \mathbb{R}^{#1} } }
+\newcommand \MReal[2] { { \mathbb{R}^{#1 \times #2} } }
+\newcommand \Nat[0]  { { \mathbb{N} } }
+\newcommand \VNat[1] { { \mathbb{N}^{#1} } }
+\newcommand \MNat[2] { { \mathbb{N}^{#1 \times #2} } }
+
+\newcommand \inv[1] { {#1}^{-1} }
+\newcommand \invb[1] { \inv{\left( #1 \right)} }
+
+\newcommand \cn { \textsuperscript{\texttt{[{\color{blue}Citation Needed}]}} }
+
+\newcommand \const { { \text{c} } }
+
+\providecommand \floor [1] { \left \lfloor #1 \right \rfloor }
+\providecommand \ceil [1] { \left \lceil #1 \right \rceil }
+
+
+\newcommand \vt[2] { { #1^{(#2)} } }
+
+\newcommand \hashtag[1] { { \ttfamily \##1 } }
+
+\newcommand \mvy  { \vv{m}_{\vv{y}} }
+\newcommand \sigvy { { S_Y } }
+
+\newcommand \mmy  { M_Y      }
+\newcommand \md   { \vv{m}_d }
+\newcommand \phin { \vv{\phi}_n }
+\newcommand \isigma { { \inv{\Sigma} } }
+
+\newcommand \sigv     { { \Sigma_V } }
+\newcommand \isigv     { { \Sigma^{-1}_V } }
+
+\newcommand \sigy { { \Sigma_Y } }
+\newcommand \isigy { { \Sigma_{-1}_Y } }
+
+
+\newcommand \omy  { { \Omega_Y } }
+\newcommand \iomy { { \inv{\Omega_Y} } }
+
+\newcommand \siga     { { \Sigma_A } }
+\newcommand \isiga     { { \Sigma^{-1}_A } }
+\newcommand \diagv { { \diag{\nu_1,\ldots,\nu_P} } }
+
+\newcommand \ma { \vv{m}_a }
+\newcommand \my { \vv{m}_y }
+
+\newcommand \VoU { V \otimes U }
+
+%\newcommand \one { \mathbb{1} }
+\newcommand \one  {{  \mathds{1} }}
+
+\newcommand \lse { \text{lse} }
+%\newcommand \lse[0] { \mathrm{lse} }
+
+% Conditional independence
+\def\ci{\perp\!\!\!\perp} % from Wikipedia
+
+
+
+% ------ For the eval section
+
+% Multinomial PDF [Math Mode]
+% params: 1 - the variable
+%         2 - the value
+%         3 - the state indicator (e.g. k for a distro with K values)
+%         4 - any additional subscript
+\newcommand{\mpdf}[4] {
+	\prod_{#3} {#1}_{{#4} {#3}} ^ {#2}
+}
+
+% Dirichlet PDF [Math Mode]
+% params: 1 - the variable
+%         2 - the hyper-parameter
+%         3 - the state indicator (e.g. k for a distro with K values)
+%         4 - any additional subscript
+\newcommand{\dpdf}[4] {
+	\frac{1}{B({#2})} \prod_{#3} {#1}_{{#4} {#3}} ^ {({#2}_{#3} - 1)}
+}
+
+% To simplify the sampling equations, this is indicates
+% that the given value has had datapoint "m" stripped out
+%
+\newcommand{\lm}[1] {
+	#1^{\setminus m}
+}
+
+\newcommand \model[0] {
+    \mathcal{M}
+}
+
+\newcommand \perplexity[1] {
+    \mathcal{P} \left( { #1 } \right)
+}
+
+\newcommand \WTrain {
+    \mathcal{W}^{(t)}
+}
+
+\newcommand \WQuery {
+    \mathcal{W}^{(q)}
+}
+
+\newcommand \oneover[1] {
+    \frac{1}{ {#1} }
+}
+
+\newcommand \samp[1] {
+    { #1 }^{(s)}
+}
+
+\newcommand \etd[0] {
+    \vv{\eta}_d
+}
+
+\title{Correlated Topic Models with Associated Features}
+
+\begin{document}
+\maketitle
+
+
+\newcommand \mnord[4]  { \mathcal{N}_{{#1}} \left(#2, #3, #4\right) }
 
 \section{Introduction}
 Our setting is a set of documents $\vv{w}_d$ each of which is accompanied by some features $\vv{x}_d$. The methods of incorporating covariates into LDA fall into two categories, as described in\cite{Mimno2008}: ``upstream" models which consider the case $p(\wdoc | \xd) = \int p(\wdoc|\thd, \Phi)p(\thd|\xd) d\thd$ 
@@ -15,17 +375,17 @@ These models are limited to binary label vectors only. A general model should ta
 
 Extensions of this model have been investigated using Gaussian processes instead of plain linear regression\cite{Hennig2012} but unsurprisingly, such a model does not scale to the size of datasets typical in topic models\footnote{For example the 8,000 document Reuters-21578 dataset is considered a toy, yet produces a kernel matrix with $64 \times 10^6$ elements}.
 
-An element of DMR is that the $K$ regression problems may be correlated, that is to say that the appearance of one topics may make others more or less likely. This in turn suggests the usual of a multi-task learning approach may improve inference.
+An element of DMR is that the $K$ regression problems could be correlated: that is to say that the appearance of one topics may make others more or less likely. This in turn suggests the usual of a multi-task learning approach may improve inference.
 
 \section{The Low+Full Rank Model}
 Let $D$ be the number of documents and $N_d$ the number of words in document $d\in\{1,\ldots,D\}$. The Correlated Topic Model models the mixture $\thd$ for a document $d$ as follows:
 \begin{align}
 \thd &\sim \nor{\mu}{\Sigma}
-&\zdn | \thd &\sim \cat {\vv{\sigma}(\thd)} ,\\
+&\zdn | \thd &\sim \muln {\vv{\sigma}(\thd)}{1} ,\\
 \pk &\sim\dir{\vv{\beta}}
-&\wdn | \zdn , \{\pk\}_k &\sim \cat{\vv{\beta}_{\zdn}}
+&\wdn | \zdn , \{\pk\}_k &\sim \muln{\vv{\beta}_{\zdn}}{1}
 \end{align}
-where $\cat{\cdot}$ denotes the categorical distribution; $\vv{\sigma}(\thd) = \{\sigma_1(\thd), \ldots, \sigma_k(\thd)\}$ and $\sigma_k(\thd) = \exp(\thdk - \lse(\thd))$ is the multivariate softmax function; and $\lse(\thd) = \ln\left(\sum_j \thdj \right)$ is the log-sum-exp function. The latent variable $\zdn$ is the mixture-component assignment for the n-th token in document $d$ stored as a 1-of-K vector. Similarly, the corresponding token is identified by the 1-of-T vector $\wdn$. The mixture distribution for the k-th mixture is given by the vector $\vv{\beta}_k$ which we treat as a parameter.
+where $\vv{\sigma}(\thd) = \{\sigma_1(\thd), \ldots, \sigma_k(\thd)\}$ and $\sigma_k(\thd) = \exp(\thdk - \lse(\thd))$ is the multivariate softmax function; and $\lse(\thd) = \ln\left(\sum_j \thdj \right)$ is the log-sum-exp function. The latent variable $\zdn$ is the mixture-component assignment for the n-th token in document $d$ stored as a 1-of-K vector. Similarly, the corresponding token is identified by the 1-of-T vector $\wdn$. The mixture distribution for the k-th mixture is given by the vector $\vv{\beta}_k$ which we treat as a parameter.
 
 \subsection{A Matrix-Variate Prior over Weights}
 The matrix-variate normal distribution, with mean matrix $M \in \MReal{P}{Q}$ row covariance $\Omega \in \MReal{Q}{Q}$ and column-covariance $\Sigma \in \MReal{P}{P}$ is denoted by $Y \sim \mnord{PQ}{M}{\Omega}{\Sigma}$ and its log-PDF is
@@ -49,10 +409,11 @@ Y \sim & \mnord{KP}{0}{\rho^2 I_P}{\Sigma} & A|Y \sim & \mnord{KF}{YV}{\alpha^2 
 \end{align}
 
 where $\Sigma$ is the covariance over topics and the matrix $V \in \MReal{P}{F}$ projects from a low-rank feature-space to the observed feature-space. By converting to multi-variate normal form, and employing the usual marginal normal identity\cite{Bishop2006}  we see that the marginal distribution of $A$ is
-$ A \sim \mnor{0}{\alpha^2 I_F + \rho^2 V\T V}{\Sigma}$ where the low-rank decomposition of the covariance over features is clear. 
+$ A \sim \mnor{0}{\text{ }(\alpha^2 I_F + \rho^2 V\T V)}{\text{ }\Sigma}$ where the low-rank decomposition of the covariance over features is clear. 
 
 The use of matrix-variate priors for multitask learning has been explored in \cite{Stegle2011}\cite{Bonilla2008} \cite{Archambeau2011}\cite{Yang2011}. Due to the ability to reduce the number of covariance parameters from $(LF)^2$ to $L^2 + F^2$ it has also been explored in other areas such as matrix factorization\cite{Allen2010}.
 
+\subsubsection*{Relationship to Other Models}
 If we were to use the distribution $A \sim \mnor{0}{\alpha^2 I_F}{\Sigma}$ and then marginalize out A from the distribution of $\thd$ we would obtain -- for our topic-prediction component -- the multi-task Gaussian Process regression algorithm of \cite{Bonilla2008}. In this context, the resulting model would provide a correlated-topic analogue to the Kernelised Topic Model \cite{Hennig2012} which makes the LDA assumption of topic independence. Like KTM however, it would be challenge to scale to large corpora with large numbers of topics.
 
 \subsection{Variational Inference}
@@ -81,14 +442,6 @@ q(\Theta) = & \prod_d \nor{\md}{\Vd} & q(Z) = & \prod_d \prod_n \muln{\vv{\gamma
 
 Where $\Vd$ is a diagonal matrix in all our experiments. Using Jensen's bound, and this approximate posterior, we can approximate the marginal likelihood $p(W | X) \geq \ex{\ln p(W,A,\Theta,Z,\Phi,A,Y| X}{q}$ with a tractable approximation, the ``free energy".
 
-
-
-\begin{align}
-M_Y = & \invb{\rho^{-2} I_P + \alpha^{-2} V V\T}(\alpha^{-2}V M_A) = R_Y (\alpha^{-2} V M_A)
-\end{align}
-
-The updates for the posterior $q(A)$ follow similarly.
-
 \subsubsection{Non-Conjugate Inference with Quadratic Bounds}
 Our posterior is still intractable however as the multinomial distribution over per-token topics $Z$ is not conjugate to the normally distributed prior.
 
@@ -116,7 +469,9 @@ With this bound, we see that the distribution over Z becomes
 
 In the case of the Bohning bound taking derivates we find that $\Ed = \md$.
 
-In our implementation we adapt the model to a bag of word-counts $\vv{w}_d \in \VReal{T}$ instead of a list of $N_d$ word observations, and with a matching change from $Z^{(d)} \in \MReal{N_d}{K}$ to $Z^{(d)} \in \MReal{T}{K}$. As it is impossible to store $Z \in \mathbb{R}^{D\times T \times K}$ in memory for any non-trivial problem, we substitute the update for Z into those expressions that employ it and recalculate. We further ``batch" groups of updates for instances same word $v$ in a document $d$, replacing $z_{dnk}$ with $z_{dvk}$ and thereby obtain algorithm \ref{alg:yv}.
+The remaining updates are obtained by standard calculus, though some care is required in the case of $q(Y)$ due to the non-identifiability of Kronecker products: this is discussed in the appendix (section \ref{sec:trace-trick}). The full set of updates is given in algorithm \ref{alg:yv}
+
+In our implementation we adapt the model to a bag of word-counts $\vv{w}_d \in \VReal{T}$ instead of a list of $N_d$ word observations, and with a matching change from $Z^{(d)} \in \MReal{N_d}{K}$ to $Z^{(d)} \in \MReal{T}{K}$. As it is impossible to store $Z \in \mathbb{R}^{D\times T \times K}$ in memory for any non-trivial problem, we substitute the update for Z into those expressions that employ it and recalculate. We further ``batch" groups of updates for instances same word $v$ in a document $d$, replacing $z_{dnk}$ with $z_{dvk}$ and thereby obtain algorithm 
 
 Note that this algorithm involves inverting a function of the topic-covariance for every document: some ways of redressing this are included in the appendix
 
@@ -178,9 +533,7 @@ One approach to the reduced covariance model is to attempt to use matrix-variate
 \vecf{M_Y} = & \invb{\rho^{-2}\tau^{-2} I_{PQ} + \alpha^{-2}V V\T \otimes \sigma^{-2} U \T U}\vecf{\sigma^{-2}\alpha^{-2} U\T M_A V\T}
 \end{align}
 
-Unlike in the YV case, in the UYV case there is no trick one can employ (see appendix) to eliminate the trace terms from the covariances.
-
-Instead, collecting terms it's clear our approximate posterior over Y is a multivariate normal distribution over $\vecf{Y}$: $q(Y) = \nor{\vv{m}_y}{S_y}$. Using this we can recalculate the expectations of the affected terms:
+Collecting terms it's clear our approximate posterior over Y is a multivariate normal distribution over $\vecf{Y}$: $q(Y) = \nor{\vv{m}_y}{S_y}$. Using this we can recalculate the expectations of the affected terms in the free-energy
 
 \begin{align}
 \ex{p(Y)}{q} = & -\halve{PQ}\left(\ln 2\pi + \ln \rho^2 + \ln \tau^2\right) - \half \left(\rho^{-2}\tau^{-2} \vv{m}_y\T\vv{m}_y + \Tr{\rho^{-2}\tau^{-2} S_Y}\right) \\
@@ -203,12 +556,12 @@ S_y & = \invb{\rho^{-2} \alpha^{-2} I_{PQ} + V\T V \otimes U\T U}
 
 Unfortunately this requires inverting $S_y \in \mathbb{R}^{(P \times Q) \times (P \times Q)}$. This has a computational complexity of $O(P^3Q^3)$ which is not tractable. Therefore we develop the following method to reduce the computational complexity to $O(P^3 + Q^3)$ by analytically deriving the update for $Y$ from the eigen-decompositions of $U\T U$ and $V\T V$..
 
-Recall that the eigen-decomposition of a matrix V is $U_V D_V U_V\T$ where $U$ is the matrix of V's eigen-vectors and $D$ a diagonal matrix of its eigen-values. The inverse is $\inv{V} = U_V \inv{D_V} U_V\T$, where the inverse of $D_V$, being diagonal, is trivially obtained. It has been shown in \cite{Stegle2011} that if $S = (a I + C \otimes B)$ then the eigen-decomposition is
+Recall that the eigen-decomposition of a matrix V is $U_V D_V U_V\T$ where $U$ is the matrix of V's eigen-vectors and $D$ a diagonal matrix of its eigen-values. The inverse is $\inv{V} = U_V \inv{D_V} U_V\T$, where the inverse of $D_V$, being diagonal, is trivially obtained. It has been shown in \cite{Stegle2011} that if $A = (a I + C \otimes B)$ then the eigen-decomposition is
 \begin{align}
-S = (a I + C \otimes B) = (U_C \otimes U_B)(\alpha I + D_C \otimes D_B)(U_C\top \otimes U_B\top)
+A = (a I + C \otimes B) = (U_C \otimes U_B)(\alpha I + D_C \otimes D_B)(U_C\T \otimes U_B\T)
 \end{align}
 
-We use this in our update for $\vv{m}_y = \vecf{M_Y}$. For brevity we use the change of notation $vec(U M_A V) = vec(T)$ and additionally denote the eigen-decompositions $U\T U = U_U D_U U_U\T$ and $V\T V = U_V D_V U_V\T$
+We use this in our update for $\vv{m}_y = \vecf{M_Y}$. For brevity we use the change of notation $\vecf{U M_A V} = \vecf{T}$ and additionally denote the eigen-decompositions $U\T U = U_U D_U U_U\T$ and $V\T V = U_V D_V U_V\T$, given the revised update:
 
 \begin{align}
 \vecf{M_Y} = (U_V \otimes U_U)
@@ -216,7 +569,7 @@ We use this in our update for $\vv{m}_y = \vecf{M_Y}$. For brevity we use the ch
   (U_V^\top \otimes U_U^\top) \vecf{T}
 \end{align}
 
-We can simplify this further. Letting $S = (\alpha I + D_V \otimes D_U)$, we can define a second term $s$ according to
+We can simplify this further. Letting $S = (\alpha^{-2}\rho^{-2} I + D_V \otimes D_U)$, we can define a second term $s$ according to
 
 \begin{align}
 S^{-1}(U_V^\top \otimes U_U^\top) \vecf{T} 
@@ -226,7 +579,7 @@ S^{-1}(U_V^\top \otimes U_U^\top) \vecf{T}
 \vecf{U_U (\text{diag}(S^{-1})^{(Q)} .* T) U_V^\top} = s
 \end{align}
 
-where $.*$ denotes the Hadamard product, and we use the notation $A^{(p)}$ to denote the vec-transpose\cite{Minka2000a}. Note that $\vecf{A}^{(Q)} = \text{reshape}(A, (Q, c))$.
+where $.*$ denotes the Hadamard product, and we use the notation $A^{(p)}$ to denote the vec-transpose\cite{Minka2000a}. Further information on the vec-transpose operator is given in the appendix (section \ref{sec:vec-transpose} but not that $\vecf{A}^{(Q)} = \text{reshape}(A, rows=Q, cols=c)$.
 
 Using the identity $\vecf{AXB} = (B\T \otimes A)\vecf{X}$ we can now re-write
 
@@ -248,9 +601,8 @@ The inference of U and V requires being able, in both cases, to differentiate th
 \end{align}
 which appears in the expectation of $\ex{\ln p(A)}{q}$.
 
-As described in \cite{Minka2000a} taking derivates of Kronecker products involves the introduction of a \emph{commutation matrix} $T_{QP}$, a square, orthogonal, permutation matrix defined by the property that $T_{QP} \vecf{X} = \vecf{X\T}$. Its further properties are defined in the appendix. The derivatives of \eqref{eqn:kro-deriv-input} are (with apologies for the abuse of notation):
+As described in \cite{Minka2000a} taking derivates of Kronecker products involves the introduction of a \emph{commutation matrix} $T_{QP}$, a square, orthogonal, permutation matrix defined by the property that $T_{QP} \vecf{X} = \vecf{X\T}$. The derivatives of \eqref{eqn:kro-deriv-input} are (with apologies for the abuse of notation):
 
-\fixme{Check this!}
 \begin{align}
 \frac{d}{dU} \Tr{(V\T V \otimes U\T U)S_y} 
 & = \left( \vt{(T_{QP} S_y)}{P} \right)\T (I_{PQ} \otimes V\T V)\vt{T_{QP}}{P}
@@ -258,7 +610,7 @@ As described in \cite{Minka2000a} taking derivates of Kronecker products involve
 \frac{d}{dV} \Tr{(V\T V \otimes U\T U)S_y} 
 & = \left(\vt{S_y}{Q}\right)\T (I_{PQ} \otimes U\T U) \vt{I_{PQ}}{Q}
 \end{align}
-Standard calculus provides the rest of the derivation for the updates.
+The full derivation of these two results is given in the appendix, section \ref{sec:trace-kro-calculus}
 
 
 \subsubsection{Inferring Document Level Topics}
@@ -336,7 +688,9 @@ $\text{ }$\\
 {\bf E-Step}
     \begin{align*}
         & S_y = \invb{I_{mn} + V\T V \otimes U\T U} \quad &
-Y & = U_U^\top (\hat S .* (U_U U M_A V U_V^\top)) U_V \\
+Y & = U_U^\top (\diag{\inv{S}}^{(Q)} .* (U_U U M_A V U_V^\top)) U_V \\
+        & &
+        S & = (\alpha^{-2}\rho^{-2} I + D_V \otimes D_U) \\
         & S_A = \sigma^2 I_K \quad R_A = \invb{\alpha^{-2} I_F + \sigma^{-2} X\T X} 
         & M_A & = \left(\alpha^{-2} YV + \sigma^{-2} \sum_d \md \xd\T\right)R_A
     \end{align*}
@@ -366,14 +720,41 @@ The experiments for the Low+Full model, included in my upgrade report, were on a
 
 The experimental setup involved cross validation, where the model was trained on the majority of tweets for all users, and then for each user the predictive likelihood of the held out tweets was evaluated. 
 
-Compared to a correlated author-topic model, the YV-model gave better predictive accuracy.
+Compared to a correlated author-topic model, the YV-model gave better predictive likelihood, indicating a better fit to the data. While examples were shown where the model could suggest useful hashtags for tweets, this was not quantitatively evaluated using standard metrics like mean average-precision (MAP).
 
 
+No experiments have been carried out with the $UYV$ model.
 
-\section{Appendix}
-\subsection{Vec-Tranpose and Commutation Matrix}
+
+\bibliographystyle{plain}
+\bibliography{/Users/bryanfeeney/Documents/library.bib}
+
+
+\begin{appendices}
+
+
+\section{Matrix Calculus Involving Kronecker Products}
+\label{sec:trace-kro-calculus}
+This briefly summarises the identities contained in three online resources\footnote{\url{http://research.microsoft.com/en-us/um/people/minka/papers/matrix/}}\footnote{\url{http://www4.ncsu.edu/~pfackler/MatCalc.pdf}}\footnote{\url{http://courses.engr.illinois.edu/cs598ps/CS598PS/Topics_and_Materials_files/Lecture\%201\%20-\%20Intro,\%20Linear\%20Algebra.pdf}} and then explains how these were used to take the derivatives of the expression
+
+\begin{equation}
+\Tr{A(X\T X \otimes Y\T Y) B}
+\end{equation}
+
+with respect to X and to Y.
+
+\subsection{Background}
+The definition of the Kronecker product and the $\vecf{\cdot}$ operator are assumed to be known. It is noted that in implementation terms, one can trivially implement the $\vecf{\cdot}$ operator using a \texttt{reshape} command, though only if the matrix is stored in column or ``Fortran" order. This is the case for Matlab, but most other numeric packages, including Numpy for Python, assume row or ``C" order. 
+
+Standard identites for Kronecker products and the related $\vecf{\cdot}$ operator are readily available\footnote{See for example ``The Matrix Cookbook" at \url{http://www2.imm.dtu.dk/pubdb/views/edoc_download.php/3274/pdf/imm3274.pdf}} but two of note are
+\begin{align}
+(X \otimes Y)\T & = X\T \otimes Y\T  \label{eqn:otimes_tranpose}\\
+\vecf{UXV} & = (V\T \otimes U)\vecf{X} \label{eqn:vec_to_otimes}
+\end{align}
+
 \subsubsection{The Vec-Transpose Operator}
-Both the $\vecf{\cdot}$ and transpose operators can be generalized by the vec-transpose operator, introduced in \cite{Wandell1992}. This becomes a necessary tool when taking the derivatives of terms that occur in kronecker products.
+\label{sec:vec-transpose}
+Both the $\vecf{\cdot}$ and tranpose operators can be generalized by the vec-transpose operator, introduced in \cite{Wandell1992}. This becomes a necessary tool when taking the derivatives of terms that occur in kronecker products.
 
 The vec-transpose of an $m \times n$ matrix $X$ is denoted $\vt{X}{p}$. The resulting matrix is composed of $n$ submatrices stacked atop one another, where each $p \times ^m/_p$ sub-matrix is generated by a fortran-order reshape of each column of X. The matrices are generated from top to bottom from the columns of X read from left to right. This is illustrated in the following examples.
 
@@ -447,11 +828,11 @@ For any matrix $X$ and appropriate values of $p$
 
 
 
-With these results in hand we write
+With these results in hand we can generalize equation \eqref{eqn:otimes_tranpose} as
 \begin{equation}
 \vt{(X \otimes Y)}{p} = X\T \otimes \vt{Y}{p} \label{eqn:vt_of_otimes}
 \end{equation}
-and 
+and equation \eqref{eqn:vec_to_otimes} as
 \begin{equation}
 \vt{\left((Z\T \otimes W)XY \right)}{p} = (Y \otimes W)\vt{X}{p}Z \label{eqn:extract_left_kro_opnd}
 \end{equation}
@@ -465,7 +846,10 @@ Using \eqref{eqn:extract_left_kro_opnd} we can show that
 \end{equation}
 
 \subsubsection{The Commutation Matrix}
-For an $m \times n$ matrix X, the commutation matrix\cite{Magnus1988} is the square matrix $T_{mn} \in \{0,1\}^{(m \times n) \times (m \times n)}$ which transforms $\vecf{X}$ into $\vecf{X\T}$:
+\label{sec:commutation-matrix}
+In the previous section, we illustrated how we can swap-out the left-hand operand of a Kronecker product, enabling us to then apply the standard matrix-calculus identities. In this section we introduce the commutation matrix introduced in \cite{Magnus1988}, which allows us to swap the order of the operands in a kronecker product, moving the right-hand operand to the left from whence it can be swapped out subsequently using the vec-transpose operator.
+
+For an $m \times n$ matrix X, define the square matrix $T_{mn} \in \{0,1\}^{(m \times n) \times (m \times n)}$ that transforms $\vecf{X}$ into $\vecf{X\T}$:
 \begin{equation}
 T_{mn} \vecf{X} = \vecf{X\T}
 \end{equation}
@@ -507,8 +891,78 @@ T_{mn}[i,j] =
 \end{equation}
 
 
-\subsection{Inference for the Low+Full Model}
-\subsubsection{Resolving Identifiability in the Matrix-Variate Posterior}
+\subsection{Connections between the Vec-Transpose Operator and Commutation Matrix}
+Looking at equation \eqref{eqn:vt_example_2}, where the vec-transform operator converts a $6 \times 2$ matrix into a $4 \times 3$ matrix, it is clear that no combination of square transformation matrices could achieve such a change in dimension, regardless of element ordering. Moreover $T_{mn}$ is explicitly defined in terms of the transform from $\vecf{X}$ to $\vecf{X\T}$
+
+Therefore rather than consider if one can express the vector-transform operator using commutation matrices, we must instead determine if a commutation matrix could be expressed in terms of the vec-transform operator.
+
+In short
+
+\begin{align}
+\mathcal{L}et\text{ } & \vv{x} = \vecf{X} & X \in \MReal{m}{n}\\
+\implies & T_{mn} \vv{x} = \vecf{X\T} \\
+\implies & T_{mn} \vv{x} = \vt{\vt{X}{1}}{n} \\
+\implies &\vt{\vt{\vt{\vv{x}}{m}}{1}}{n} = \vt{\vt{X}{1}}{n} \label{eqn:T_mn_to_vt}
+\end{align}
+
+Where in \eqref{eqn:T_mn_to_vt} we use \eqref{eqn:a_pp_is_a} to undo the $\vecf{\cdot}$ operation, then take the transpose via a vec-transpose operation, then re-apply $\vecf{\cdot}$ via another vec-transpose operation.
+
+Mathematically this is not a particularly useful result, replacing as it does one matrix multiplication with three applications of the vec-transpose operator. Programmatically, it is also likely that a sparse matrix-multiply is faster than several stacked \texttt{reshape} operations.
+
+\subsection{Derivatives of Terms in Kronecker Products}
+In this section we use the identities above, combined with standard matrix-calculus identities, to derive the derivative of
+
+\begin{equation}
+\Tr{A (X\T X \otimes Y\T Y) B}
+\end{equation}
+
+where $X \in \MReal{m}{n}$, $Y \in \MReal{k}{l}$, $A \in \MReal{nl}{a}$ and $B \in \MReal{nl}{b}$.
+
+\subsubsection{With Respect to the Left-Hand Operand}
+\newcommand \ddX  { \frac{d}{dX} }
+
+This proceeds in a straightforward manner, extending only slightly the example provided by Minka. 
+\begin{align}
+  & \ddX \Tr{A\T (X\T X \otimes Y\T Y) B} \\
+= & \ddX \Tr{\left(\vt{A}{l}\right)\T \vt{\left( (X\T X \otimes Y\T Y) B \right)}{l}} & \text{using } \eqref{eqn:tr_reshape} \\
+= & \ddX \Tr{\left(\vt{A}{l}\right)\T (I_{b} \otimes Y\T Y) \vt{B}{l} X\T X} & \text{using } \eqref{eqn:extract_left_kro_opnd} \\
+\begin{split}
+= & \quad X \left(\vt{A}{l}\right)\T (I_{b} \otimes Y\T Y) \vt{B}{l} \\
+  & \quad + X \left(\vt{B}{l}\right)\T (I_{b} \otimes Y\T Y) \vt{A}{l}  \label{eqn:lhs_kro_derivative}
+\end{split}
+\end{align}
+where in the final step we use the standard matrix-calculus result $\ddX \Tr{B X \T X} = XB + XB\T$. The scale of the vec-transporm operator is uniquely determined by conformability to be the number of columns in $Y\T Y$ which is $l$. If $A$ and $B$ are symmetric we can take advantage of \eqref{eqn:dot_of_vt_of_symmetric} to simplify the final result to
+\begin{equation}
+\ddX \Tr{A\T (X\T X \otimes Y\T Y) B} = 2X \left(\vt{A}{l}\right)\T (I_{b} \otimes Y\T Y) \vt{B}{l} \label{eqn:lhs_kro_derivative_symm_final}
+\end{equation}
+
+
+\subsubsection{With Respect to the Right-Hand Operand}
+This is much the same as before, except that we first employ two commutation matrices to re-arrange the order of the operands in the product.
+
+\begin{align}
+  & \ddX \Tr{A\T (X\T X \otimes Y\T Y ) B} \\
+= & \ddX \Tr{A\T T_{nl} (Y\T Y \otimes X\T X ) T_{ln} B} & \text{using }\eqref{eqn:kro_reorder} \\
+= & \ddX \Tr{ (T_{ln} A)\T (Y\T Y \otimes X\T X ) T_{ln} B} \text{using }\eqref{eqn:transform_transpose} \\
+= & \ddX \Tr{\left(\vt{(T_{ln} A)}{n}\right)\T \vt{\left( (Y\T Y \otimes X\T X ) T_{ln}B \right)}{n}} & \text{using } \eqref{eqn:tr_reshape} \\
+= & \ddX \Tr{\left(\vt{(T_{ln} A)}{n}\right)\T (I_b \otimes X\T X ) \vt{\left( T_{ln}B \right)}{n} Y\T Y } & \text{using } \eqref{eqn:extract_left_kro_opnd} \\
+\begin{split}
+= & \quad Y \left(\vt{(T_{ln} A)}{n}\right)\T (I_b \otimes X\T X ) \vt{\left( T_{ln}B \right)}{n} \\
+  & + Y \left(\vt{\left( T_{ln}B \right)}{n}\right)\T (I_b \otimes X\T X ) \vt{(T_{ln} A)}{n} \label{eqn:rhs_kro_derivative}
+\end{split}
+\end{align}
+
+The identity matrix in the kronecker produce is square with side equal to the columns of B. If B is square in turn, then the $I_b = I_{ln}$. If A is symmetric and $B = I_{ln}$ then this simplifies to
+
+\begin{equation}
+\ddX \Tr{A\T (X\T X \otimes Y\T Y )} = 2 Y \left(\vt{(T_{ln} A)}{n}\right)\T (I_{ln} \otimes X\T X ) \vt{\left( T_{ln} \right)}{n} \label{eqn:rhs_kro_derivative_B_is_ident}
+\end{equation}
+
+
+
+\section{Inference for the Low+Full Model}
+\subsection{Resolving Identifiability in the Matrix-Variate Posterior}
+\label{sec:trace-trick}
 Taking derivatives of the free-energy and setting to zero in the usual manner initially leads to the following updates for $R_Y$ and $S_Y$.
 
 \begin{align}
@@ -536,7 +990,13 @@ R_Y = & \invb{\rho^{-2} I_P + \alpha^{-2}V V\T}
 
 No such special treatment is required to obtain the update for $M_Y$
 
-\subsubsection{Avoiding a Matrix Inverse per Document}
+\begin{align}
+M_Y = & \invb{\rho^{-2} I_P + \alpha^{-2} V V\T}(\alpha^{-2}V M_A) = R_Y (\alpha^{-2} V M_A)
+\end{align}
+
+The updates for the posterior $q(A)$ follow similarly.
+
+\subsection{Avoiding a Matrix Inverse per Document}
 The inference scheme in algorithm \ref{alg:yv} involves inverting a matrix for every individual document when updating that document's posterior mean over topics:
 
 \begin{align}
@@ -561,5 +1021,6 @@ where the \eqref{eqn:sherman-post-ctm} follows from the Sherman-Morrison identit
 & = U_\Sigma \invb{D + \halve{N_d}I_K} U\T
 \end{align}
 Since $D + \halve{N_d}I_K$ is a diagonal matrix, its inverse is trivially obtained. Thus instead of performing a matrix inverse for every document, we instead do a eigen-decomposition once per iteration.
+\end{appendices}
 
-\input{../footer.tex}
+\end{document}
