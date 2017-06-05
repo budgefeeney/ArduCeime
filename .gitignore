@@ -13,8 +13,6 @@
 
 *.toc
 
-*.pdf
-
 upgrade-auto.tex
 
 Chap2/plots/NIPS-Old.numbers/*
