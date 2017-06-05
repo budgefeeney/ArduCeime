@@ -1,0 +1,66 @@
+\input{../header.tex}
+
+\section{Dirichlet Processes}
+
+\subsection{Bayesian Historgram}
+Consider the issue of estimating a density using a histogram. If one is \emph{given} a partitioning scheme $\xi_0 < \xi_1 < \ldots < \xi_K$ then the probability of a value is given by
+\begin{align}
+p(y) = \sum_k \one_{\xi_{k-1}<y<\xi_k} \frac{\theta_k}{\xi_k - \xi_{k-1}} \label{chap1:eqn:bayes-hist}
+\end{align}
+A natural choice for the prior distribution over $\vv{\theta}$ is the Dirichlet parameterised by a vector $\vv{\alpha}$. This parameterisation can be factorised into $\alpha \vv{u}$ where $\vv{u}$ is a vector on the K-1 simplex. Hence
+\begin{align}
+\vv{\theta} &\sim \dir{\alpha \vv{u}} &
+\ex{\theta_k}{} & = u_k = \frac{\alpha u_k}{\sum_j \alpha u_j} &
+\var{\theta_k}{} & = \oneover{\alpha + 1} u_k (1 - u_k) \label{chap1:eqn:dir-variance-etc}
+\end{align}
+From this it can be seen that $\alpha$ acts as a precision, or concentration, parameter. Higher values of $\alpha$ will prefer draws closer to $\vv{u}$.
+
+There are two standard ways of taking a draw from a Dirichlet. One takes $K$ draws $\hat{\theta}_k \sim \gam{\alpha u_k}{\lambda}$ -- where $\lambda$ can be any value -- and then normalises them so that $\theta_k = \frac{\hat{\theta}_k}{\sum_j \hat{\theta}_j}$. 
+
+A different approach is obtained by observing that $\vv{\theta} \sim \dir{\alpha \vv{u}}$ the marginal distribution of a single component is $\theta_k \sim \betadist{\alpha u_k}{1- \alpha u_k}$, one can alternatively sample $\theta$ by repeatedly sampling from Beta distributions
+\begin{align}
+V_k & \sim \betadist{\alpha u_k}{\alpha \sum_{j>k} u_j} &
+\theta_k & = V_k \prod_{j > k}(1 - V_j) &
+\theta_K = 1 - \sum_{j=1}^{K} \theta_j
+\end{align}
+This is known as a stick-breaking construction. We begin with a stick of unit length, then break off a portion given by a draw from a Dirichlet distribution. We then take the remainder and break a scaled portion from that. We continue till we've reached the K-th element, at which point the \emph{entirety} of the remaining stick length is assigned to $\theta_K$.
+
+One might reasonably ask what happens in the limit as $K \rightarrow \infty$. If our stick-breaking construction were extended, we would end up with infinitismally small draws.
+
+\bflong{Infinitely long Dirichlet Distribution}
+
+\newcommand \sampspace { { \Omega } }
+\newcommand \borel { { \mathcal{B} } }
+
+\subsection{Dirichlet Process}
+Consider the standard definition of a probability space $(\sampspace, \borel, P)$ where $\sampspace $ is the sample space, $\borel$ is a $\sigma$-algebra -- i.e. a collection of sets closed under complement, intersection and countably infinite union -- and $P$ is a probability measure $P : \Sigma \rightarrow [0,1]$. For a finite subset of sets $B_k$ drawn from $\borel$ we can assign probabilities to these sets, or ``bins" according to
+
+\begin{align}
+P(B_1), \ldots, P(B_K) & \sim \dir{\alpha P_0 (B_1), \ldots, P_0 (B_K)} \end{align}
+This presentation differs to \eqref{chap1:eqn:bayes-hist} in that it does not specify how the probability mass $P(B_k)$ should be distributed across the values in $B_k$. The base measure $P_0$ is also defined in $(\sampspace, \borel)$ and can be any distribution, e.g. a Gaussian in a mixture model. Standard conjugacy results provide that
+
+\begin{align}
+\begin{split}
+P(B_1), \ldots, &P(B_k) | x_1, \ldots x_n
+= \\
+& \dir{\alpha P_0(B_1) + \sum_i \one_{y_i \in B_1}P_0(B_1), \ldots, \sum_i \one_{y_i \in B_K} P_0(B_K)}
+\end{split}
+\end{align}
+
+On its own, this does not define a complete prior on $P$ as it is conditioned on a specific partition $B_1, \ldots, B_K$. Generalising this model\bfshort{A reference would be really handy here!} to handles all possible partitions $B_1, \ldots, B_K$, for all possible values of $K$, gives rise to the Dirichlet process.
+
+\begin{align}
+P \sim \DP{\alpha P_0}
+\ex{P(B_k)}{} &= P_0 (B_k) &
+\var{P(B_k)}{} &= \oneover{1 + \alpha} P_0(B_k) (1 - P_0 (B_k) )
+\end{align}
+The Dirichlet Process can be expressed using a Beta distribution
+\begin{align}
+P(B_k) = \betadist{\alpha P_0(B_k)}{1 - \alpha P_0(B_k)}
+\end{align}
+and is conjugate to a multinomial likelihood:
+
+
+
+
+\input{../footer.tex}
