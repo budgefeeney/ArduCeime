@@ -13,6 +13,14 @@
 
 *.toc
 
+Chap*/*.pdf
+pres/Ardu/*.pdf
+Incidental/*.pdf
+pres/Warwick/*.pdf
+
+
+thesis*.pdf
+
 upgrade-auto.tex
 
 Chap2/plots/NIPS-Old.numbers/*
