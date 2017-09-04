@@ -1059,7 +1059,7 @@ The Pitman-Yor Process (PYP), also known as the Two-Parameter Poisson-Dirichlet 
 As with the dirichlet process, one can marginalise out the measure drawn from a Pitman-Yor Process and express the probability of draws directly in terms of the hyper-parameters
 \begin{align}
 \phi_d|G & \sim G &
-G & \sim \PYP{\alpha, d, H} \\
+G & \sim \PYP{d, \alpha, H} \\
 \phi^*_k &\sim H &
 \phi_n | \phi_1, \ldots, \phi_{n-1} & \sim 
     \frac{\sum_{j=1}^{i-1} \delta_{\phi_j} - d + (\alpha + dK) H}{i + d + \alpha - 1} \label{eqn:ch1:pyp-marginal}
@@ -1073,7 +1073,7 @@ p(z_i = K + 1) & = \frac{\alpha + dK}{i + \alpha - 1}
 where $K$ indicates the number of ``tables" sat prior to $i$
 
 
-The stick-breaking construction follows similarly to the DP. Given a Pitman-Yor process $\PYP{\alpha, d, H}$ one makes draws $\vv{\theta} \sim \PYP{\alpha, d,H}$ by
+The stick-breaking construction follows similarly to the DP. Given a Pitman-Yor process $\PYP{d, \alpha, H}$ one makes draws $\vv{\theta} \sim \PYP{d, \alpha, H}$ by
 
 \begin{align}
 \theta_k & = u_k \prod_{j=1}^{k-1} (1 - u_j) &
@@ -1082,9 +1082,19 @@ u_k & \sim \betadist{1-d}{\alpha + kd} &
 \end{align}
 It can be seen that the stick-breaking process representation of the DP is a special case of this more general stick-breaking process where both parameter of the Beta distribution can vary. This general process is known as the GEM distribution\cite{Pitman2002}\bfshort{Everyone cites this paper for this name, but I'm not sure they're doing it right}.
 
+Pitman-Yor processes have been used both as priors over infinite mixtures and admixtures: notably the HDP was extended to use both Pitman-Yor processes for topic-distributions and for for word-distributions\cite{Buntine2014}, where they captured the power-law distribution of words, and admitted a potentially infinite vocabulary.
+
+\subsubsection*{Example: Pitman-Yor Language Model}
+On page \pageref{sec:chap1:mackay-lang-model} we discussed the hierarchical Dirichlet language-model. As should be clear now, the Dirichlet distribution is not an ideal fit for words as it does not exhibit a power-law. However by using Pitman-Yor Processes one can capture this aspect of 
+
+The PYP language model\cite{Teh2002}
+
+\bflong{Just do a summary, point to the paper for inference, add note it uses CRP but to consider SeqMem or alternative}
 
 
-\bflong{Waffle about other forms of inference}.
+\bflong{Move ref to LDA with PYP-Lang-Model here.}
+
+\bflong{Simplify the discussion of language models and IKN}.
 
 
 
@@ -1284,7 +1294,7 @@ $\dvi{\TopDist}{\LabDist}$ is a true metric: it is always non-negative, becomes 
 \end{align}
 
 
-The VI distance has been used to compare topics inferred by LDA with manual labelling of over 20,000 news-stores in \cite{HeinrichEtAl2005}. 
+The VI distance has been used to compare topics inferred by LDA with manual labelling of over 20,000 news-stories\cite{HeinrichEtAl2005}. 
 
 
 A well-known metric from the field of clustering is the rand Rand Index, which determines how similar are two ways of partitioning data. It counts fours classes of document-pairs: (a) those which have the same cluster and have the same label; (b) those which have different clusters but share the same label; (c) those which have the same cluster but have different labels; and (d) those which which are not in the same cluster and have different labels.
@@ -1311,11 +1321,11 @@ This is a section
 In this chapter we have introduced the fundamentals of Bayesian inference. We have described the major probabilisitic models used with text: including language-models, mixture-models, and admixture models. In the particular case of admixture models of text, or ``topic models", we have given a cursory overview of the literature. We have demonstrated how admixture models outperform simple mixture models, and how the training scheme affects model fit. 
 
 
-There is a wealth of information which for reasons of brevity we have not discussed. In the machine learning-literature, it is common to represent text not as vectors of word-counts, but of vectors of word-frequencies, which have been adjusted using words' inverse document-frequencies (to down-weight common stop-words). Standard machine-learning approaches such as K-Means clustering work quite well on this data. In the sense that LDA can be thought of as a matrix factorization approach, in that $W \approx \Theta \Phi$, it has been anticipated by the latent-semantic indexing (or analysis) method, which uses a singular-value decomposition of the TF-IDF matrix. A weakness of this method is that topic "strengths" may be negative, which difficult to interpret. 
+There is a wealth of information which for reasons of brevity we have not discussed. In the machine learning-literature, it is common to represent text not as vectors of word-counts, but of vectors of word-frequencies, which have been adjusted using words' inverse document-frequencies (to down-weight common stop-words). Standard machine-learning approaches such as K-Means clustering work quite well on this data. In the sense that LDA can be thought of as a matrix factorization approach, in that $W \approx \Theta \Phi$, it has been anticipated by the latent-semantic indexing (or analysis) method, which uses a singular-value decomposition of the TF-IDF matrix. A weakness of this method is that topic ``strengths" may be negative, which difficult to interpret. 
 
 Prior to the publication of LDA, several other methods had been attempted to represent documents as a mixture, of which probabilistic latent-semantic indexing \cite{Hofmann1999a} was the most successful. Unfortunately, like LSI, pLSI used a document indicator variable to associate topic with documents, and so could not generalise to unseen documents. It has been shown\cite{GiKa2003} that LDA is in fact just a proper Bayesian inference scheme for the pLSI. 
 
-The matrix factorisation view of LDA, is also reminiscent of principal components analysis, and in fact an model for principal components analysis generalised to multinomial observations\cite{Buntine2002} published a year before the original LDA paper has been shown to be equivalent to the LDA model: though both were anticipated by an ad-hoc model of chromosome data published in 2000\cite{Pritchard2000}
+The matrix factorisation view of LDA, is also reminiscent of principal components analysis, and in fact a model for principal components analysis generalised to multinomial observations\cite{Buntine2002} published a year before the original LDA paper has been shown to be equivalent to the LDA model: though both were anticipated by an ad-hoc model of chromosome data published in 2000\cite{Pritchard2000}
 
 In chapter two we will discuss further extensions to topic models, using correlation between topics and in chapter three and four we will dicuss how additional observations can be incorporated into topic-models. In chapter five we will use the correlated topic-model framework to consider the problem of predicting inter-document links in a network of academic papers.
 
