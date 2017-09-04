@@ -78,6 +78,13 @@ The alternative to finding modes is to take a fully \emph{Bayesian} approach, so
 
 The Bayesian approach involves evaluating the evidence $p(\xdat) = \int p(\xdat | \param) p(\param) d\param$. In many cases this is intractable, but there are families of prior and likelihood distributions where the prior and posterior have the same functional form for which exact inference is possible. In these cases we say the prior is \emph{conjugate} to the likelihood.
 
+\begin{figure}
+  \centering
+    \includegraphics[width=0.97\textwidth]{../Chap1/plots/dirichlet_samples.pdf}
+  \caption{Samples drawn from a three-dimensional Dirichlet distribution parameterised by different vectors $\vv{\beta}$. Observe that these 3D samples exist on a 2D simplex.}
+  \label{fig:dirichlet-params}
+\end{figure}
+
 An example is learning a parameter $\param$ with a Dirichlet distribution given multinomial-distributed observations (e.g. throws of a weighted dice). The Dirichlet distribution is given by:
 \begin{align}
 p(\param) & = \oneover{B(\vv{\beta})} \prod_k \phi_k^{(\beta_k - 1)} &
@@ -128,7 +135,7 @@ In this thesis, we will frequently posit models where we sample words one at a t
 
 One representation of this is to use a scalar $x \in \{1 \ldots T\}$ whose value indicates the word chosen. This gives rise to a \emph{categorical} distribution parameterised by a vector $\vv{\phi} \in \VReal{T}$
 \begin{align}
-x &\sim \cat{\vv{\phi})}&
+x &\sim \cat{\vv{\phi}}&
 p(x) = \prod_t \phi_t^{[x = i]}
 \end{align}
 where $[x = i]$ is the Iverson bracket -- an extension of the Dirac delta -- which evaluates to 1 if the condition is true, and zero otherwise. 
@@ -138,7 +145,7 @@ An equivalent representation is a 1-of-T vector $\vv{x}$, where all elements are
 \vv{x} &\sim \muln{\vv{\phi}}{1} &
 p(x) = \frac{1!}{\prod_t x_t!}\prod_t \phi_t^{x_t} = \prod_t \phi_t^{x_t}
 \end{align}
-In all cases in this thesis, when we say a variable has a \emph{categorical distribution}, we mean to say it is a 1-of-T vector with a multinomial distribution for which the number of trials is fixed at one. 
+In all cases in this thesis, when we say a variable has a \emph{categorical distribution}, we mean to say it is a 1-of-T vector with a multinomial distribution for which the number of trials is fixed at one. Depending on context we may refer to it as a 1-of-T vector or as a categorical scalar. 
 
  
 \subsection*{Example: Language Models}
@@ -269,6 +276,7 @@ This is the MAP variant of the Expectation Maximization (EM) algorithm\cite{Demp
 Both E and M steps increase the bound. In the M-Step, we maximise the ELBO with respect to $\params$, increasing both the likelihood and the ELBO. In the E-Step by setting $q(\zdat) = p(\xdat|\zdat, \params)$ the KL divergence goes to zero, decreasing the gap between the ELBO and marginal likelihood. Consequently EM is guaranteed to find a local maximum of the marginal likelihood.\bfshort{Reference for convergence}
 
 \subsection*{Example: A Mixture of Multinomials}
+\label{sec:ch1:mom}
 \bflong{Add Poisson to Multinomial Here}
 As an example, consider the problem of modelling a corpus of documents. Let $\xd \in \mathbb{N}^T$ be the count of how often each word occurred in document $d$, for all $T$ words (known as the bag-of-words model). If we presume each document is about one of K topics, where each topic has a distribution over word-counts $\vv{\phi}_k$, we can associate a latent categorical variable $\vv{z}_d$ with each document indicating which (unobserved) topic generated its words. Denoting document d's word-count as $n_d = \sum_t x_{dt}$, and letting $\params = \{ \vv{\phi}_{k=1}^K \}$, this gives rise to the mixture of multinomials model\cite{Nigam2000}
 \begin{align}
@@ -429,7 +437,7 @@ q(\thd) &=  \dir{\sum_d \sum_n \ex{\zdnk}{q} + \vv{\alpha} - 1} \\
     } \qquad n_k = \sum_d \sum_n \ex{z_{dnk}}{q}
 \end{align}
 
-As with our discussion of the mixture of multinomials, we have omitted any inference of the hyper-parameters. While this is common, with practitioners frequently fixing the hyperparameters at the symmetric values $\alpha = \frac{50}{K}, \beta=0.001$ based on results quoted in \cite{Griffiths2004}, research has shown\cite{Wallach2009a} that the model's predictive accuracy improves when hyper-parameter inference is performed, particularly for the hyper-parameter of the topic prior $\vv{\alpha}$. In particular, it was shown that some topics are much more likely a priori than others, and that the most probable topic a priori is often a collection of ``stop-words": semantically meaningless words induced by grammar such as "of", "the", "from" etc.
+As with our discussion of the mixture of multinomials, we have omitted any inference of the hyper-parameters. While this is common, with practitioners frequently fixing the hyperparameters at the symmetric values $\alpha = \frac{50}{K}, \beta=0.001$ based on results quoted in \cite{Griffiths2004}, research has shown\cite{Wallach2009a} that the model's predictive accuracy improves when hyper-parameter inference is performed, notably for the hyper-parameter of the topic prior $\vv{\alpha}$. In particular, it was shown that some topics are much more likely a priori than others, and that the most probable topic a priori is often a collection of ``stop-words": semantically meaningless words induced by grammar such as "of", "the", "from" etc.
 
 Prediction is
 \bflong{Prediction}
@@ -438,7 +446,7 @@ Prediction is
 
 An advantage of the Bayesian method is -- since the inputs and outputs of Bayesian inference are probability distributions -- that models can be combined together.
 
-Thus for example, one can replace the use of the Multinomial distribution with more sophisticated ways of representing text for each topic. For example the bigram language model introduced on page \pageref{sec:chap1:mackay-lang-model} has been combined with LDA\cite{Wallach2006}, in two variations: one where the Dirichlet hyper-prior was learned across all topics, and one where it was learned for each individual topic.\bfshort{which was best}.
+Thus for example, one can replace the use of the Multinomial distribution with more sophisticated ways of representing text for each topic. For example the bigram language model introduced on page \pageref{sec:chap1:mackay-lang-model} has been combined with LDA, in two variations\cite{Wallach2006}: one where the Dirichlet hyper-prior was learned across all topics, and one where it was learned for each individual topic.\bfshort{which was best}.
 
 A deficiency of language models based on text is that they do not adequately capture the Zipfian distribution of text (see figure\bfshort{Zipf figures} for examples of text distributions). The Pitman-Yor Process (PYP) extends the Dirichlet process with a discount factor: this in turn allows it to model data with an \bfshort{exponential?} distribution. Using the Pitman-Yor Process instead of a plain Dirichlet distribution a Bayesian equivalent to the Knesser-Ney language model was derived in\cite{Teh2002} and then combined with the LDA framework in\cite{Lindsey2012}. Since the the PYP can model arbitrarily long sequences, it is necessary to introduce a Bernoulli variable $c_{dn}$ for each word in each document to determine when the sequence of words has ended: a form of change-point detection. 
 
@@ -777,14 +785,14 @@ As the parameter $\varparam$ approaches the optimum, $p(x|\varparam)$ resembles 
 
 \subsubsection*{Example: Online Latent Dirichlet Allocation}
 
-Our setting is Latent Dirichlet Allocation which was presented on page \pageref{sec:chap1:lda}. For the purposes of later comparisons, we amend the inference procedure outlined there and make $\param$ a random variable, rather than a parameter. Using the standard mean-field variational inference machinery, its approximate posterior distribution is given by
+Our setting is Latent Dirichlet Allocation which was presented on page \pageref{sec:chap1:lda}. For the purposes of later comparisons, we amend the inference procedure outlined there and make $\param$ a random variable, rather than a parameter. Using the standard mean-field variational inference machinery, its approximate posterior distribution in the batch variational setting is given by
 
 \begin{align}
 q(\param_k) = \dir{\vv{\beta} + \sum_d \sum_n \vv{w}_{dn} \ex{\zdnk}{q}}
 \end{align}
 The remaining posteriors remain the same. 
 
-In the case of an online algorithm, the updates for $\thd$ and $\zdnk$ can be thought of as the ``local" E-Step updates, so we need only perform a gradient step for the vocabularies $\Phi = \{ \param \}_{k=1}^K$. The gradient of the per-document ELBO with respect to $\varparam_k$, the parameter of the approximate variational Dirichlet posterior for $\param_k$ is given by
+In the case of an online algorithm, the updates for $\thd$ and $\zdnk$ can be thought of as the ``local" E-Step updates, so we need only perform a gradient step for the vocabularies $\Phi = \{ \param_k \}_{k=1}^K$. The gradient of the per-document ELBO with respect to $\varparam_k$, the parameter of the approximate variational Dirichlet posterior for $\param_k$ is given by
 
 \begin{align}
 \frac{\delta}{\delta \lambda_{kv}} &\ex{\ln p(\wdoc,\zd, \thd|\param) + \ln p(\param_k)}{q} + \ent{\param_k} \\
@@ -820,13 +828,267 @@ $q(\zdat, \Theta, \Phi) = \prod_k q(\param_k)\prod_d q(\thd, \vv{z}_d | \param)$
 
 \section{Non-Parametric Bayesian Priors}
 \label{sec:chap1:DPs}
-In both mixture and admixture models, a problem is how to determine the appropriate number of components, $K$. The simplest possible method is to train a model on a number of different values of $K$, and then evaluate the model on held out data using some evaluation metric, perhaps using a heuristic such as canopy-clustering\cite{McCallum2000} to determine an appropriate range of values of $K$ in advance.
+Determining the number of components is an issue with mixture and admixture models. A simple approach is to try different counts and evaluate the fit on held-out data. This can be combined with heuristic methods such as canopy-clustering\cite{McCallum2000} to determine an appropriate range of component-counts  in advance.
 
-In Bayesian inference, one can use priors to encode a preference for $K$. For example, if one employs a Dirichlet prior with a very small symmetric hyperparameter such $\alpha = 10^{-3}$ this encodes a preference for sparse models, where extra redundant clusters may never be used. 
+Thus far we have used a Dirichlet prior distribution over our topics. While we have noted that draws from a Dirichlet distribution are on the simplex, they can also be thought of as PMFs.
 
-Consider the two-parameter definition of a Dirichlet distribution (used in \cite{MacKay1995}\cite{Wallach2006}\cite{Wallach2009a} among others), where one writes $\vv{\theta} \sim \dir{\alpha \vv{m}}$ where $\vv{m}$ is the ``base-measure" on the simplex, and $\alpha$ is a ``concentration" parameter. This reflects the fact that two Dirichlet distributions may represent the distribution (e.g. $(2, 6, 10, 4)$ and $(0.2, 0.6, 1, 0.4)$) which differ only in ``concentration", i.e. by how much will a single observation affect the posterior. The manner in which the prior ``pseudo-counts" are transformed by the likelihood is sometimes described as ``Polya Urn" model.
+This Dirichlet can be parameterised to encode a preference for sparse topic counts by specifying small hyperparamters (see figure \ref{fig:dirichlet-params}). The mechanism is more obvious if one considers the two-parameter definition of a Dirichlet distribution (used in \cite{MacKay1995}\cite{Wallach2006}\cite{Wallach2009a} among others), where one writes $\vv{\theta} \sim \dir{\alpha \vv{m}}$ where $\vv{m}$ is the ``base-measure" on the simplex, and $\alpha$ is a ``concentration" parameter. This reflects the fact that two Dirichlet distributions may represent the distribution (e.g. $(2, 6, 10, 4)$ and $(0.2, 0.6, 1, 0.4)$) which differ only in ``concentration", i.e. by how much will a single observation affect the posterior. Small concentration values encode preferences for sparser models.
 
-Thus the difference between a very small and very large symmetric hyperprior (where $\vv{m}=\vv{1}$) is only in the scale of the \emph{concentration parameter} $\alpha$, with small concentrations encoding a preference for sparse models
+An interesting property of the Dirichlet is its aggregation property: given a Dirichlet distribution over a $K-1$ simplex parameterised by $\vv{\alpha}$, one can derive a Dirichlet distribution over a smaller $J-1$:
+\begin{equation}
+\left(
+    \sum_{i \in A_1} \param_i, \ldots, \sum_{i \in A_J} \param_i
+\right)
+\sim
+\dir{
+    \sum_{i \in A_1} \alpha_i, \ldots, \sum_{i \in A_J} \alpha_i
+}
+\end{equation}
+To prove this property, note first that one can draw a sample $\param \sim \dir{\vv{\alpha}}$ by drawing multiple samples $z_k \sim \Gamma(\alpha_k, 1)$ and setting $\param = \oneover{\sum_k z_k} \vv{z}$. This can be verified using the standard change-of-variable formula. Hence
+\begin{align}
+\begin{split}
+\left(
+    \sum_{i \in A_1} \param_i, \ldots, \sum_{i \in A_J} \param_i 
+\right)
+& = 
+\oneover{\sum_k z_k}
+\left(
+    \sum_{i \in A_1} z_i, \ldots, \sum_{i \in A_J} z_i
+\right) \\& \sim
+\oneover{\sum_k \gam{\alpha_k}{1}}
+\left(
+    \sum_{i \in A_1} \gam{\alpha_i}{1}, \ldots, \sum_{i \in A_J} \gam{\alpha_i}{1}
+\right) \\
+& \sim
+\dir{
+    \sum_{i \in A_1} \alpha_i, \ldots, \sum_{i \in A_J} \alpha_i
+}
+\end{split}
+\end{align}
+
+
+\newcommand \eventspace { \mathcal{X}  }
+\newcommand \sigalgebra { \mathcal{B}  }
+
+Denote by $\eventspace$ the event-space, and by $\sigalgebra$ a $\sigma$-algebra defined on that set: which is to say, first, a set such that $\eventspace \in \sigalgebra$; second, that if $B \in \sigalgebra$ its complement $B^{C} \in \sigalgebra$ and third, that for every countable collection of sets in $\sigalgebra$, $\{ B_i \}_{i=1}^{\infty}$, its union is also in $U_{i=1}^{\infty} B_i \in \sigalgebra$. A function $\mu : \eventspace \rightarrow [0, \infty]$ is called a measure if it is countably additive and $\mu( \emptyset ) = 0$. The triple $(\eventspace, \sigalgebra, \mu)$ defines a measureable space. If $\mu(\eventspace) = 1$ then the measure is a probability measure.
+
+The Dirichlet Process (DP) provides a distribution over all possible probability measures on $(\eventspace, \sigalgebra)$. We write $G \sim \DP{\alpha, H}$ if any \emph{finite} partition of $\eventspace$ has a Dirichlet distribution\fixme{Cite Ferguson}:
+
+\begin{align}
+\left(
+    G(\cup_{i \in A_1} B_i),
+    \ldots,
+    G(\cup_{i \in A_K} B_i)
+\right)
+\sim
+\dir{
+    \left(
+        \alpha H(\cup_{i \in A_1} B_i),
+        \ldots,
+        \alpha H(\cup_{i \in A_K} B_i)
+    \right)
+}
+\end{align}
+where $\alpha$ is the concentration parameter and $H$ is the base-measure on the event-space. \fixme{Kolmogorov}. As draws from the DP are discrete, one can write the distribution as
+
+\bflong{Check this}
+
+\begin{equation}
+G = \sum_{k=1}^{\infty} \theta_k \delta_{\phi^*_k} \label{eqn:ch1:dp-as-weighted-atoms}
+\end{equation}
+where $\delta$ is the dirac-delta, $\phi^*_k$ is an atom\footnote{In a $\sigma$-algebra $\sigalgebra$ a set $B \in \sigalgebra$ is an atom if for any strict subset $B' \subset B$ its measure $\mu(B') = 0$. We denote by $\phi_i \sim G$ the $i$-th draw from a DP $G$, and by $\phi^*_k$ the $k$-th \emph{distinct} draw from that DP} and $\theta_k$ is its corresponding probability. Draws from the DP follow in the usual manner
+\begin{align}
+\phi_i & \sim G &
+\phi_i|\phi_1,\ldots,\phi_{i-1} & \sim G &
+G \sim \DP{\alpha, H}
+\end{align}
+If one marginalises out G entirely one obtains the following marginal and conditional distributions
+\begin{align}
+\phi_i &
+\sim H &
+\phi_i | \phi_1, \ldots \phi_{i-1} &
+\sim \frac{\sum_{j=1}^{i-1} \delta_{\phi_j} + \alpha H}{i + \alpha - 1}
+\end{align}
+If one denotes by $n^i_k = \sum_{j=1}^{i-1} \one_{\phi_i = \phi^*_k}$ the number of times the distinct atom $\phi^*_k$ has been observed, this can be re-written to given the standard chinese restaurant process (CRP), in which the table $z_i$ at which customer $i$ is sat is either an existing table $k$ with probability proportional to the number of customers already sat there, or a new table with probability $\frac{\alpha}{i + \alpha - 1}$
+\begin{align}
+p(z_i = k) & = \frac{n^i_k + \alpha}{i + \alpha - 1} &
+p(z_i = k + 1) & = \frac{\alpha}{i + \alpha - 1}
+\end{align}
+The corresponding distinct atom at table k is directly sampled from the base measure $\phi^*_k \sim H$. Note that this exhibits a ``rich-get-richer" property in which the more customers are sat at a table, the greater the probability that a new customer will be sat at that table.
+
+This arrangement of observations -- or ``customers" --  at tables is a partitioning of a potentially infinite stream of exchangeable observations into an infinite sequence of tables, each associated with a distinct atom $\phi^*_k$, which it should be clear is equivalent to a clustering. In the presence of finite data only a finite number of tables employed.
+
+\bflong{Add note about Dirichlet dir stick breaking}
+
+An alternative to the CRP is the stick-breaking process. Whereas the CRP is concerned with the assignment of observations to partitions, the stick-breaking process, is concerned with the estimation of the size of the partitions, from largest to smallest: this is the problem of estimating $\theta_k$ in \eqref{eqn:ch1:dp-as-weighted-atoms}. This proceeds by recursively using draws from a Beta distribution to assign to proportion of the remaining probability mass to each distinct atom. Given a dirichlet process $\DP{\alpha, H}$ one makes draws by
+
+\begin{align}
+\theta_k & = u_k \prod_{j=1}^{k-1} (1 - u_j) &
+u_k & \sim \betadist{1}{\alpha} &
+\phi^*_k \sim H
+\end{align}
+
+
+\subsubsection*{Example: Infinite Mixture of Multinomials}
+On page \pageref{sec:ch1:mom} we introduced the mixture of multinomials, using the EM algorithm. Denoting by $H$ the prior distribution on the topic vocabularies, $\dir{\vv{\beta}}$, and using a symmetric prior for the mixture components $\dir{\alpha \one}$ the finite mixture of multinomials is
+\begin{align}
+\vv{\theta} & \sim \dir{\alpha \one} &
+\zd|\vv{\theta} & \sim \muln{\vv{\theta}}{1} & 
+\xd|\zd, \params & \sim \muln{\param_{z_{d}}}{1} & 
+\param_k|H & \sim H
+\end{align}
+By letting $G = \sum_k^\infty \theta_k \delta_{\vv{\phi}^*_k}$ we can re-write this as an infinite mixture of multinomials using the Dirichlet Process.
+
+\begin{figure}
+\centering
+    \subfigure[]{
+        \resizebox{0.3\textwidth}{0.40\textwidth}{
+            \input{plots/infinite-mom-diagram.tex}
+        }
+    }
+    \subfigure[]{
+        \resizebox{0.5\textwidth}{0.40\textwidth}{
+            \input{plots/infinite-lda-diagram-2.tex}
+        }
+    }
+
+    \caption{Plate diagrams for (a) an infinite mixture of multinomials and (b) an infinite admixture of multinomials (``Hierarchical Dirichlet Process")} using the stick-breaking construction.
+\label{fig:inf-plates}
+\end{figure}
+
+\begin{align}
+G|\alpha, H & \sim \DP{\alpha, H} &
+\phi_d|G & \sim G &
+w_{dn}|\phi_d & \sim \muln{\phi_d}{1}
+\end{align}
+Rewriting this using a stick-breaking construction one obtains the model shown in figure \ref{fig:inf-plates}.
+\begin{align}
+\theta_k & = u_k \prod_{j=1}^{k-1} (1-u_j) &
+u_k & \sim \betadist{1}{\alpha} &
+\phi^*_k & \sim \dir{\vv{\beta}} \\ 
+z_d & \sim \muln{\vv{\theta}}{1} &
+w_{dn} & \sim \muln{\vv{\phi^*_{z_d}}}{1}
+\end{align}
+Using a mean-field approximation, the variational posterior is $q(\vv{\Phi^*}, \vv{u}, Z) = \prod_k^{T_K - 1} q(u_k) \prod_k^{T_K}q(\phi^*_k) \prod_d q(z_d)$. This approximation \emph{truncates} the space of the Dirichlet process to some upper limit $T_K$: $q(u_{T_K} = 1) = 1$ and for any $k > T_K$, $q(z_d = k) = q(z_d > K) = 0$. This leaves $T_K -1$ stick-lengths $u_k$ to estimate.
+
+Given that the number of partitions employed cannot exceed the number of documents, setting $T_K = D$ is reasonable, though in practice the upper-bound on component count can be much smaller. By choosing conjugate distributions for $\phi^*_k$ and $u_k$ and taking derivatives and solving in the usual manner, one obtains the following distributions for the variational posterior factors.
+\begin{align}
+q(u_k) & =
+    \betadist{
+        1 + \sum_d \ex{z_{dk}}{q}
+       }{
+           \alpha + \sum_d \sum_{j={k+1}}^{T_K} \ex{z_{dj}}{q}
+       } \\
+q(z_{dk}) & \propto 
+    \ex{\ln u_k}{q} 
+    + \sum_{k}^{T_K-1}
+        \ex{\ln (1 - u_k)}{q}
+        + \ex{\phi^*_k}{q}\top \wdoc
+        - \ex{a(\phi^*_k)}{q} \\
+q(\phi^*_k) & =
+    \dir{
+        \vv{\beta} + \sum_d \ex{z_{dk}}{q} \wdoc
+    }
+\end{align}
+where $\vv{w}_d$ is a bag-of-words representation of the d-th document.
+
+The likelihood of new documents is approximated by
+\begin{align}
+p(\vv{w}^* | W, \alpha, \vv{\beta})
+    &= \int
+        \sum_{k=1}^\infty \theta_k(\vv{u}) p(\vv{w}^* | \vv{\phi}^*_k)
+        dP(\vv{u}, \Phi^* | W, \alpha, \vv{\beta}) \\
+    &\approx \sum_k^{T_K} \ex{\theta_k(\vv{u})}{q} \ex{p(\vv{w}^* | \vv{\phi}^*_k)}{q}
+\end{align}
+where $\theta_k(\vv{u}) = u_k \prod_{j=k+1}^\infty (1 - u_j)$.
+
+
+\subsubsection*{Example: Infinite Admixture of Multinomials}
+As with the finite mixture of multinomials, by denoting the Dirichet prior over vocabularies as H, we can define the finite admixture of multinomials as:
+\begin{align}
+\thd & \sim \dir{\alpha \one} &
+\zdn|\thd & \sim \cat{\thd} & 
+\xdn|\zdn, \param & \sim \muln{\param_{z_{dn}}}{1} & 
+\param_k & \sim H
+\end{align}
+We can make this model extend to infinite admixtures by using a hierarchy of Dirichlet Processes (HDP)\cite{Teh2006b}. Since draws from the DP are discrete, this allows for the same atoms to be shared in different documents with different probabilities.
+\begin{align}
+G_0 & \sim \DP{\alpha, H} &
+G_d & \sim \DP{\gamma, G_0} &
+\phi_{dn} &\sim G_d &
+\xdn \sim \muln{\phi_{dn}}{1}
+\end{align}
+This model can be representing using a hierarchical stick-breaking construction, illustrated in figure \ref{fig:inf-plates}.
+\begin{align}
+\theta_{0k} & = u_{0k} \prod_{j=1}^{k-1}(1-u_j) &
+u_{0k} & \sim \betadist{1}{\alpha} \qquad\qquad
+\phi^*_k \sim H \\
+\theta_{dk} &= u_{dk} \prod_{j=1}^{k-1}(1 - u_{dj}) &
+u_{dk}|\vv{u}_{0} & \sim \betadist{\gamma u_{0k}}{\gamma ( 1 - \sum_{j=1}^{k} u_{0j} )} \\
+\zdn | \thd & \sim \muln {\thd}{1} &
+\xdn | \zdn, \Phi^* &\sim \muln{\phi^*_{z_{dn}}}{1}
+\end{align}
+As with the infinite mixture model, one can approximate the true posterior using a a truncated, approximate, variation distribution
+\begin{equation}
+q(\vv{u}_0, U, Z, \Phi^*) = \prod_{k=1}^{T_K} q(\phi^*_k) \left( \prod_{k=1}^{T_K-1} q(u_{0k}) \prod_{d=1}^D q(u_{dk})\right) \prod_{d=1}^{D}\prod_{n=1}^{N_d} q(z_{dn})
+\end{equation}
+Standard application of the rules of variational inference leads to the following distributions for the approximate posterior's factors
+\begin{align}
+a = 2
+\end{align}
+
+\subsubsection{Pitman-Yor Process}
+Experiments with learning the hyper-parameter of finite admixture models have shown that the distributions of topics often has a ``long" tail: there are a few topics that are very likely and many topics are less likely\cite{Wallach2009a}. Specifically the distribution of topics has often looked Zipfian, much like the distribution of words.
+
+In such cases one may make sense to use a Pitman-Yor Process, which captures, a power-law distribution over topics. Inference is achieved using a CRP augmented with a discount parameter, and this method has delivered better results than a HDP in experiments.\cite{Buntine2014}. However it is dependent on the dataset, and typically visible only when large numbers of topics are employed. 
+
+%Dirichlet processes, like Dirichlet distributions assume that components are near-independent\footnote{The requirement that samples like on the simplex means they cannot be considered \emph{fully} independent}. The Discrete Infinite Logistic Normal (DILN) distribution\cite{Paisley2012}\cite{Paisley2012b} incorporates a HDP into CTM in order to capture correlations amongst a potentially infinite number of components. The derivation proceeds in several stages. 
+%Firstly, one should note that one can implement a HDP using a combination of stick-breaking processes and gamma-processes, the latter analogous to the usual approach for sampling from a (finite) Dirichlet
+%\begin{align}
+%G_0 & = \sum_{k=1}^\infty \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j)\delta_{\phi_k} & 
+%\hat{\pi}_k & \sim \mathcal{B}eta\left(1, \gamma\right) &
+%\delta_{\phi_k} & \sim H \\
+%G_d|G_0, Z & = \sum_{k=1}^\infty \frac{Z_k^{(d)}}{\sum_{j=1}^\infty Z_j^{(d)}} \delta_{\phi_k} &
+%Z_k^{(d)} | G_0 &\sim \gam{\beta \pi_k}{1} &
+%\pi_k & = \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j)
+%\end{align}
+%
+%To capture a sense of correlation, each atom $\phi_k$ is associated with a location $\vv{l}_k \in \VReal{d}$, where $d$ is set equal to $K$ for the purposes of inference
+%\begin{align}
+%G_0 | \gamma, H, L & \sim \DP{\gamma H \times L } &
+%G_d^{\text{DP}} | \alpha, G_0 & \sim \DP{\alpha, G_0} \\
+%\eta_d(l) & \sim \GP{\vv{m}(l)}{K(l, l')} &
+%G_d\left(\{\phi, l\}\right) & \propto G_d^{\text{DP}}\left(\{\phi, l\}\right) \exp\left(\eta_d(l) \right) \\
+%\phi_{dn} |G_d &\sim G_d & w_{dn} | \phi_{dn} & \sim F(\phi_{dn})
+%\end{align}
+%
+%Noting that if $y = bx$ for $x \sim \gam{a}{1}$, then $y \sim \gam{a}{b^{-1}}$, we see we can fold in the exponentiated draw from the GP into the Gamma Process, and thus arrive at this model.
+%
+%\begin{align}
+%\hat{\pi}_k & \sim \mathcal{B}\left(1, \gamma\right) &
+%\delta_{\phi_k} & \sim H,\quad \delta_{l_k} \sim L \\
+%G_0 & = \sum_{k=1}^\infty \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j)\delta_{\phi_k} & 
+%\pi_k & = \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j) \\
+%G_d|G_0, Z & = \sum_{k=1}^\infty \frac{Z_k^{(d)}}{\sum_{j=1}^\infty Z_j^{(d)}} \delta_{\phi_k, l_k} &
+%Z_k^{(d)} | G_0 &\sim \gam{\beta \pi_k}{e^{-\eta_{dk}}} \\
+%\eta_{dk} & \sim \GP{\vv{m}}{K} \\
+%\phi_{dn} |G_d &\sim G_d & w_{dn} | \phi_{dn} & \sim F(\phi_{dn})
+%\end{align}
+%
+%A variational inference procedure is given in \cite{Paisley2012b} where a truncated Dirichlet was used to model the DP. Rather than learn a kernel function, the kernel (i.e. covariance) matrix was learnt directly from the values of $\eta_{dk}$ using the usual form $K = \frac{1}{D} \sum_d (\vv{\mu}_d - \vv{m})(\vv{\mu}_d - \vv{m}) + \diag{\vv{v}_d}$ where the variational posterior over the location for document d was $q(\vv{\eta}_d) = \nor{\vv{\mu}}{\diag{\vv{v}_d}}$. With regard to variational posterior over location, its parameters are found using gradient descent, where the gradients are
+%\begin{align}
+%\frac{\delta \mathcal{L}}{\delta \mu_{dk}} & = \lambda_{dk} - \beta \pi_k - K^{-1}_{k,:} \left( \vv{\mu}_d - \vv{m}\right) &
+%\frac{\delta \mathcal{L}}{\delta v_{dk}} & = -\half \left( \lambda_{dk} - K^{-1}_{k,k} + \oneover{v_{dk}}\right)
+%\end{align}
+%and $\lambda_{dk} = \ex{Z_{dk}}{q} \times \ex{\exp(-\eta_{dk})}{q}$, and these expectations follow the usual form for gamma and log-normal distributions respectively. 
+%
+%A variant of this approach was additionally used in \cite{Virtanen2012a}
+
+Online HDP
+
+http://jmlr.csail.mit.edu/proceedings/papers/v15/wang11a/wang11a.pdf
+
+\subsubsection*{Too bad to include}
 
 To infer an appropriate number of mixture components automatically from the data, one can replace Dirichlet prior over mixture components with a Dirichlet process, which can be thought of as a the limit of a Dirichlet distribution over $K$ topics as $K \rightarrow \infty$. Formally, the Dirichlet Process is a distribution over distributions $G$, parameterised by a concentration parameter $\alpha$ and a base-measure $G_0$, such that
 \begin{align*}
@@ -863,53 +1125,7 @@ G_d | \alpha, G_0 & \sim \DP{\alpha, G_0} \\
 
 Despite the superficial similarities to LDA, it should be noted that the whereas in LDA the parameters $\phi_{dn}$ are keys into a matrix of per-component probability-distributions, in HDP $\phi_{dn}$ is an atom from which a distribution over words is formed: specifically the base measure $H$ is the prior over \emph{words} (or other discrete observations), and takes the place of the $\dir{\vv{\beta}}$ prior over component distributions in LDA. Implementations using CRPs and SBPs are presented in\cite{Teh2006b}, while an in-depth description of DPs, CRPs, SBPs and their applications is given in\cite{JordanMichael2005a}
 
-In practice, the distributions of topics often has a ``long" tail, there are few topics are very likely and many topics are less likely\cite{Wallach2009a}. In such cases one may make sense to use a Pitman-Yor Process, which captures, a power-law distribution over topics. Inference is achieved using a CRP augmented with a discount parameter, and this method has delivered better results than a HDP in experiments.\cite{Buntine2014}. However it is dependent on the dataset, and typically visible only when large numbers of topics are employed. 
 
-Dirichlet processes, like Dirichlet distributions assume that components are near-independent\footnote{The requirement that samples like on the simplex means they cannot be considered \emph{fully} independent}. The Discrete Infinite Logistic Normal (DILN) distribution\cite{Paisley2012}\cite{Paisley2012b} incorporates a HDP into CTM in order to capture correlations amongst a potentially infinite number of components. The derivation proceeds in several stages. 
-Firstly, one should note that one can implement a HDP using a combination of stick-breaking processes and gamma-processes, the latter analogous to the usual approach for sampling from a (finite) Dirichlet
-\begin{align}
-G_0 & = \sum_{k=1}^\infty \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j)\delta_{\phi_k} & 
-\hat{\pi}_k & \sim \mathcal{B}eta\left(1, \gamma\right) &
-\delta_{\phi_k} & \sim H \\
-G_d|G_0, Z & = \sum_{k=1}^\infty \frac{Z_k^{(d)}}{\sum_{j=1}^\infty Z_j^{(d)}} \delta_{\phi_k} &
-Z_k^{(d)} | G_0 &\sim \gam{\beta \pi_k}{1} &
-\pi_k & = \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j)
-\end{align}
-
-To capture a sense of correlation, each atom $\phi_k$ is associated with a location $\vv{l}_k \in \VReal{d}$, where $d$ is set equal to $K$ for the purposes of inference
-\begin{align}
-G_0 | \gamma, H, L & \sim \DP{\gamma H \times L } &
-G_d^{\text{DP}} | \alpha, G_0 & \sim \DP{\alpha, G_0} \\
-\eta_d(l) & \sim \GP{\vv{m}(l)}{K(l, l')} &
-G_d\left(\{\phi, l\}\right) & \propto G_d^{\text{DP}}\left(\{\phi, l\}\right) \exp\left(\eta_d(l) \right) \\
-\phi_{dn} |G_d &\sim G_d & w_{dn} | \phi_{dn} & \sim F(\phi_{dn})
-\end{align}
-
-Noting that if $y = bx$ for $x \sim \gam{a}{1}$, then $y \sim \gam{a}{b^{-1}}$, we see we can fold in the exponentiated draw from the GP into the Gamma Process, and thus arrive at this model.
-
-\begin{align}
-\hat{\pi}_k & \sim \mathcal{B}\left(1, \gamma\right) &
-\delta_{\phi_k} & \sim H,\quad \delta_{l_k} \sim L \\
-G_0 & = \sum_{k=1}^\infty \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j)\delta_{\phi_k} & 
-\pi_k & = \hat{\pi}_k \prod_{j=1}^{k-1} (1 - \hat{\pi}_j) \\
-G_d|G_0, Z & = \sum_{k=1}^\infty \frac{Z_k^{(d)}}{\sum_{j=1}^\infty Z_j^{(d)}} \delta_{\phi_k, l_k} &
-Z_k^{(d)} | G_0 &\sim \gam{\beta \pi_k}{e^{-\eta_{dk}}} \\
-\eta_{dk} & \sim \GP{\vv{m}}{K} \\
-\phi_{dn} |G_d &\sim G_d & w_{dn} | \phi_{dn} & \sim F(\phi_{dn})
-\end{align}
-
-A variational inference procedure is given in \cite{Paisley2012b} where a truncated Dirichlet was used to model the DP. Rather than learn a kernel function, the kernel (i.e. covariance) matrix was learnt directly from the values of $\eta_{dk}$ using the usual form $K = \frac{1}{D} \sum_d (\vv{\mu}_d - \vv{m})(\vv{\mu}_d - \vv{m}) + \diag{\vv{v}_d}$ where the variational posterior over the location for document d was $q(\vv{\eta}_d) = \nor{\vv{\mu}}{\diag{\vv{v}_d}}$. With regard to variational posterior over location, its parameters are found using gradient descent, where the gradients are
-\begin{align}
-\frac{\delta \mathcal{L}}{\delta \mu_{dk}} & = \lambda_{dk} - \beta \pi_k - K^{-1}_{k,:} \left( \vv{\mu}_d - \vv{m}\right) &
-\frac{\delta \mathcal{L}}{\delta v_{dk}} & = -\half \left( \lambda_{dk} - K^{-1}_{k,k} + \oneover{v_{dk}}\right)
-\end{align}
-and $\lambda_{dk} = \ex{Z_{dk}}{q} \times \ex{\exp(-\eta_{dk})}{q}$, and these expectations follow the usual form for gamma and log-normal distributions respectively. 
-
-A variant of this approach was additionally used in \cite{Virtanen2012a}
-
-Online HDP
-
-http://jmlr.csail.mit.edu/proceedings/papers/v15/wang11a/wang11a.pdf
 
 
 

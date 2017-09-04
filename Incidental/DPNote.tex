@@ -17,7 +17,7 @@ From this it can be seen that $\alpha$ acts as a precision, or concentration, pa
 
 There are two standard ways of taking a draw from a Dirichlet. One takes $K$ draws $\hat{\theta}_k \sim \gam{\alpha u_k}{\lambda}$ -- where $\lambda$ can be any value -- and then normalises them so that $\theta_k = \frac{\hat{\theta}_k}{\sum_j \hat{\theta}_j}$. 
 
-A different approach is obtained by observing that $\vv{\theta} \sim \dir{\alpha \vv{u}}$ the marginal distribution of a single component is $\theta_k \sim \betadist{\alpha u_k}{1- \alpha u_k}$, one can alternatively sample $\theta$ by repeatedly sampling from Beta distributions
+A different approach is obtained by observing that for $\vv{\theta} \sim \dir{\alpha \vv{u}}$ the marginal distribution of a single component is $\theta_k \sim \betadist{\alpha u_k}{1- \alpha u_k}$. Consequently one can sample $\vv{\theta}$ by repeatedly sampling from Beta distributions
 \begin{align}
 V_k & \sim \betadist{\alpha u_k}{\alpha \sum_{j>k} u_j} &
 \theta_k & = V_k \prod_{j > k}(1 - V_j) &
