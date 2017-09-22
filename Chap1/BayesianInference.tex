@@ -1028,20 +1028,21 @@ u_{dk}|\vv{u}_{0} & \sim \betadist{\gamma u_{0k}}{\gamma ( 1 - \sum_{j=1}^{k} u_
 \zdn | \thd & \sim \muln {\thd}{1} &
 \xdn | \zdn, \Phi^* &\sim \muln{\phi^*_{z_{dn}}}{1}
 \end{align}
-As with the infinite mixture model, one can approximate the true posterior using a truncated, approximate, variational distribution
-\begin{equation}
-q(\vv{u}_0, U, Z, \Phi^*) = \prod_{k=1}^{T_K} q(\phi^*_k) \left( \prod_{k=1}^{T_K-1} q(u_{0k}) \prod_{d=1}^D q(u_{dk})\right) \prod_{d=1}^{D}\prod_{n=1}^{N_d} q(z_{dn})
-\end{equation}
-Standard application of the rules of variational inference leads to the following distributions for the approximate posterior's factors
+however inference is much simplified by taking an alternative stick-breaking decomposition\cite{Wang2011a}
 \begin{align}
-a = 2
+\theta_{dk} = u_{dk} \prod_{j=1}^{k-1}(1-u_{dj})
+u_{dk} & \sim \betadist{1, \alpha} & 
+\phi^*_{dk} & \sim G_0 \\
+G_d &= \sum_{k=1}^\infty \theta_{dk}\phi^*_{dk}
 \end{align}
+In this setup each document-level atom $\phi^*_{dk}$ maps to a distinct corpus-level atom $\phi^*_{k}$ drawn from $G_0$.
+
 \bflong{Add inference scheme}
 
 Markov-Chain Monte Carlo (MCMC) methods have also been employed for the Dirchlet Processes of course, typically ``collapsing" out $G$ and using the Chinese Restaurant Process to sample assignments for each observations\cite{MacEachern1994}\cite{Escobar1995}\cite{Neal2000}, though truncated stick-breaking methods have also been employed\cite{Ishwaran2001}. Empirical comparisons of infinite mixture inference schemes model using Gibbs sampling via the Chinese Restaurant Process; Gibbs sampling using truncated stick-breaking process; and the variational inference scheme given in equations \eqref{eqn:ch1:inf-mom-var-algor-first}-\eqref{eqn:ch1:inf-mom-var-algor-first-last} have shown that variational methods converge much fastest, but sampling using truncated stick-breaking produces models which best explain held-out observations\cite{Blei2006b}
 
 
-The HDP, being the non-parametric version of LDA, has like LDA seen a similar degree of interest in inference schemes, which include non-parametric variants of the collapsed CVB/CVB0 algorithsm\cite{Sato2012a}, and and online variational algorithms using natural gradients\cite{Wang2011a}.
+The HDP, being the non-parametric version of LDA, has like LDA seen a similar degree of interest in inference schemes, which include non-parametric variants of the collapsed CVB/CVB0 algorithsm\cite{Sato2012a}, and and online variational algorithms using natural gradients\cite{Wang2011a}. A Gibbs sampler for the HDP can be derived by collapsing out $G_d$ and $G_0$ which leads to the Chinese Restaurant Franchise sampler\cite{Teh2006}.
 
 \subsubsection{Pitman-Yor Process}
 \begin{figure}
@@ -1054,7 +1055,7 @@ The distribution of words in corpora often follows power-law distribution, somet
 
 Similarly, experiments on the impact of hyper-parameter learning in finite admixture models have shown that the prior distribution of topics itself often exhibits a similar power-law distribution: there are a few topics which are highly likely a priori, then ``long" tail topics that are  much less likely\cite{Wallach2009a}.
 
-The Pitman-Yor Process (PYP), also known as the Two-Parameter Poisson-Dirichlet Process, is an adaptation of the Dirichlet process, over measures which exhibit this power-law behaviour. A PYP is defined by a base measure $H$, a concentration parameter $\alpha > -d$ and a \emph{discount} parameter $0 \leq d < 1$. 
+The Pitman-Yor Process (PYP), also known as the Two-Parameter Poisson-Dirichlet Process, is a generalisation of the Dirichlet process, over measures which can exhibit this power-law behaviour. A PYP is defined by a base measure $H$, a \emph{discount} parameter $0 \leq d < 1$, and a concentration parameter $\alpha > -d$. 
 
 As with the dirichlet process, one can marginalise out the measure drawn from a Pitman-Yor Process and express the probability of draws directly in terms of the hyper-parameters
 \begin{align}
@@ -1065,7 +1066,7 @@ G & \sim \PYP{d, \alpha, H} \\
     \frac{\sum_{j=1}^{i-1} \delta_{\phi_j} - d + (\alpha + dK) H}{i + d + \alpha - 1} \label{eqn:ch1:pyp-marginal}
 \end{align}
 \bflong{This is wrong!}
-From this perspective it can be shown that the DP is just a special case of the PYP where the discount parameter $d=0$. If $\alpha = 0$ and $d=\half$ the resulting process is equivalent to an Inverse-G Equation \eqref{eqn:ch1:pyp-marginal} also indicates that the Chinese Restaurant Process can be constructed by incorporating the discount parameter in the probabilities.
+From this perspective it can be shown that the DP is just a special case of the PYP where the discount parameter $d=0$. If $\alpha = 0$ and $d=\half$ the resulting process is equivalent to an Inverse-G. Equation \eqref{eqn:ch1:pyp-marginal} also indicates that the Chinese Restaurant Process can be constructed by incorporating the discount parameter in the probabilities.
 \begin{align}
 p(z_i = k) & = \frac{n^i_k - d}{i + \alpha - 1} &
 p(z_i = K + 1) & = \frac{\alpha + dK}{i + \alpha - 1}
@@ -1080,7 +1081,7 @@ The stick-breaking construction follows similarly to the DP. Given a Pitman-Yor 
 u_k & \sim \betadist{1-d}{\alpha + kd} &
 \phi^*_k \sim H
 \end{align}
-It can be seen that the stick-breaking process representation of the DP is a special case of this more general stick-breaking process where both parameter of the Beta distribution can vary. This general process is known as the GEM distribution\cite{Pitman2002}\bfshort{Everyone cites this paper for this name, but I'm not sure they're doing it right}.
+It can be seen that the stick-breaking process representation of the DP is a special case of this more general stick-breaking process where both parameter of the Beta distribution can vary. This general process is known as the Griffiths-Engen-McCloskey (GEM) distribution distribution\cite{Pitman2002}\bfshort{Everyone cites this paper for this name, but I'm not sure they're doing it right}.
 
 Pitman-Yor processes have been used both as priors over infinite mixtures and admixtures: notably the HDP was extended to use both Pitman-Yor processes for topic-distributions and for for word-distributions\cite{Buntine2014}, where they captured the power-law distribution of words, and admitted a potentially infinite vocabulary.
 
