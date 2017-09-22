@@ -23,7 +23,6 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{appendix}
-\usepackage{subcaption}
 \usepackage{fancyvrb}
 \usepackage{subfigure}
 \usepackage{graphicx,xcolor}
@@ -355,13 +354,28 @@
     \vv{\eta}_d
 }
 
-\title{Correlated Topic Models with Associated Features}
+\author{
+  Feeney, Bryan\\
+  \texttt{bryan.feeney@ucl.ac.uk}
+  \and
+  Silva, Ricardo\\
+  \texttt{ricardo.silva2@ucl.ac.uk}
+}
 
+
+\title{Correlated Topic Models with Associated Features}
 \begin{document}
 \maketitle
 
 
+%\begin{abstract}
+%Topic models are the standard method for deriving low-rank representations of text. Traditionally topic-models scale to many topics, but this poses a problem when texts are short. We present a model for fitting topics to short texts which would otherwise be over-parameterised, by exploiting additional observations. We further improve the fit to documents by capturing correlation between topics, a technique common in multi-task learning. We demonstrate the performance of this model by training it on two datasets: the NUSWIDE dataset of images from Flicker, and several million tweets from Twitter. We quantify model fit by evaluting perplexity, and by using the models for a text-prediction task, predicting hashtags for both images and tweets.
+%\end{abstract}
+
+
 \newcommand \mnord[4]  { \mathcal{N}_{{#1}} \left(#2, #3, #4\right) }
+
+
 
 
 \section{Introduction}
@@ -377,16 +391,6 @@ These models are limited to binary label vectors only. A general model should ta
 Extensions of this model have been investigated using Gaussian processes instead of plain linear regression\cite{Hennig2012} but unsurprisingly, such a model does not scale to the size of datasets typical in topic models\footnote{For example the 8,000 document Reuters-21578 dataset is considered a toy, yet produces a kernel matrix with $64 \times 10^6$ elements}.
 
 An element of DMR is that the $K$ regression problems could be correlated: that is to say that the appearance of one topics may make others more or less likely. This in turn suggests the usual of a multi-task learning approach may improve inference.
-
-\section{The Low+Full Rank Model}
-Let $D$ be the number of documents and $N_d$ the number of words in document $d\in\{1,\ldots,D\}$. The Correlated Topic Model models the mixture $\thd$ for a document $d$ as follows:
-\begin{align}
-\thd &\sim \nor{\mu}{\Sigma}
-&\zdn | \thd &\sim \muln {\vv{\sigma}(\thd)}{1} ,\\
-\pk &\sim\dir{\vv{\beta}}
-&\wdn | \zdn , \{\pk\}_k &\sim \muln{\vv{\beta}_{\zdn}}{1}
-\end{align}
-where $\vv{\sigma}(\thd) = \{\sigma_1(\thd), \ldots, \sigma_k(\thd)\}$ and $\sigma_k(\thd) = \exp(\thdk - \lse(\thd))$ is the multivariate softmax function; and $\lse(\thd) = \ln\left(\sum_j \thdj \right)$ is the log-sum-exp function. The latent variable $\zdn$ is the mixture-component assignment for the n-th token in document $d$ stored as a 1-of-K vector. Similarly, the corresponding token is identified by the 1-of-T vector $\wdn$. The mixture distribution for the k-th mixture is given by the vector $\vv{\beta}_k$ which we treat as a parameter.
 
 \subsection{A Matrix-Variate Prior over Weights}
 The matrix-variate normal distribution, with mean matrix $M \in \MReal{P}{Q}$ row covariance $\Omega \in \MReal{Q}{Q}$ and column-covariance $\Sigma \in \MReal{P}{P}$ is denoted by $Y \sim \mnord{PQ}{M}{\Omega}{\Sigma}$ and its log-PDF is
@@ -413,6 +417,9 @@ where $\Sigma$ is the covariance over topics and the matrix $V \in \MReal{P}{F}$
 $ A \sim \mnor{0}{\text{ }(\alpha^2 I_F + \rho^2 V\T V)}{\text{ }\Sigma}$ where the low-rank decomposition of the covariance over features is clear. 
 
 The use of matrix-variate priors for multitask learning has been explored in \cite{Stegle2011}\cite{Bonilla2008} \cite{Archambeau2011}\cite{Yang2011}. Due to the ability to reduce the number of covariance parameters from $(LF)^2$ to $L^2 + F^2$ it has also been explored in other areas such as matrix factorization\cite{Allen2010}.
+
+\section{Correlated Admixture model}
+The standard correlated model of text posits a
 
 \subsubsection*{Relationship to Other Models}
 If we were to use the distribution $A \sim \mnor{0}{\alpha^2 I_F}{\Sigma}$ and then marginalize out A from the distribution of $\thd$ we would obtain -- for our topic-prediction component -- the multi-task Gaussian Process regression algorithm of \cite{Bonilla2008}. In this context, the resulting model would provide a correlated-topic analogue to the Kernelised Topic Model \cite{Hennig2012} which makes the LDA assumption of topic independence. Like KTM however, it would be challenge to scale to large corpora with large numbers of topics.

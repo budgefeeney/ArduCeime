@@ -1,0 +1,381 @@
+\documentclass[10pt,fleqn]{report}
+
+\usepackage[english]{babel}
+\usepackage[utf8x]{inputenc}
+\usepackage{enumerate}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{mathtools}
+\usepackage{graphicx}
+\usepackage{bm}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{todonotes}
+\usepackage{dsfont}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks,
+    citecolor=black,
+    filecolor=black,
+    linkcolor=black,
+    urlcolor=black
+}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{appendix}
+\usepackage{caption}
+\usepackage{fancyvrb}
+\usepackage{subfigure}
+\usepackage{graphicx,xcolor}
+\usepackage{pifont,mdframed}
+\usepackage{tikz}
+\usetikzlibrary{fit,positioning}
+
+
+\newcommand{\specialcell}[2][c]{%
+  \begin{tabular}[#1]{@{}c@{}}#2\end{tabular}}
+
+\newcommand \etr[0] {
+    \text{etr}
+}
+
+\newcommand \Etr[1] {
+    \text{etr}\left( { #1 } \right)
+}
+
+\newcommand \tinymath[1] {{  \mbox{\tiny ${#1}$ }  }}
+
+%
+% Macros
+%
+\newcommand \cashort[1] { {\todo[color=yello]{#1 -- Cedric}} }
+\newcommand \calong[1]  { { \todo[inline,color=yellow]{#1 -- Cedric} } }
+\newcommand \gbshort[1] { {\todo[color=cyan!40]{#1 -- Guillaume}} }
+\newcommand \gblong[1]  { { \todo[inline, color=cyan!40]{#1 -- Guillaume} } }
+\newcommand \mgshort[1] { {\todo{#1 -- Mark}} }
+\newcommand \mglong[1]  { { \todo[inline]{#1 -- Mark} } }
+\newcommand \bfshort[1] { {\todo[color=green!40]{#1 -- Bryan}} }
+\newcommand \bflong[1]  { { \todo[inline,color=green!40]{#1 -- Bryan} } }
+
+
+% Adds a plus const to the end of a math expression
+\def \pcst{+\text{const}}
+
+% A fancy version for capital R
+\def \Rcal{\mathcal{R}}
+
+% A fancy version for r
+\def \rcal{\mathbf{r}}
+
+% Loss function / log likelihood as appropriate
+\def \L{\mathcal{L}}
+
+% KL divergence [Math Mode]
+\newcommand{\kl}[2] {
+	\text{KL}\left[#1||#2\right]
+}
+
+\newcommand{\symmkl}[2] {
+	\text{KL}^{symm}\left[#1||#2\right]
+}
+
+\newcommand \vecf[1] {
+    \text{vec}\left(#1\right)
+}
+
+\newcommand \ent[1] {
+    \text{H} \left[ #1 \right]
+}
+
+\newcommand \mut[2] {
+    \text{I} \left[ #1 ; #2 \right]
+}
+
+\newcommand \dvi[2] {
+    \text{D}_\text{VI} \left[ #1; #2 \right]
+}
+
+% Starts an expected value expresses [Math Mode]
+\newcommand{\starte}[1] {%
+	\mathbb{E}_{#1}\left[
+}
+
+% Ends an expected value expression [Math Mode]
+\def \ende{\right]}
+
+% Starts an varianc expresses [Math Mode]
+\newcommand{\startv}[1] {%
+	\mathbb{V}\text{ar}_{#1}\left[
+}
+
+% Ends an variance expression [Math Mode]
+\def \endv{\right]}
+
+%\newcommand \ex[2] {
+%    \bigl\langle #1 \bigr\rangle_{#2}
+%}
+\newcommand \ex[2] {
+    \mathbb{E}_{ { #2 } }\left[ #1 \right]
+}
+\newcommand \var[2] {
+    \mathbb{V}\text{ar}_{ { #2 } }\left[ #1 \right]
+}
+\newcommand \cov[1] {
+    \mathbb{C}\text{ov}[ #1 ]
+}
+
+\newcommand \halve[1] {
+	\frac{#1}{2}
+}
+
+\newcommand \half {
+    \halve{1}
+}
+
+\newcommand \tr { \text{tr} }
+
+\newcommand \T { ^\top }
+
+\newcommand \fixme[1] {
+    {\color{red} FIXME: #1}
+}
+
+\newcommand \vv[1] { \bm #1 }
+
+\newcommand{\mbeq}{\overset{!}{=}}
+
+\def\app#1#2{%
+  \mathrel{%
+    \setbox0=\hbox{$#1\sim$}%
+    \setbox2=\hbox{%
+      \rlap{\hbox{$#1\propto$}}%
+      \lower1.1\ht0\box0%
+    }%
+    \raise0.25\ht2\box2%
+  }%
+}
+\def\approxpropto{\mathpalette\app\relax}
+
+\newcommand \diag[1] { \text{diag} \left( {#1} \right) }
+\newcommand \diagonal[1] { \text{diagonal} \left( {#1} \right) }
+
+\newcommand \Ed {{ \vv{\xi}_d}}
+\newcommand \Edj {{\xi_{dj}}}
+\newcommand \Edk {{\xi_{dk}}}
+\newcommand \AEdj {{\Lambda(\xi_{dj})}}
+\newcommand \AEdk {{\Lambda(\xi_{dk})}}
+\newcommand \AEd  {{ \bm{\Lambda}(\bm{\xi}_d) }}
+
+\newcommand \Axi { { \Lambda_{\xi} } }
+\newcommand \bxi { { \vv{b}_{\xi} } }
+\newcommand \cxi { { c_{\xi} } }
+
+
+\newcommand \wdoc      { { \vv{w}_d } }
+\newcommand \wdt[0]  { { w_{dt} } }
+\newcommand \wdn[0]  { { \vv{w}_{dn} } }
+\newcommand \wdnt[0]  { { w_{dnt} } }
+\newcommand \wdd[0]   { { \vv w_{d} } }
+\newcommand \zd[0]   { { \vv z_{d} } }
+\newcommand \zdn[0]  { { \vv{z}_{dn} } }
+\newcommand \zdnk[0] { { z_{dnk} } }
+\newcommand \zdk[0]  { { z_{dk} } }
+\newcommand \thd[0]  { { \vv \theta_d } }
+\newcommand \thdk[0] { { \theta_{dk} } }
+\newcommand \thdj[0] { { \theta_{dj} } }
+\newcommand \epow[1] { { e^{#1} } }
+\newcommand \pkt     { { \phi_{kt}  } }
+\newcommand \pk      { { \vv \phi_k } }
+\newcommand \lmd     { { \vv \lambda_d } }
+\newcommand \lmdk    { { \lambda_{dk} } }
+\newcommand \xd      { { \vv x_d } }
+\newcommand \atxd     { A ^\top \bm x_d}
+\newcommand \axd     { A\bm x_d}
+\newcommand \tsq      { { \tau^2 } }
+\newcommand \ssq      { { \sigma^2 } }
+\newcommand \tmsq     { { \tau^{-2} } }
+\newcommand \asq      { { \alpha^2 } }
+\newcommand \amsq     { { \alpha^{-2} } }
+\newcommand \sgsq     { { \sigma^2 } }
+\newcommand \xvec     { { \vv{x} } }
+\newcommand \omk      { { \bm \omega _k } }
+\newcommand \omkt     { { \omega_{kt} } }
+\newcommand \oma     { { \Omega_A } }
+\newcommand \gdn      { { \vv{\gamma}_{dn} } }
+\newcommand \gdnk     { { \gamma_{dnk} } }
+\newcommand \gdk      { { \gamma_{dk} } }
+\newcommand \isigt   { { \Sigma^{-1}_{\bm \theta} } }
+
+\newcommand \nd { { n_{d\cdot\cdot} } }
+
+
+\newcommand \halfSig { \frac{1}{2\sigma^2} }
+
+\newcommand \cat[1]   { \mathcal{C} \left( {#1} \right) }
+\newcommand \nor[2]   { \mathcal{N} \left( {#1}, {#2} \right) }
+\newcommand \nord[3]   { \mathcal{N}_{#1} \left( {#2}, {#3} \right) }
+\newcommand \mnor[3]  { \mathcal{N} \left(#1, #2, #3\right) }
+\newcommand \norp[3]  { \mathcal{N} \left(#1; #2, #3\right) }
+\newcommand \mnorp[4] { \mathcal{N} \left(#1; #2, #3, #4\right) }
+\newcommand \mul[1]   { \mathcal{M} \left( {#1} \right) }
+\newcommand \muln[2]  { \mathcal{M} \left( {#1},{#2} \right) }
+\newcommand \dir[1]   { \mathcal{D} \left( {#1} \right) }
+\newcommand \pois[1]  { \mathcal{P} \left( {#1} \right) }
+\newcommand \gp[2]    { \mathcal{GP} \left( {#1}, #2 \right) }
+\newcommand \dir[1]   { \mathcal{D} \left( {#1} \right) }
+\newcommand \gam[2]   { \Gamma \left( {#1}, {#2} \right) }
+\newcommand \betadist[2]  { Beta \left( {#1}, {#2} \right) }
+\newcommand \DP[1]    { \text{DP} \left( {#1} \right) }
+\newcommand \PYP[1]   { \text{PYP} \left( {#1} \right) }
+\newcommand \GP[2]    { \text{GP} \left( {#1}, {#2} \right) }
+
+\newcommand \lne[1]  { { \ln \left( 1 + e^{ #1 } \right) } }
+\newcommand \Tr[1]   { \tr \left(  {#1}  \right) }
+
+\newcommand \roud  { \vv{\rho}_{d}  }
+\newcommand \rodk { \rho_{dk} }
+
+\newcommand \exA[1]  { \ex{#1}{q(A)} }
+\newcommand \exV[1]  { \ex{#1}{q(V)} }
+\newcommand \exT[1]  { \ex{#1}{q(\Theta)} }
+\newcommand \extd[1] { \ex{#1}{q(\thd)} }
+\newcommand \exTV[1] { \ex{#1}{q(\Theta)q(V)} }
+
+\newcommand \Real[0]  { { \mathbb{R} } }
+\newcommand \VReal[1] { { \mathbb{R}^{#1} } }
+\newcommand \MReal[2] { { \mathbb{R}^{#1 \times #2} } }
+\newcommand \Nat[0]  { { \mathbb{N} } }
+\newcommand \VNat[1] { { \mathbb{N}^{#1} } }
+\newcommand \MNat[2] { { \mathbb{N}^{#1 \times #2} } }
+
+\newcommand \inv[1] { {#1}^{-1} }
+\newcommand \invb[1] { \inv{\left( #1 \right)} }
+
+\newcommand \cn { \textsuperscript{\texttt{[{\color{blue}Citation Needed}]}} }
+
+\newcommand \const { { \text{c} } }
+
+\providecommand \floor [1] { \left \lfloor #1 \right \rfloor }
+\providecommand \ceil [1] { \left \lceil #1 \right \rceil }
+
+
+\newcommand \vt[2] { { #1^{(#2)} } }
+
+\newcommand \hashtag[1] { { \ttfamily \##1 } }
+
+\newcommand \mvy  { \vv{m}_{\vv{y}} }
+\newcommand \sigvy { { S_Y } }
+
+\newcommand \mmy  { M_Y      }
+\newcommand \md   { \vv{m}_d }
+\newcommand \phin { \vv{\phi}_n }
+\newcommand \isigma { { \inv{\Sigma} } }
+
+\newcommand \sigv     { { \Sigma_V } }
+\newcommand \isigv     { { \Sigma^{-1}_V } }
+
+\newcommand \sigy { { \Sigma_Y } }
+\newcommand \isigy { { \Sigma_{-1}_Y } }
+
+
+\newcommand \omy  { { \Omega_Y } }
+\newcommand \iomy { { \inv{\Omega_Y} } }
+
+\newcommand \siga     { { \Sigma_A } }
+\newcommand \isiga     { { \Sigma^{-1}_A } }
+\newcommand \diagv { { \diag{\nu_1,\ldots,\nu_P} } }
+
+\newcommand \ma { \vv{m}_a }
+\newcommand \my { \vv{m}_y }
+
+\newcommand \VoU { V \otimes U }
+
+%\newcommand \one { \mathbb{1} }
+\newcommand \one  {{  \mathds{1} }}
+
+\newcommand \lse { \text{lse} }
+%\newcommand \lse[0] { \mathrm{lse} }
+
+% Conditional independence
+\def\ci{\perp\!\!\!\perp} % from Wikipedia
+
+
+
+% ------ For the eval section
+
+% Multinomial PDF [Math Mode]
+% params: 1 - the variable
+%         2 - the value
+%         3 - the state indicator (e.g. k for a distro with K values)
+%         4 - any additional subscript
+\newcommand{\mpdf}[4] {
+	\prod_{#3} {#1}_{{#4} {#3}} ^ {#2}
+}
+
+% Dirichlet PDF [Math Mode]
+% params: 1 - the variable
+%         2 - the hyper-parameter
+%         3 - the state indicator (e.g. k for a distro with K values)
+%         4 - any additional subscript
+\newcommand{\dpdf}[4] {
+	\frac{1}{B({#2})} \prod_{#3} {#1}_{{#4} {#3}} ^ {({#2}_{#3} - 1)}
+}
+
+% To simplify the sampling equations, this is indicates
+% that the given value has had datapoint "m" stripped out
+%
+\newcommand{\lm}[1] {
+	#1^{\setminus m}
+}
+
+\newcommand \model[0] {
+    \mathcal{M}
+}
+
+\newcommand \perplexity[1] {
+    \mathcal{P} \left( { #1 } \right)
+}
+
+\newcommand \WTrain {
+    \mathcal{W}^{(t)}
+}
+
+\newcommand \WQuery {
+    \mathcal{W}^{(q)}
+}
+
+\newcommand \oneover[1] {
+    \frac{1}{ {#1} }
+}
+
+\newcommand \samp[1] {
+    { #1 }^{(s)}
+}
+
+\newcommand \etd[0] {
+    \vv{\eta}_d
+}
+
+\author{
+  Feeney, Bryan\\
+  \texttt{bryan.feeney@ucl.ac.uk}
+  \and
+  Archambeau, Cedric\\
+  \texttt{cedric.archambeau@amazon.de}
+  \and
+
+  Silva, Ricardo\\
+  \texttt{ricardo.silva@ucl.ac.uk}
+}
+\title{Admixture Models of Micro-Texts using Multi-task Learning}
+
+\begin{document}
+  \maketitle
+
+
+
+\bibliographystyle{plain}
+\bibliography{/Users/bryanfeeney/Documents/library.bib}
+
+\end{document}
+
