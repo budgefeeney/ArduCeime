@@ -41,6 +41,31 @@
 \definecolor{newcolor}{rgb}{.8,.349,.1}
 
 
+% ----------------------------------------------------------
+%                      CUSTOM COMMANDS
+% ----------------------------------------------------------
+
+\usepackage{amsmath}
+\usepackage{todonotes}
+
+\newcommand \bfshort[1] { {\todo[color=green!40]{#1 -- Bryan}} }
+
+\newcommand \wdoc { { \mathbf{w}_d } }
+\newcommand \xdoc { { \mathbf{x}_d } }
+
+\newcommand \thd   { { \mathbf{\theta}_d } }
+\newcommand \thdk  { { \theta_{dk} } }
+\newcommand \vv[1] { { \mathbf{#1} } }
+\newcommand \zdnk  { { z_{dnk} } }
+\newcommand \wdnt  { { w_{dnt} } }
+
+\newcommand \nor[2] { { \mathcal{N}\left(#1, #2\right) } }
+
+% ----------------------------------------------------------
+%                      / CUSTOM COMMANDS
+% ----------------------------------------------------------
+
+
 \journal{Pattern Recognition Letters}
 
 \begin{document}
@@ -232,7 +257,7 @@ findings of the article. It should  include 3 to 5 bullet points
 
 \begin{frontmatter}
 
-\title{Multi-Task Prediction of Topic Admixtures for Micro-Texts}
+\title{Multi-Task Prediction of Topic Admixtures for Micro-Documents}
 
 \author[1]{Bryan \snm{Feeney}\corref{cor1}} 
 \cortext[cor1]{Corresponding author: 
@@ -252,28 +277,7 @@ findings of the article. It should  include 3 to 5 bullet points
 
 
 \begin{abstract}
-Type your abstract here. Type your abstract here. Type your abstract
-here. Type your abstract here. Type your abstract here. Type your
-abstract here. Type your abstract here. Type your abstract here. Type
-your abstract here. Type your abstract here. Type your abstract here.
-Type your abstract here. Type your abstract here.
-Type your abstract here. Type your abstract here. Type your abstract
-here. Type your abstract here. Type your abstract here. Type your
-abstract here. Type your abstract here. Type your abstract here. Type
-your abstract here. Type your abstract here. Type your abstract here.
-Type your abstract here. Type your abstract here.
-Type your abstract here. Type your abstract here. Type your abstract
-here. Type your abstract here. Type your abstract here. Type your
-abstract here. Type your abstract here. Type your abstract here. Type
-your abstract here. Type your abstract here. Type your abstract here.
-
-
-Type your abstract here. Type your abstract here.
-Type your abstract here. Type your abstract here. Type your abstract
-here. Type your abstract here. Type your abstract here. Type your
-abstract here. Type your abstract here. Type your abstract here. Type
-your abstract here. Type your abstract here. Type your abstract here.
-Type your abstract here. Type your abstract here.
+Topic models are well established as a means of creating low-dimensional representations of text. Such text documents are frequently associated with other information such as authorship, date or richer information sources such as images. Use of this information can improve the assignments of topic mixtures to documents: this is particularly useful for very small documents, such as tweets and image captions. In this paper we present a conditional topic model which uses associated information to help fit topics. By means of a matrix-variate prior on weights we capture correlations between both topics and features, which is essential to make accurate predictions when the number of topics is very high. We provide a fast, efficient inference scheme, and demonstrate the model's effectiveness on two corpora: a selection of  tweets from late 2016, and a selection of images with tags.
 \end{abstract}
 
 \begin{keyword}
@@ -289,38 +293,22 @@ Type your abstract here. Type your abstract here.
 %\linenumbers
 
 %% main text
-\section{Note}
-\label{sec1}
-Please use \verb+elsarticle.cls+ for typesetting your paper.
-Additionally load the package \verb+prletter.sty+ in the preamble using
-the following command: 
-\begin{verbatim} 
-  \usepackage{prletter}
-\end{verbatim}
 
-Following commands are defined for this journal which are not in
-\verb+elsarticle.cls+. 
-\begin{verbatim}
-  \received{}
-  \finalform{}
-  \accepted{}
-  \availableonline{}
-  \communicated{}
-\end{verbatim}
 
-Any instructions relavant to the \verb+elsarticle.cls+ are applicable
-here as well. See the online instruction available on:
-\makeatletter
-\if@twocolumn
-\begin{verbatim}
- http://support.river-valley.com/wiki/
- index.php?title=Elsarticle.cls
-\end{verbatim}
-\else
-\begin{verbatim}
- http://support.river-valley.com/wiki/index.php?title=Elsarticle.cls
-\end{verbatim}
-\fi
+\subsection{Introduction}
+Bayesian multinomial admixture models such as Latent Dirichlet Allocation\cite{BleiNgJordan2003} are a popular way of creating low-dimensional representations of text. \todo{Why}
+
+While LDA itself is concerned solely with the contents of documents, documents typically have other information available to them, and numerous models have been proposed to exploit such extra information, including date of publication\citep{Blei2006a}\citep{Wang2006}, geography\citep{Eisenstein2010}, and authorship\citep{RosenZvi2004}\citep{MacCallum2007} as well as images\citep{Blei2003} and paired documents (e.g. in other languages\citep{Zhao2001}).
+
+Typically the field has been divided into two classes\citep{Mimno2008}: ``upstream" models model the conditional distribution of a document's words given its observed features $p(\wdoc | \xdoc)$, where $\wdoc \in \mathbb{R}^T$ is the bag-of-words representation of text, and $\xdoc \in \mathbb{R}^F$ is a vector of features. By comparison ``downstream" models model documents and observed features concurrently $p(\wdoc, \xdoc$). This latter class are also sometimes known as ``multi-modal" topic models.
+
+While the use of ad-hoc methods has had some success, there have been efforts to create generic models that can be applied to a variety of datasets. In the case of ``downstream" models early methods generated multiple observations from a single shared topic mixture\citep{Blei2003}\citep{Erosheva2004}\citep{Yakhnenko2009}, however often the number of topics needed to model certain ``modalities" or classes of observation varies, leading to newer models extending the correlated topic-model\citep{Blei2006} to create models where separate but correlated topic-mixtures for each modality\citep{Salomatin2009}\citep{Virtanen2012a} are generated by sampling a long topic-strength vector from a Gaussian and then partitioning it by modality.
+
+In the case of upstream models, there has been much less work. The most significant model was the Dirichlet Multinomial Regression (DMR) \citep{Mimno2008} model which generated a topic-strength vector as a simple linear function of the associated features an a topic-specific weight vector. This was extended to use kernel methods in \citep{Hennig2012}
+
+A disadvantage of the DMR is that it involves independently and separately the different weight vectors $\vv{w}_k$ for each topic -- and there may be over a hundred topics to learn.
+
+
 
 \subsection{Entering text}
 \textcolor{newcolor}{\bf Please note that Full Length Papers can have 7
