@@ -322,7 +322,7 @@ The matrix $F \in \MReal{D}{K}$ and vector $G \in \MReal{1}{K}$ simply collect t
 \mtd &= \invb{ \invb{(\alpha + \rho_d)\Sigma} + N^o_d A_K } \\
     & \times
             \left(
-                \invb{\rho_d \Sigma} \mpd
+                \invb{\rho_d \tau I_K} \mpd
                 + \invb{\alpha \Sigma}\vv{\mu}
                 + \vv{b}_d 
                 + \hat{\vv{z}}_{d\cdot}
@@ -347,7 +347,7 @@ The matrix $F \in \MReal{D}{K}$ and vector $G \in \MReal{1}{K}$ simply collect t
     T & = \exp(M^{\Theta}) &
     U & = T \vv{\beta} \\
     R & = W ./ U &
-    B & = \texttt{normalizerows}(B .* (T\T R))\\
+    \vv{\beta} & = \texttt{normalizerows}(\vv{\beta} .* (T\T R))\\
     \end{align*}
     \begin{align*}
     \vv{\mu} & = \frac{1}{D}\sum_d \mtd &
@@ -413,7 +413,7 @@ We use the Association for Computational Linguistics (ACL) corpus of academic pa
 
 We have presented
 \begin{itemize}
-    \item A model which predicts in-set out-links 
+    \item A model which, for a given paper, can recommend additional within-dataset papers 
     \item Which outperforms RTM and TF-IDF
     \item With an efficient update strategy
     \item Which utilises document/topic information 
