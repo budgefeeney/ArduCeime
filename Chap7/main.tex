@@ -1,0 +1,42 @@
+\input{../header.tex}
+
+\chapter{Conclusions and Future Work}
+In this chapter we enumerate the main contributions of this thesis. We discuss the challenges that remain, and outline further avenues of research which may be promising.
+
+\section{Contributions}
+This thesis has concerned itself with the intersection of four areas of research which have hitherto been kept separate: analysis of text with mixture \& admixture models; multi-task learning with learnt priors; and marginalisation and dimensionality reduction in observations with matrix-variate distributions.
+
+As a motivating example, we have focussed on short and ``micro" texts, where due to low word-counts, it may not be possible to obtain good \emph{predictive} performance with traditional mixture models. 
+
+We have made a number of advances. First, we have shown that for admixture models derived from the correlated topic-model\cite{Blei2006}, the Bohning bound provides the best convergence and speed guarantees, contrary to the existing published literature\cite{Wang2013}. We have provided an algorithm taking advantage of parallelisable instructions which in addition to providing best of class performance in terms of predictive quality; also provides best of class performance in terms of execution time.
+
+Building on this improvement on the CTM, we have developed a model for incorporating covariates which takes into account the latent structure that exists between covariates, in a multi-task framework, to provide improved predictive ability. We have demonstrated empirically the advantage that this provides over simpler models\cite{Mimno2008}, and shown how it may be a useful adjunct to existing deep-learning networks for image classification, providing a means to perform both query expansion and aid classification on heavily unbalanced datasets.
+
+As a part of this work we have developed a novel new algorithm for inference on matrix-variate distributions, which provides the basis for an efficient double-PCA algorithm on matrix-variate distributions.
+
+
+\section{Future Work}
+There are nevertheless a number of gaps in our work. The most significant is the need to perform exhaustive grid searches to determine the number of topics and latent dimensions.
+
+In the case of the Dirichlet distribution, the Dirichlet process and the Pitman-Yor Process both allow the data to determine the number of components. 
+
+For logistic-normal prior, the discrete, infinite, logistic normal (DILN) model\cite{Paisley2012b} similarly provides a non-parametric equivalent. It is formed by combining a gamma-process to determine partition probabilities (analogous to using the gamma distribution to sample from a Dirichlet), then using a Gaussian process to capture correlations between such partitions. Since the covariance kernel of a Guassian process will consume too much memory for all but the most trivial of datasets, a covariance \emph{matrix} is measured in practice corresponding to a linear kernel between observations.
+
+For incorporation into our model, we would need to prove two identities: the first, that a separable covariance matrix with a Kronecker structure corresponds to a valid kernel function; and secondly that the resulting infinite-dimensional normal distribution is equivalent to a matrix-variate normal distribution. If feasible, this would also admit non-parametric inference of the number of components in Principal Components Analysis.
+
+It is also obvious that the distributions used to model vocabularies are sub-optimal in our model. This was a conscious decision, as the focus of the work was in deriving novel priors over topic distributions. Nevertheless, given the extreme Zipfian nature of the vocabulary of tweets in particular, we should seek to use a Pitman-Yor Process to model the vocabulary, which has been shown to exhibit good performance in past work\cite{Buntine2014}. Further improvements such as burst models are perhaps less important given our decision to blend topics using correlation. For tweets in particular, this model is a poor fit, since it does not generalise to new users: this leads to a representation problem of how to represent Twitter users from their ancillary information.
+
+This could be combined with a stochastic inference algorithm to improve convergence. Using natural gradients, the updates should not need to change.
+
+The most intriguing extension is outside the scope of this thesis. As an example use-case, we combined our model with a deep-neural network for feature extraction. While classic neural network literature\cite{Bishop2006} uses the softmax function for activation functions, more recent practitioners have used an unbouned $\exp(.)$ function to avoid the vanishing gradients problem. This was attempted before in the Dirichlet Multinomial Regression model\cite{Mimno2008}. This suggests that we could use Dirichlet distribution to generate discrete outputs, and stack them as in the Pachinko Allocation model\cite{Li2006}. Being Dirichlet, one could further investigate the use of non-parameteric extensions to handle the number of internal layers.
+
+\section{Acknowledgments}
+I would like to acknowledge the support of my supervisors, Prof Mark Girolami, Dr. Cedric Archaumbeau, Dr. Guillaume Bourchard, and Dr. Ricardo Silva. I would also like to acknowledge the contribution of Xerox and the UCL Impact programme, under whose grant UCL2013453RP this work was funded. Lastly I would like to thank my family for their support.
+
+
+
+
+
+
+
+\input{../footer.tex}

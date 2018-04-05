@@ -149,7 +149,7 @@ Prediction of Out-Links for Academic Papers
         
         
         \begin{align*}
-        \thd & \sim \dir{\alphav} & \betav & \sim \dir{\lambdav} \\
+        \thd & \sim \dir{\alphav} & \betav_k & \sim \dir{\lambdav} \\
         \zdn & \sim \mulone{\thd} & \wdn & \sim \mulone{\mathbf{\beta}_{z_{dn}}}
         \end{align*}
     \end{center}
@@ -165,7 +165,7 @@ Prediction of Out-Links for Academic Papers
         
         
         \begin{align*}
-        \thd &\sim \nor{\vv{\mu}}{\Sigma} & \betav & \sim \dir{\lambdav} \\
+        \thd &\sim \nor{\vv{\mu}}{\Sigma} & \betav_k & \sim \dir{\lambdav} \\
         \zdn &\sim \mulone{\sigma(\thd)} & \wdn & \sim \mulone{\mathbf{\beta}_{z_{dn}}}
         \end{align*}   
     
@@ -193,7 +193,7 @@ Prediction of Out-Links for Academic Papers
 
         \item<6->[PLSA+LDA]\cite{Nallapati2008}\cite{Nallapati2008a}: Draw documents from a shared multinomial
         \only<6>{\begin{align*}
-            y_{dm} &\sim \mulone{l_{dm}} \sim \mulone{\vv{\phi}_{y_{dm}}}
+            y_{dm} &\sim \mulone{\thd} & l_{dm} & \sim \mulone{\vv{\phi}_{y_{dm}}}
         \end{align*}}
         \item<7>[MMSB]\cite{Gopalan2013b}: Mixed-membership stochastic block-models
     \end{description}
@@ -234,7 +234,7 @@ Prediction of Out-Links for Academic Papers
 }
 \only<2> {
     \begin{align*}
-        \Phi &\sim \mnor{\vv{\mu}\one\T}{\Sigma + \tau I_K}{\alpha I_D + \diag{\vv{\rho}_d}}
+        \Phi &\sim \mnor{\vv{\mu}\one\T}{\Sigma + \tau I_K}{\alpha I_D + \diag{\vv{\rho}}}
     \end{align*}
 }
 \only<3-> {
@@ -336,7 +336,7 @@ The matrix $F \in \MReal{D}{K}$ and vector $G \in \MReal{1}{K}$ simply collect t
 \end{align*}
 \only<1> {
      \begin{align*}
-     z_{dtk}    & = \frac{\beta_{kt}^{m^\theta_{dk}}}{\sum_j \beta_{jt}^{m^\theta_{dj}}} &
+     \ex{q}{z_{dtk}}    & = \frac{\beta_{kt}^{m^\theta_{dk}}}{\sum_j \beta_{jt}^{m^\theta_{dj}}} &
      \beta_{kt} & = \frac{\sum_d w_{dt}\ex{q}{z_{dtk}}}{\sum_v \sum_d w_{dv}\ex{q}{z_{dvk}}} \\
      \vv{\mu} & = \frac{1}{D}\sum_d \mtd &
      \Sigma   & = \frac{1}{D}\sum_d \std + (\vv{\mu} - \mtd)(\vv{\mu} - \mtd)
@@ -354,6 +354,21 @@ The matrix $F \in \MReal{D}{K}$ and vector $G \in \MReal{1}{K}$ simply collect t
     \Sigma   & = \frac{1}{D}\sum_d \std + (\vv{\mu} - \mtd)(\vv{\mu} - \mtd)
     \end{align*}
 }
+\only<3> {
+    \begin{align*}
+    T & = \exp(M^{\Theta}) &
+    U & = T \vv{\beta} \\
+    R & = W ./ U &
+    \vv{\beta} & = \texttt{normalizerows}(\vv{\beta} .* (T\T R))\\
+    \end{align*}
+    \begin{align*}
+    \rho_d   & = \sum_k S^{\Theta}_{d,kk} + (\mpd - \mtd)\T(\mpd - \mtd)
+    \end{align*}
+}
+
+
+
+    
 \normalsize
 
 \end{frame}

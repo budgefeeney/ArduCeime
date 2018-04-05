@@ -1,0 +1,325 @@
+\input{../header.tex}
+
+\newcommand \thdo { { \vv{\theta}_{d\cdot} } }
+\newcommand \thok { { \vv{\theta}_{\cdot k} } }
+\newcommand \phok { { \vv{\phi}_{\cdot k} } }
+\newcommand \phdo { { \vv{\phi}_{d\cdot} } }
+
+\chapter{Correlated Admixture Models for Relational Document Networks}
+In this section we apply the framework of correlated admixtures of text with covariates to the problem of relational learning. In particular we examine relational learning within document networks. Typically approaches to this problem have focussed on simply the presence of links between documents. We go one step further and assign an \emph{incidence} to each link, being the number of times it was cited in a source document.
+
+We build on our previous work with correlated topic models with covariates, and previous published work on using paired admixture models jointly on document words and document links, to derive a novel model, with fast efficient inference, which can model link presence and suggest new links for existing documents.
+\section{Introduction}
+This is concerned with the predictions of which papers should be cited by an origin paper - very similar to a recommendation system. For brevity the ``source" paper in the network is the \emph{paper}, and the destination paper is the "reference". So we are concerned with how to predict the references for a paper, particularly references which have not been included in the dataset. If we restrict ourselved to the ACL dataset, we have author, year, venue, title and full-text for both papers and references.
+
+Previous work on link prediction for academic papers has suggested\cite{Bethard2010} that the most influential factors when choosing references: whether the reference is a self-citation; whether it is a self-citation one step removed (e.g. Alice cites a paper by Bob who's previously cited Alice); how often a paper is cited a priori; the terms of the paper; how old the cited paper in relative terms; whether the cited and citing papers shared a venue; and finally functions of the topics inferred from the words using LDA\cite{Blei2003}.
+
+Many other approaches have used topics, often in a multiview setting. In some cases a function of the distance between two topics is learnt\cite{Chang2009a}\cite{Chang2010a}, but the linkage structure reveals topics not evident in the text, leading some to adapt the topics of a paper when it is a ``destination" by adding in some learnt document-specific noise\cite{Neiswanger2014} and the FIXME POISSON paper.
+
+A different arrangement possible when one has text for papers and references is the LDA/PLSA model\cite{Nallapati2008}\cite{Nallapati2008a} in that the topics used to generate links differ to those used to generate words, though both share the same Dirichlet prior. In the LDA/PLSA model, it's assumed one has the words of the linked to documents, and that the $K \times L$ matrix distribution of per-topic link-distributions can be used as $L \times K$ matrix of per-link topic-distributions used to model the linked documents' words. Sharing the parameter allows a transfer of learning from the words of the linked documents to the generation of links in linking documents.
+The only other paper, aside from \cite{Bethard2010}, to consider time is \cite{Gerrish2010} which builds on the dynamic topic model of \cite{Blei2006a} in which time was quantized, and per-topic vocabularies changed between quanta according to a Kalman Filter style algorithm operating on the logistic-normal vocabulary distributions. The novel aspect is in the addition of an impact factor, one for each paper and topic, which upweights the contribution of that paper's topic-words when inferring the prior over vocabularies in the next time-step. This model limited itself solely to text and did not consider linkage structure.
+
+Link prediction is an unbalanced prediction problem, with very few positive examples in the dataset. In the case of \cite{Bethard2010} a variant of SVM optimising the MAP criterion\cite{Yue2007} (i.e. ranking) was found to outperform logistic regression and logistic regression with downsampled negative inputs. In the RTM model\cite{Chang2009a}\cite{Chang2010a} a single-class classifier was trained, regularised by using a combination of Gaussian priors and the addition of a number of pseudo-documents for the negative case drawn from the posterior, their number indicated by means of a parameter $\rho$. This was motivated by the fact that the absence of links cannot be construed as evidence indicating links should not exist, and therefore one should not employ the ``zeroes" in the dataset as negative samples when training a classifier. Other approaches have simply ignored the imbalance, or in the case of the Link-PSLA-LDA model\cite{Nallapati2008}\cite{Nallapati2008a} used a multinomial distribution over documents' out-links, whose posterior is a function solely of existing links (the ``ones").
+
+
+\section{The Model}
+Following the example of the correlated topic model (CTM)\cite{Blei2006} we try to capture correlations between topics. We collect the individual document topic-score vectors $\thdo$ into a matrix $\Theta \in \MReal{D}{K}$. 
+\begin{align}
+\Theta &\sim \mnor{\vv{\mu}\one\T}{\Sigma}{\alpha I_D}
+\end{align}
+
+Denoting the softmax function as $\sigma_k(\vv{\theta}) = \frac{\theta_k}{\sum_j \theta_j}$ and the vector of softmax scores as $\vv{\sigma}(\vv{\theta})$ we 
+the topic for the $n$-th of the $N^w_d$ words in document $d$ as
+\begin{align}
+\zdn & \sim \muln{\vv{\sigma}(\thdo)}{1} &
+\wdn & \sim \muln{\vv{\lambda}_{z_{dn}}}{1}
+\end{align}
+And likewise for the $m$-th of the $N^l_d$ out-links in document $d$
+\begin{align}
+y_{dm} & \sim \muln{\vv{\sigma}(\thdo)}{1} &
+l_{dp} & \sim \muln{\vv{\beta}_{- z_{dn}}}{1}
+\end{align}
+
+Were we to put simple Dirichlet priors over $\vv{\beta}_k$ and $\vv{\phi}_k$ we would just have a simple multi-field (or ``multi-modal") topic-model\cite{Salomatin2009}. However we instead wish to transfer our knowledge of how topics are emitted by document $\Theta$ to the parameter $\Phi = \{ \vv{\phi}_k\T \}_{k=1}^K$ governing how documents are emitted for each topic $k$. Thus we use the following prior:
+\begin{align}
+\Phi|\Theta & \sim \mnor{\Theta}{\Sigma}{\diag{\vv{\rho}}}
+\end{align}
+where $\vv{\rho} \in \VReal{D}$ is the column covariance of all documents. 
+
+\section{Inference with Non-Conjugate Bounds}
+\subsubsection*{The Matrix-Normal Distribution}
+Given a random matrix $X \in \MReal{D}{K} \sim \mnor{M}{\Sigma}{\Omega}$ with row covariance $\Sigma \in \MReal{K}{K}$ and column covariance $\Omega \in \MReal{D}{D}$ its log-pdf is given by
+\begin{align}
+\halve{DK}\ln 2\pi - \halve{D}\ln|\Sigma| - \halve{K} \ln|\Omega| -\Tr{\inv{\Omega}(X - M)\inv{\Sigma}(X - M)\T}
+\end{align}
+This is mathematically identical to the following distribution over the vectorized matrix X, $\vecf{X} \sim \nor{\vecf{M}}{\Omega \otimes \Sigma}$. It should be noticed that this approach, due to the assumed separability of the covariance, is a considerably more parsimonious model than naively assuming $\vecf{X} \sim \nor{\vecf{M}}{S}$. The separability assumption, i.e. that $S = \Omega \otimes \Sigma$ means that the covariance is approximated in the following ways:
+
+\begin{align}
+\cov{X_{dk}, X_{pj}} & = \Omega_{dp} \Sigma_{kj} &
+\cov{X_{d-}} & = \Omega_{dd} \Sigma &
+\cov{X_{-k}} & = \Sigma_{kk} \Omega \label{eqn:sep-cov-forms}
+\end{align}
+
+\subsubsection*{Non-Conjugate Bounds}
+The log-probability of the emission probabilities for words is given by
+\begin{align}
+\ex{p(Z)}{q} = \sum_d \sum_n \sum_k \zdnk \ex{\thdk}{q} - \sum_d N^w_d \text{ }\ex{\lse(\thdo)}{q}
+\end{align}
+where the log-sum-exp function is $\lse(\thd) = \ln (\sum_k e^\thdk)$. As this expectation cannot be evaluated analytically, we choose to bound it with an analytically tractable expression. While Taylor series expansions have been used the past\cite{Blei2006}\cite{Wang2013a}, these involve iterating though Newton-Raphson steps which are both computationally expensive and lack convergence guarantees. Therefore we use the Bohning bound approximation\cite{Bohning1988} which is both guaranteed to converge, and has a quadratic form that allows for closed form updates.
+
+The bound is given by
+\begin{align}
+\lse(\thdo) \leq \half \thdo\T A_K \thdo - \vv{b}_d\T\thdo + c_d \label{eqn:lse-def}
+\end{align}
+where
+\begin{align}
+A_K & = \half \left( I_K - \frac{1}{K} \one \one\T \right) \\
+b_d & = A_K \Ed - \vv{\sigma}(\Ed) \label{eqn:bohning-b} \\
+c_d & = \frac{1}{2} \Ed\T A_K \Ed - \vv{\sigma}(\Ed)\T\Ed + \lse(\Ed) \label{eqn:bohning-c}
+\end{align}
+
+Employing this bound, and denoting $N^o_d = N^w_d + N^l_d$ we can lower-bound the log probability of the emission topics as
+
+\begin{equation}
+\begin{aligned}
+\ex{p(X,Y)}{q} & \geq \sum_d  (\sum_n \vv{z}_{dn} + \sum_m \vv{y}_{dm}) \ex{\thdo}{q} \\
+   & - \sum_d N^o_d \left(\half \ex{\thdo}{q}\T A_K \ex{\thdo}{q} - \vv{b}_d\T\ex{\thdo}{q} + c_d\right)
+\end{aligned}
+\end{equation}
+
+Taking derivatives of the complete log-likelihood and solving for zero, we see that the solution to the bound parameter is $\Ed = \ex{\thdo}{q}$. 
+
+Substituting $\ex{\thdo}{q}$ for $\Ed$ in \eqref{eqn:bohning-b} and \eqref{eqn:bohning-c} we see that equation \eqref{eqn:lse-def} simplifies to $\ex{\lse(\thdo)}{q} \leq \lse(\ex{\thdo}{q})$ which is equivalent to a zero-order Delta method approximation (i.e. a zero-order Taylor series approximation around $\ex{\thdo}{q}$). However the use of the longer, quadratic form avoids the need for a nested iterative inference scheme such as Newton-Raphson in determining the posterior mean of $\thdo$.
+
+Similarly, the distribution over out-links can be bounded as
+
+\begin{align}
+\ex{p(L|Y)}{q} & \geq \sum_p \sum_m \sum_k \sum_d y_{pmk} l_{pmd} \ex{\phi_{dk}}{q} \\
+ & - \sum_p \sum_m \sum_k \sum_d y_{pmk} l_{pmd} \left(\half \ex{\phok}{q}\T A_D \ex{\phok}{q} - \vv{f}_k\T \ex{\phok}{q} + g_k\right)
+\end{align}
+where the bound parameter in this case $\vv{\xi}_k = \ex{\phok}{q}$. Letting $\hat{L}_{dk} = \sum_p \sum_m y_{pmk} l_{pmd}$ and the diagonal matrix $N^i = \diag{\sum_d \hat{L}_{d\cdot}}$, we can see that $N^i$ is the diagonal matrix of how often an \emph{``in-link"} is generated by topic $k$. With this notation we can write:
+\begin{align}
+p(L|Y) & \geq \sum_k \hat{L}_{\cdot k}\T \ex{\phok}{q} - \sum_k N^i_{kk} \left(\half \ex{\phok}{q}\T A_D \ex{\phok}{q} - \vv{f}_k\T \ex{\phok}{q} + g_k\right) \\
+& = \ex{\Tr{L \Phi}}{q} - \half \ex{\Tr{A_D \Phi N^i \Phi}}{q} + \ex{\Tr{F \Phi}}{q} - \one\T G \one \\
+& = \sum_d \hat{L}_{d\cdot} \phdo - \half \sum_{p \neq d} A_{dp} \vv{\phi}_{p\cdot}\T N^i \phdo -\half A_{dd} \phdo\T N^i \phdo + F_{d\cdot}\T\phdo + G_{d\cdot}
+\end{align}
+where the matrices $F \in \MReal{D}{K}$ and $G \in \MReal{D}{K}$ simply collect the vectors $\vv{f}_k$ and $\vv{g}_k$. This gives us a lower bound, which we denote $\hat{p}(\Theta, Z, Y, W, L, \Phi)$  on the complete probability
+
+
+\subsubsection*{Variational Inference}
+Having lower-bounded the complete log likelihood using Bohning's bound, we can then employ an approximate posterior distribution $q(\Theta, Z, Y, \Phi, \Sigma, \vv{\rho}, \alpha)$ in conjunction with Jensen's to obtain a lower-bound on the marginal log-likelihood:
+
+\begin{align}
+\ln p(W, L) \geq \ex{\hat{p}(\Theta, Z, Y, W, L, \Phi)}{q} - \ent{q}
+\end{align}
+
+We use the following mean-field factorisation
+\begin{align}
+q(\Theta, Z, Y, \Phi, \Sigma, \vv{\rho}, \alpha) = q(\alpha)q(\Sigma)\prod_d q(\thd)q(\vv{\phi}_d)q(\rho_d)\prod_n q(\vv{z}_{dn})q(\vv{y}_{dn}).
+\end{align}
+
+In most cases, the posterior is naturally conjugate to the prior and likelihood, and the parameter estimates are easily obtained. However, the cases of the topic-distribution matrix $\Theta$ and the document-emission matrix $\Phi$ require special attention. The obvious choice in each case is a matrix-variate posterior distribution, however while one can obtain a multivariate Normal posterior over $\vecf{\Theta}$, the covariance of that distribution is not separable into a Kronecker product of two matrices, and thus no matrix-variate posterior over $\Theta$ exists. A similar issue arises with $\Phi$. Thus we take the aggressive form of the mean-field factorisation outlined above where we consider the rows of the matrices individually.
+
+\newcommand \mtd { { \vv{m}^{\theta}_d } }
+\newcommand \std { { S^\theta_d } }
+\newcommand \mpd { { \vv{m}^{\phi}_d } }
+\newcommand \spd { { S^\phi_d } }
+
+\begin{align}
+q(\Theta) &= \prod_d \mathcal{N}\left(\thdo; \mtd, \std \right) &
+q(\Phi) &= \prod_d \mathcal{N}\left(\phdo; \mpd, \spd\right) 
+\end{align}
+and further assume that the covariances $\std$ and $\spd$ are diagonal. Denoting the sum of expected topic assignments for document $d$ as $\hat{\vv{z}}_{d\cdot} = \sum_n \ex{\vv{z}_{dn}}{q}$ and $\hat{\vv{y}}_{d\cdot} = \sum_m \ex{\vv{y}_{dm}}{q}$ we obtain the following updates for both means:
+\begin{align}
+\mtd &= \invb{ \invb{(\alpha + \rho_d)\Sigma} + N^o_d A_K }
+            \left(
+                \invb{\rho_d \Sigma} \mpd
+                + \invb{\alpha \Sigma}\vv{\mu}
+                + \vv{b}_d 
+                + \hat{\vv{z}}_{d\cdot}
+                + \hat{\vv{y}}_{d\cdot}
+            \right) \\
+ \mpd & = \invb{\invb{\rho_d \Sigma} + A_{dd}N^i}
+             \left(
+                 \invb{\rho_d \Sigma}\mtd + N^i F_{d\cdot} -\half \sum_{p \neq d} A_{dp} N^i \vv{m}^\phi_p + \hat{L}_{d\cdot}
+             \right)
+ \end{align}
+ 
+As can be expected, both updates feature as the first term of the right-hand side the value of the (full) posterior covariance matrix. In both cases the posterior precision is a sum of two terms each of which takes the form of a scalar inverse variance times a precision matrix, as one would expect given the matrix-variate form. 
+
+In the case of $\mtd$, the matrix $A_K$ is a component of the posterior row-precision and the matrix $N^o = \diag{N^o_1, \ldots, N^o_D}$ is a component of the column precisoin. In the case of $\mpd$ these roles are reversed, due to the bound operating column-wise. Note that $A_{dd} = \frac{D-1}{2D}$ while $A_{dp} = - \oneover{2D}$
+
+The interpretation of these two distributions is that $q(\thd)$ is the distribution of document $d$ being the \emph{origin} of a word or link according to topic $k$, whereas $q(\vv{\phi}_d)$ is the distribution of a document being the \emph{target} of a link emitted according to topic $k$.
+
+\begin{algorithm}
+\caption{Matrix-Variate Topic Model}
+\label{alg:sra_generic}
+
+    \begin{align*}
+        \mtd &= 
+            \invb{ \invb{(\hat{\alpha} + \hat{\rho}_d)\hat{\Sigma}} + N^o_d A_K } \\
+            & \times \left(
+                \invb{\hat{\alpha} \hat{\Sigma}}\vv{\mu}
+                + \invb{\hat{\rho}_d \hat{\Sigma}} \mpd + \vv{b}_d 
+                + \sum_n \ex{\vv{z}_{dn}}{} 
+                + \sum_m \ex{\vv{y}_{dn}}{}
+            \right)\\
+         S^\theta_{d,kk} &= \invb{\inv{\hat{\alpha}} + \inv{\hat{\rho}_d} + \inv{\hat{\Sigma}}_{kk}} \\
+         \mpd & = \invb{\invb{\hat{\rho}_d \hat{\Sigma}} + A_{dd}N^i} \\
+             & \times \left(
+                 \invb{\hat{\rho}_d \hat{\Sigma}}\mtd 
+                 + N^i F_{d\cdot} 
+                 -\half \sum_{p \neq d} A_{dp} N^i \vv{m}^\phi_p 
+                 + \hat{L}_{d\cdot}
+             \right) \\
+        S^\phi_{d,kk} & = \invb{ \inv{\hat{\rho}_d} \inv{\hat{\Sigma}_{kk}} + A_{dd}N^i_{kk} } \\
+        z_{dnk} & \propto \exp(\ex{\theta_{dk}}{q})\beta_{k,w_{dn}} \\
+        y_{dmk} & \propto \exp(\ex{\theta_{dk}}{q} + \ex{\phi_{l_{dp},k}}{q}) \\
+        \vv{\beta}_{kt} & = \sum_d \sum_n \sum_t \ex{z_{dnk}}{q} w_{dnt} \\
+        \ex{\Sigma}{q} & =  \oneover{\nu + 2D} \left(\Sigma_0
+             + \sum_d \inv{\ex{\alpha}{}} (\mtd - \vv{\mu})(\mtd - \vv{\mu})\T + \std  \right .\\
+            & \qquad\qquad\qquad\quad+ \left. \sum_d \inv{\ex{\rho_d}{}} (\mpd - \mtd)(\mpd - \mtd)\T + \spd \right)  \\  \ex{\rho_d}{} & = \oneover{a + K} \left(b + (\mpd - \mtd)\T \inv{\hat{\Sigma}} (\mpd - \mtd) + \Tr{\std \inv{\hat{\Sigma}}} + \Tr{\spd \inv{\hat{\Sigma}}} \right) \\
+        \ex{\alpha}{q} & = \oneover{a + DK} \left(b + \sum_d (\mtd - \vv{\mu})\T\inv{\hat{\Sigma}}(\mtd - \vv{\mu}) + \Tr{\std \inv{\hat{\Sigma}}} \right) \\
+        \vv{\mu} &= \oneover{D} \sum_d \mtd
+    \end{align*}
+    For brevity, we let $\hat{\alpha} = \ex{\alpha}{}$, $\hat{\rho}_d = \ex{\rho_d}{}$ and $\hat{\Sigma} = \ex{\Sigma}{}$
+\end{algorithm}
+
+\subsubsection*{Non-Identifiability of the prior Covariances}
+Careful attention needs to be applied to the case of the prior covariances: factors in Kronecker products are inherently non-identifiable as $A \otimes B = c A \otimes \frac{1}{c} B$ for any constant $c$. In practice this means that maximum likelihood estimates of A and B can diverge below and over machine precision respectively.
+
+In the case of maximum likelihood estimation this is addressed by means of ``flip-flop" algorithms\cite{Srivastava2009} which fix an element of one matrix to a constant value and adjust the other accordingly. In our case, take a Bayeisan approach and put priors over the covariances, drawing $\alpha$ and $\rho_d$ from the same inverse-gamma prior $\inv{\Gamma}\left(a, b\right)$ and $\Sigma \sim \inv{\mathcal{IW}}\left(\Sigma_0, \nu\right)$. 
+
+
+\subsubsection*{Eliminating topic assignments}
+Storing $z_{dnk}$ and $y_{dmk}$ for every word or link in every document is prohibitively difficult. Therefore in our implementation we simply substitute the update for these variables in those terms where they appear, and simplify. This significantly improves the runtime of our algorithm. 
+\section{Experiments}
+
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.40\textheight]{plots/RPlot.pdf}
+  \caption{Results of our model on the ACL corpus dataset}
+  \label{fig:chap5-fig-self-1}
+\end{figure}
+
+The dataset is the Associated for Computational Linguistics (ACL) corpus of academic papers. Each document has associated with it a list of links to other documents in the corpus, the list of authors, the venue and the year published. Additionally we have extracted the number of times each out-link occurs in the paper text. \emph{(We also have the surrounding text, but we don't use it)}.
+
+To prepare the data, we remove all documents with fewer than three unique words, which leaves 13,533 documents. Then, from that, we remove document with fewer than 2 out-links. This results in a corpus of 4,264 documents. The total word-count of that corpus is 14,864,709 words drawn from a dictionary of 23,769 unique terms.
+
+The evaluation methodology consists of removing from each document half of its links, training on the full corpus, and then evaluating the rank of the held out links.
+
+We use three ranking metrics metrics. Mean reciprocal-rank, is the average of the reciprocal of the ranks of all held-out links across all documents: $mrr = \frac{1}{D} \sum_d \frac{1}{Q} \sum_q r_q$.  
+
+
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.25\textheight]{plots/figs/fig-1.png}
+  \caption{Comparison between our model (``MTM") and other commonly used models}
+  \label{fig:chap5-fig-compare-2}
+\end{figure}
+
+The precision at m is the precision evaluated on the top-ranked $m$ documents, which is simply the quotient of the number of held-out links found in that subset and $m$. The recall at m similarly is the recall evaluated on the top-ranked $m$ documents, being the quotient of number of held-out links returned and either $m$ or the total number of out links that could be returned, whichever is smaller. Precision and recall at m were averaged across all documents in the corpus. In all cases larger values are better.
+
+As a model convergence check, we also look at the perplexity of the words and links. This is the marginal log-likelihood normalized by document length, according to 
+
+\begin{equation}
+\mathcal{P}erp(W,L) = \exp\left( - \frac{\ln p(W,L)}{\sum_d N^w_d + N^l_d} \right)
+\end{equation}
+Smaller perplexity scores are better.
+
+
+The baseline models currently consist of the RTM model, which as established earlier, performs extremely poorly, and a previous version of this model, ``MTM-Old" which re-used $\Theta$ for link emissions
+\begin{align}
+\Theta & \sim \mnor{0}{I}{\Sigma} &
+z_{dn} & \sim \muln{\vv{\sigma}(\thdo)}{1} &
+w_{dn} & \sim \prod_k \muln{\vv{\beta}_k}{1}^{z_{dnk}} \\
+& &
+y_{dm} & \sim \muln{\vv{\sigma}(\thdo)}{1} &
+l_{dp} & \sim \prod_k \muln{\vv{\sigma}(\thok)}{1}^{y_{dmk}}
+\end{align}
+As noted in previous work, MTM-Old exhibits the property that the model prefers to adapt $\Theta$ to fit words rather than out-links, which is unsurprising since each document has approximate 300 words for every out-link. Consequently, as training progressed for that model, perplexity scores improved while recall and precision scores degraded. The current model, where the emission distribution for links $\Phi$ is separate from $\Theta$ seeks to address this.
+
+We used weak priors for the variances, with $a = b = 0.001$, and $\nu = 1.1 \times K$ and $\Sigma_0 = 0.001 I_K$.
+
+The results for precision and recall at M are given in tables \ref{tbl:rtm}, \ref{tbl:mtm-old} and \ref{tbl:mtm-new}. The documents are grouped into subsets based on how many out-links they have. This is the ``group" column with the number of documents in each group in the ``count" column.
+
+The mean reciprocal-rank for 25 topics for RTM, MTM-Old and MTM-New is are 0.0016, 0.0887 and 0.1050 respectively.
+
+The perplexity for 25 topics for RTM, MTM-Old and MTM-New as evaluated on the \emph{training} dataset is 1581.67, 1559.38 and 15.68 respectively. I just use this as a convergence check. The old MTM model does a better job of modelling words and links despite doing worse at ranking, but in reality it's simply focusing on words which outnumber links 300 to 1.
+
+\begin{table}{\small
+Precision at m\\
+\begin{tabular}{| l | r || c | c | c | c | c | c | c | c | c |}\hline
+ Group    & Count &    10 &    20 &    30 &    40 &    50 &    75 &   100 &   250 &   500  \\
+\hline
+  0,    3 &      2460 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.001 & 0.000  \\
+  3,    5 &       634 & 0.000 & 0.000 & 0.001 & 0.001 & 0.001 & 0.001 & 0.001 & 0.001 & 0.001  \\
+  5,   10 &       546 & 0.000 & 0.000 & 0.000 & 0.001 & 0.001 & 0.001 & 0.001 & 0.002 & 0.002  \\
+ $\geq 10$ &        86 & 0.001 & 0.001 & 0.001 & 0.002 & 0.002 & 0.002 & 0.002 & 0.003 & 0.003  \\
+\hline\end{tabular}\\
+
+Recall at m\\
+\begin{tabular}{| l | r || c | c | c | c | c | c | c | c | c |}\hline
+ Group    & Count &    10 &    20 &    30 &    40 &    50 &    75 &   100 &   250 &   500  \\ \hline
+  0,    3 &      2460 & 0.001 & 0.003 & 0.006 & 0.010 & 0.010 & 0.014 & 0.017 & 0.078 & 0.124  \\
+  3,    5 &       634 & 0.000 & 0.002 & 0.004 & 0.009 & 0.010 & 0.013 & 0.016 & 0.060 & 0.102  \\
+  5,   10 &       546 & 0.000 & 0.001 & 0.002 & 0.006 & 0.006 & 0.011 & 0.013 & 0.052 & 0.111  \\
+ $\geq 10$ &        86 & 0.001 & 0.001 & 0.002 & 0.007 & 0.008 & 0.010 & 0.013 & 0.051 & 0.112  \\
+\hline\end{tabular}
+\caption{Precision and recall at m for the RTM model with 25 topics. Mean reciprocal rank is 0.0016}\label{tbl:rtm}
+}\end{table}
+
+\begin{table}{\small
+Precision at m\\
+\begin{tabular}{| l | r || c | c | c | c | c | c | c | c | c |}\hline
+ Group    & Count &    10 &    20 &    30 &    40 &    50 &    75 &   100 &   250 &   500  \\
+\hline
+  0,    3 &      2460 & 0.032 & 0.022 & 0.017 & 0.015 & 0.013 & 0.010 & 0.009 & 0.005 & 0.003  \\
+  3,    5 &       634 & 0.081 & 0.053 & 0.042 & 0.036 & 0.032 & 0.025 & 0.021 & 0.012 & 0.007  \\
+  5,   10 &       546 & 0.121 & 0.080 & 0.065 & 0.056 & 0.049 & 0.039 & 0.033 & 0.020 & 0.012  \\
+ $\geq 10$ &        86 & 0.208 & 0.142 & 0.112 & 0.096 & 0.083 & 0.066 & 0.056 & 0.033 & 0.021  \\
+\hline\end{tabular}\\
+
+Recall at m\\
+\begin{tabular}{| l | r || c | c | c | c | c | c | c | c | c |}\hline
+ Group    & Count &    10 &    20 &    30 &    40 &    50 &    75 &   100 &   250 &   500  \\ \hline
+  0,    3 &      2460 & 0.180 & 0.239 & 0.288 & 0.332 & 0.365 & 0.434 & 0.491 & 0.695 & 0.832  \\
+  3,    5 &       634 & 0.181 & 0.237 & 0.283 & 0.324 & 0.356 & 0.421 & 0.479 & 0.673 & 0.829  \\
+  5,   10 &       546 & 0.168 & 0.221 & 0.269 & 0.311 & 0.338 & 0.403 & 0.457 & 0.675 & 0.823  \\
+ $\geq 10$ &        86 & 0.165 & 0.225 & 0.264 & 0.300 & 0.325 & 0.388 & 0.441 & 0.646 & 0.815  \\
+\hline\end{tabular}
+\caption{Precision and recall at m for the old MTM model with 25 topics. Mean reciprocal rank is 0.0887}\label{tbl:mtm-old}
+}\end{table}
+
+\begin{table}{\small
+Precision at m\\
+\begin{tabular}{| l | r || c | c | c | c | c | c | c | c | c |}\hline
+ Group    & Count &    10 &    20 &    30 &    40 &    50 &    75 &   100 &   250 &   500  \\
+\hline
+  0,    3 &      2460 & 0.045 & 0.031 & 0.024 & 0.020 & 0.017 & 0.013 & 0.010 & 0.005 & 0.003  \\
+  3,    5 &       634 & 0.113 & 0.079 & 0.061 & 0.050 & 0.043 & 0.032 & 0.026 & 0.012 & 0.007  \\
+  5,   10 &       546 & 0.155 & 0.113 & 0.092 & 0.077 & 0.066 & 0.051 & 0.041 & 0.020 & 0.012  \\
+ $\geq 10$ &        86 & 0.245 & 0.179 & 0.147 & 0.124 & 0.108 & 0.083 & 0.068 & 0.033 & 0.019  \\
+\hline\end{tabular}\\
+
+Recall at m\\
+\begin{tabular}{| l | r || c | c | c | c | c | c | c | c | c |}\hline
+ Group    & Count &    10 &    20 &    30 &    40 &    50 &    75 &   100 &   250 &   500  \\ \hline
+  0,    3 &      2460 & 0.253 & 0.348 & 0.403 & 0.441 & 0.476 & 0.535 & 0.571 & 0.680 & 0.772  \\
+  3,    5 &       634 & 0.258 & 0.356 & 0.412 & 0.448 & 0.481 & 0.534 & 0.576 & 0.689 & 0.791  \\
+  5,   10 &       546 & 0.215 & 0.316 & 0.381 & 0.425 & 0.458 & 0.526 & 0.567 & 0.692 & 0.795  \\
+ $\geq 10$ &        86 & 0.193 & 0.283 & 0.348 & 0.394 & 0.427 & 0.492 & 0.535 & 0.659 & 0.766  \\
+\hline\end{tabular}
+\caption{Precision and recall at m for the current MTM model with 25 topics. Mean reciprocal rank is 0.1050}\label{tbl:mtm-new}
+}\end{table}
+
+\subsubsection*{Model Variants}
+We have presented a model which links the emission of topics per document, to the emissions of documents per topic, and therefore shares information between these two related tasks. \\
+
+Our model is the first, to our knowledge, which uses the \emph{incidence} rather than mere \emph{existence} of links when modelling relationships between documents. It avoids the quadratic scaling problem of \cite{Chang2009a} and instead uses a deterministic inference algorithm which is linear in the number of links.\\
+
+Our model can be used to predict links for existing and new documents, in the latter case by inferring $\thdo$ from document words. Our ranking results, on existing documents is competitive with published work, notably \cite{Chang2009a}\cite{Neiswanger2014} and we are actively experimenting with implementations of competing models and other datasets.
+
+
+
+\input{../footer.tex}

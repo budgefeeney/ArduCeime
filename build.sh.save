@@ -19,16 +19,8 @@ Chap3/MTL-Kro.tex
 Chap3/main.tex
 EOF
 
-read -d '' chap5Files <<EOF
-Chap5/main.tex
-EOF
-
 read -d '' chap6Files <<EOF
 Chap6/main.tex
-EOF
-
-read -d '' chap7Files <<EOF
-Chap7/main.tex
 EOF
 # Chap3a/LangModels.tex
 # Chap3a/Admix-Intro.tex
@@ -81,20 +73,10 @@ do
 	echo $chap3File
 	tail -n +2 $chap3File | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap3\/plots\//g" >> $outfile
 done
-for chap5File in $chap5Files;
-do
-	echo $chap5File
-	tail -n +2 $chap5File | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap6\/plots\//g" >> $outfile
-done
 for chap6File in $chap6Files;
 do
 	echo $chap6File
 	tail -n +2 $chap6File | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap6\/plots\//g" >> $outfile
-done
-for chap7File in $chap7Files;
-do
-	echo $chap7File
-	tail -n +2 $chap7File | sed -e "s/\\input{..\/footer.tex}//g" | sed -e "s/plots\//Chap6\/plots\//g" >> $outfile
 done
 
 echo "\input{footer.tex}" >> $outfile

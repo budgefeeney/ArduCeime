@@ -1,13 +1,15 @@
 \input{../header.tex}
 
 
+\newcommand \xdat { { \mathcal{X} } }
+\newcommand \xdoc { { \vv{x}_d } }
+\newcommand \xdn { { \vv{x}_{dn} } }
+
 \chapter{Non-Conjugate Bayesian Inference}
 \label{sec:nonconj}
 In this chapter we investigate several approximations to the log-sum-exp function which arises when working with the logit. We qualitatively and quantitatively evaluate several approximation techniques on two classes of model: logistic regression and the correlated topic-model (CTM).
 
 In particular while Taylor approximations have been recommended for inference with the \cite{Wang2013} we investigate other families of approximations, and qualitiatively show that one, the Bohning bound\cite{Bohning1988} offers faster and more accurate convergence. 
-
-Finally we provide a proof of convergence when performing inference on the CTM with the Bohning bound, making this the only variational inference scheme for the CTM with convergence guarantees
 \section{The Logit}
 In the previous chapter we considered only those cases where the posterior and prior are conjugate, and so tractable closed-form updates can be easily derived. However there are many classes of model where conjugacy is not available. For example, in logistic regression one introduces an \emph{activation function} $f(y) : \mathbb{R} \rightarrow [0, 1]$ which maps the real number line onto the interval $[0,1]$.
 \begin{align*}
@@ -104,7 +106,6 @@ A second approach is to use Monte-Carlo sampling to approximate the integral \eq
 
 A third method is the probit approximation\cite{Barber1998} to approximate the integral \eqref{eqn:log-reg-predict-approx-q}. By requiring both functions to have the same slope at the origin we can derive the approximation $\sigma(a) \approx \Phi(\lambda a)$ where $\lambda = \sqrt{\frac{\pi}{8}}$. As the convolution of the probit with a Gaussian is also a probit function\footnote{$\int \Phi(\lambda a)\norp{a}{\mu}{\sigma^2} \text{d}a = \Phi\left(\mu / (\lambda^{-2} + \sigma^2)^{\half} \right)$} we arrive at the following predictive distribution:
 
-\bfshort{Shouldn't this $\sigma(\cdot)$ be a $\Phi(\cdot)$}
 
 \begin{align}
 p(t_* = 1 | \vv{x}_*, X, \vv{t}) = \sigma\left( \kappa(\sigma_y^2) \mu_y \right)
@@ -131,7 +132,6 @@ f(x) & \approx f(\xi) + f'(\xi) (x - \xi) + c \\
 \end{align}
 
 giving the classic equation for a line $y(x, m) = mx - c$ where $m = f'(\xi)$ and $c = f'(\xi)\xi - f(\xi)$. As described in \cite{JordanBook1999} this can approach can be taken one step further, where the intercept is defined in terms of the slope such that $y(x, m) = mx - c(m)$ using the following identities
-\bfshort{Double-check this}
 \begin{align}
 c(m) = & \max _x mx - f(x) & f(x) = & \max _m mx - c(m)
 \end{align}
@@ -363,220 +363,415 @@ A multivariate ``tilted bound" for the $\lse(\cdot)$ function was proposed by Mi
 \end{equation}
 where $m_l$ and $v_l$ are the posterior mean and variance of $y_l$. Maximisation of $a_l$ can be achieved using the fixed form update $\vv{a} \leftarrow \sigma(\vv{m} + \half(1 - 2 \vv{a})\vv{v})$ where $\sigma(y) = \frac{1}{1 + e^{-y}}$, however the updates for the means and variances have to be estimated using iterative schemes. 
 
-\subsection{Inference with the Probit}
-The probit is the CDF of a standard normal distribution:
+\section{The Correlated Topic Model}
+In the previous chapter we discussed the admixture of multinomials model, commonly known as Latent Dirichlet Allocation.
+
+In the case of predicting topics for medium-sized texts with large numbers of topics, the Latent Dirichlet Alloction may become over-parameterised: there may b insufficient term observations to adequately predict which of a large number of topics models a document.
+
+In cases in which data is sparse, and a large number of predictions need to be made, a common technique is to ``transfer learning" between simultaneously executed ``tasks"\cite{Caruana1997}, in this case predicting the probability of each topic in a document.
+
+The natural approach to take in such cases is to learn the correlation between tasks, by placing a logistic-normal prior on the topics, and learning its hyper-parameters.
 
 \begin{align}
-\Phi(a) = & \int_{-\infty}^{a} \phi(\epsilon) d\epsilon & \epsilon \sim \nor{0}{1}
+\thd &\sim \nor{\mu}{\Sigma} &
+\phi_k &\sim \dir{\vv{\beta}} \\
+\zdn &\sim \muln{\sigma(\thd)}{1} &
+\vv{x}_{dn} &\sim \muln{\phi_{\zdn}}{1}
 \end{align}
-where $\phi(\epsilon) = \frac{1}{\sqrt{2\pi}} e^{-\half \epsilon ^2}$ denotes the PDF of a standard normal. %The following identities are useful when working with the probit:
 
-%\begin{align}
-%    \Phi'(a) = & \phi(a)  & \phi'(a) = & -a \phi(a) \\
-%    1 - \Phi(a) = & \Phi(-a) & \text{ } & \text{ }
-%  \label{eqn:probit-identities}
-%\end{align}
-When working with the probit, it is useful to know that the PDF and expected value of a variable $a < X < b$ according to a truncated Gaussian distribution in the range $(a,b)$:
+In this model we can use the correlation structure between topics to choose to predict topics even when the number of observations (in this case words within a document) is low. 
+
+\section{Inference in the Correlated Topic Model}
+Using the bounds described in the previous section, we derive a variety of methods for performing inference in this model.
+
+As with LDA, we use a MAP approach, seeking to maximise the distribution over vocabularies 
 \begin{align}
-X & \sim \mathcal{N}_{(a,b)}\left(\mu, \sigma \right) & \implies p(X = x) & = \frac{1}{Z} \frac{\phi (\xi)}{\sigma} \\
- & & p(X \leq x) & = \frac{1}{Z} \left( \Phi(\xi) - \Phi(\alpha)\right)
+\Phi & = \arg \max_\Phi \ln p(\xdat | \Phi) \\
+     & = \arg \max_\Phi \ln p(\Phi) + \int_\Theta \int_{\mu,\Sigma} \sum_Z \prod_d p(\xdoc|\vv{z}_d)p(\vv{z}_d | \thd)p(\thd|\mu, \Sigma)
 \end{align}
 
-where $\xi = \frac{x - \mu}{\sigma}$, $\alpha = \frac{a - \mu}{\sigma}$ and $\beta = \frac{b - \mu}{\sigma}$ and the normalizing constant of the distribution is $Z = \Phi(\beta) - \Phi(\alpha)$. 
-
-Further, note that for $b = \infty$, $\Phi(\frac{b-\mu}{\sigma}) = 1$ and for $a = -\infty$, $\Phi(\frac{a-\mu}{\sigma}) = 0$ so that, for example, for a right-truncated normal distribution the normalising constant is $\Phi(\frac{b - \mu}{\sigma})$.
-
-For the fully-truncated, right-truncated, and left-truncated distributions, the expected values are defined as
-
+We approximate the integral using the variational approximation, with the mean-field approximate posterior 
 \begin{align}
-X & \sim \mathcal{N}_{(a,b)}\left(\mu, \sigma \right) & \implies \ex{X}{} & = \mu + \sigma \frac{\phi(\alpha) - \phi(\beta)}{Z} \label{eqn:full-trunc-mean} \\ 
-X & \sim \mathcal{N}_{(a,\infty)}\left(\mu, \sigma \right) & \implies \ex{X}{} & = \mu + \sigma \frac{\phi(\alpha)}{1 - \Phi(\alpha)} \label{eqn:left-trunc-mean} \\
-X & \sim \mathcal{N}_{(-\infty,b)}\left(\mu, \sigma \right) & \implies \ex{X}{} & = \mu - \sigma\frac{\phi(\beta)}{\Phi(\beta)} \label{eqn:right-trunc-mean}
+q(\Theta,Z) & = \prod_d q(\thd)\prod_n q(\zdn)
+ &= \nor{\vv{m}_d}{V^{(d)}} \muln{\hat{\vv{z}}_{dn}}{1}
 \end{align}
+and constrain the posterior covariance to be diagonal.
 
-
-The use of the probit is trivially motivated by a slight modification of the original logistic regression example in the introduction.
-
-Let $t_d$ be denoted by the following:
-\begin{equation}
-    t_d = \left\{ \begin{matrix}
-        1 & \text{if } y > 0 \\
-        0 & \text{if } y \leq 0
-    \end{matrix} \right.
-\end{equation}
-
-% Some presentations alternatively let $t_n \in \{-1, +1\}$ and thus be defined as $t_n = \text{sgn}(y_n)$. However this has no practical effect on the inference.
-
-Following \cite{AlbertChib1993}, define an auxiliary variable $y_n$ as
-\begin{align}
-y_d & = \vv{w}\T \vv{x}_d + \epsilon_d & \epsilon_d \sim \nor{0}{1}
-\end{align}
-which is of course the same as saying $y_d \sim \nor{\vv{w}\T\vv{x}_d}{1}$. With this, the probability that $t_d = 1$ can be written as
-\begin{equation}
-\begin{aligned}
-p(t_d = 1 | \vv{x}_d) & = p (y_d > 0) \\
-& = p(\vv{w}\T\vv{x}_d + \epsilon_d > 0) \\
-& = p(\epsilon_d > - \vv{w}\T\vv{x}_d) \\
-& = p(\epsilon_d \leq \vv{w}\T\vv{x}_d) & \text{\emph{by symmetry of the Gaussian PDF}} \\
-& = \Phi(y_d) 
-\end{aligned}
-\end{equation}
-
-A similar result can be obtained by making use of the usual identities for truncated Gaussians.
-
-\begin{equation}
-\begin{aligned}
-p(t = 1 | \vv{x}, \vv{w}) & = \int p(t = 1 | \vv{y}) p(\vv{y} | \vv{x}, \vv{w}) d\vv{y} \\
- & = \int \delta(y > 0) p(\vv{y} | \vv{x}, \vv{w}) d\vv{y} & \text{\emph{a right-truncated distribution}} \\
- & = \Phi(\vv{w}\T\vv{x}) & \text{\emph{its normalising constant}}
-\end{aligned}
-\end{equation}
-
-Compared to the logit, the probit has lighter tails, and so is more likely to be adversely affected by outliers. Additionally, the likelihood surface, for probit regression at least, is often flat near it's maximum, hindering convergence\cite{Dow2004}.
-
-The weights inferred in a probit model are harder to interpret than for the logit. The d-th weight, $w_d$ is the amount by which a Z-score is increased given the d-th covariate. Typically one uses the marginal effects:
-
-\begin{equation}
-\frac{\delta \Phi(\vv{w}\T\vv{x}_d)}{\delta x_{df}} = w_f \phi(\vv{w}\T\vv{x}_d)
-\end{equation}
-
-This metric provides the amount by which probability of the positive class is increased by every unit change in the feature $x_{df}$. Unlike the case of ordinary least squares (where the marginal effects are just $w_f$) here we need a value of $\vv{x}$ in order to evaluate the marginal effects. One approach is to use the empirical mean $\bar{\vv{x}}$: however for 1-of-F encodings of categorical features the mean will not correspond to any real-world datapoint (e.g. a person who is 49\% male and 51\% female). The alternative is the average marginal effects $\frac{w_f}{D}\sum_d\phi(\vv{w}\T\vv{x}_d)$. In practice, both approaches tend to give similar answers.
-
-
-%\fixme{See http://stats.stackexchange.com/questions/42956/how-do-i-interpret-a-probit-model-in-stata}
-
-\subsection*{Maximum Likelihood Estimation}
-With a Bernoulli distribution on $t_d$ our log-likelihood has the form
+However in order to proceed with the variational inference, we need to be able to evaluate the expectation
 
 \begin{align}
-\ln p(\vv{y}; X, \vv{w}) & = \sum_d t_d \ln \Phi(y_d) + (1 - t_d) \ln (1 - \Phi(y_d)) \\
-& \text{where } y_d = \vv{w}\T\vv{x}_d
+\ex{\ln p(Z|\thd)}{q} 
+&= \ex{\sum_n \sum_k \zdnk \thdk - \lse(\zdn)}{q} \\
+&= \sum_n \ex{\zdnk}{q}\ex{\thdk}{q} - \ex{\lse(\zdn)}{q}
 \end{align}
 
-The gradient $\vv{g}_w$ and Hessian $H_w$ of the log-likelihood with respect to $\vv{w}$ are.
+As should be clear by now, there is no closed form solution for $\ex{\lse(\zdn)}{q}$ and so we resort to approximations discussed earlier in this chapter.
+
+There are two algorithms depending on whether one uses the Bouchard\cite{Bouchard2007} or Bohning\cite{Bohning1988} bound.
+
+\subsection{Bounds}
+
+\newcommand \Axi { A_{\xi_d} }
+\newcommand \bxi { \vv{b}_{\xi_d} }
+\newcommand \cxi { \vv{c}_{\xi_d} }
+\newcommand \lse[1] { \text{lse}\left(#1\right) }
+\newcommand \onek { \one_K }
+\newcommand \isigma {\Sigma^{-1}}
+\newcommand \Vd { V^{(d)} }
+\newcommand \zdvk { { z_{dvk} } }
+\newcommand \wdv { { w_{dv} } }
+
+
+The log-sum-exp function $\lse(\thd) = \ln\left(\sum_k e^{\thdk}\right)$ can be bounded in various ways. In the Bouchard bound\cite{Bouchard2007} it's
 
 \begin{align}
-\vv{g}_w = & \sum_d \left( t_d \frac{\phi(y_d)}{\Phi(y_d)} - (1 - t_d) \frac{\phi(y_d)}{1 - \Phi(y_d)} \right) \vv{x}_d \label{eqn:probit-gradient}\\
-H_w = & - \sum_d \phi(y_d) \left(
-    t_n \frac{\phi(y_d) + y_d \Phi(y_d)}{\Phi(y_d)^2} + (1-t_d) \frac{\phi(y_d) + y_d (1-\Phi(y_d))}{(1 - \Phi(y_d))^2}
-\right) \vv{x}_d \vv{x}_d\T \label{eqn:probit-hessian}
-\end{align}
+\lse{\thd} & \leq \half \thd\T \Axi \thd - \bxi\T\thd + \cxi \\
+\qquad \text{where} \\
+\Axi & = 2 \text{diag}_k
+    \left(
+        \frac{1}{2\Edk}\left(\frac{1}{1 + e^{\Edk}} - \half\right)
+    \right) \\
+\bxi & = \half I_K - s_d \Axi \\
+\cxi & = \half \left( s_d + s_d^2 \Axi \onek\T\onek - \Ed\T\Axi\Ed -  s_d \onek - \Ed\right) + \text{vec}_k\left({\ln 1+e^{\Edk}}\right)
+\end{align} 
 
-This is sufficient to perform a Newton-Raphson update
-\begin{align}
-\vv{w}^{(\text{new})} \leftarrow \vv{w}^{(old)} - H_w^{-1} \vv{g}_w
-\end{align}
-
-although with some re-arrangement of \eqref{eqn:probit-gradient} and \eqref{eqn:probit-hessian} one can obtain an update in the form of weighted least-squares as with the logit.
-
-\begin{align}
-\vv{w}^{(new)} = \invb{X\T R X}X\T R \vv{z}
-\end{align}
-where
-\begin{align}
-R & = \diag{\left\{ \phi(y_d) \left(
-    t_n \frac{\phi(y_d) + y_n \Phi(y_d)}{\Phi(y_d)^2} + (1-t_d) \frac{\phi(y_d) + y_d (1-\Phi(y_d))}{(1 - \Phi(y_d))^2}
-\right) \right\}_{d=1}^D} \\
-z & = X \vv{w}^{(old)}  - \inv{R} \text{ vec} \left(\left\{ t_d \frac{\phi(y_d)}{\Phi(y_d)} - (1 - t_d) \frac{\phi(y_d)}{1 - \Phi(y_d)} \right\}_{d=1}^D\right)
-\end{align}
-
-
-
-\subsection*{MAP Estimation}
-Consider once again the case of logistic regression with a zero-mean Gaussian prior on the weights $\vv{w}$.
+Whereas for the Bohning bound it's:
 
 \begin{align}
-\vv{w} \sim & \nor{\vv{0}}{\Lambda} & y_d | \vv{w} \sim & \nor{\vv{w}\T\vv{x}_d}{1} \\
-\text{ } & \text{ } & t_d | y_d \sim & \mathcal{B}\left( \Phi(y_d) \right)
-\end{align}
+\lse{\thd} & \leq \half \thd\T \Axi \thd - \bxi\T\thd + \cxi \\
+\qquad \text{where} \\
+\Axi & = \half \left(I_K - \mathbf{1}_K\mathbf{1}_K\T / K  \right) \\
+\bxi & = A \Ed  - \sigmoid{\Ed} \\
+\cxi & = \half \Ed\T A \Ed - \sigmoid{\Ed}\T\Ed + \ln(\sum_k e^{\Edk}))
+\end{align} 
 
-Unlike the logit, estimation here is made easy by the fact that the prior is conjugate to the likelihood of the latent score $y_n$. The distribution of $y_n$ itself is conditional on $t_n$ and is made up of two disjoint, truncated Gaussians:
+Both of these bounds allow us to derive the generic algorithm \ref{alg:ctm_generic}, with separate subroutines needed to derive the bound parameters . For Bouchard, that subroutine is given in algorithm \ref{alg:bouchard_sub}. For Bohning, a version is given in \ref{alg:bohning_sub}
+
+\begin{algorithm}
+\caption{Generic CTM Algorithm}
+\label{alg:ctm_generic}
+    \begin{align}
+         \Vd = & \invb{\isigma + N_d \Axi}\\
+         \md = & \Vd \left(\isigma \vv{\mu} + N_d \bxi + Z^{(d)}\vv{w}_d \right )\\
+        \vv{\mu}    = &\frac{1}{D} \sum_d \md \\
+        \Sigma = & \sum_d \left[ \Vd + (\md - \vv{\mu})(\md - \vv{\mu})\T \right] \\
+        z_{dvk} \propto & \beta_{kv} e^{m_{dk}} \\
+        \beta_{kv} \propto & \sum_d z_{dvk} x_{dv} 
+    \end{align}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Bouchard Bound Subroutine}
+\label{alg:bouchard_sub}
+    \begin{align}
+         \Edk = & \sqrt{m_{dk}^2 - 2s_d m_{dk} + s_d^2 + V^{(d)}_{kk}} \\
+        s_d = & \frac{\frac{K}{4} - \half + \sum_k m_{dk} \AEdk}{\sum_k \AEdk} \\
+    \end{align}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Bohning Bound Subroutine}
+\label{alg:bohning_sub}
+    \begin{align}
+         \Ed = \md 
+    \end{align}
+\end{algorithm}
+
+
+
+\begin{algorithm}
+\caption{Laplace Bound CTM Algorithm}
+\label{alg:ctm_laplace}
+    \begin{align}
+         \nabla \Vd_{kk} = & -\half \inv{\Sigma}_{kk} - \frac{n_d}{2\xi}e^{\md + \Vd/2} + \oneover{\Vd_{kk}}\\
+         \nabla \md = & -\inv{\Sigma} (\md - \mu) + \sum_n \ex{\zdn}{q} - \frac{n_d}{\xi} e^{\md + \Vd/2}\\
+        \vv{\mu}    = &\frac{1}{D} \sum_d \md \\
+        \Sigma = & \sum_d \left[ \Vd + (\md - \vv{\mu})(\md - \vv{\mu})\T \right] \\
+        \xi & = \sum_k e^{(m_{dk} + V^{(d)}_{kk}/2} \\
+        z_{dvk} \propto & \beta_{kv} e^{m_{dk}} \\
+        \beta_{kv} \propto & \sum_d z_{dvk} x_{dv} 
+    \end{align}
+\end{algorithm}
+
+
+
+As an alternative to these \emph{local} bounds, one can instead use a \emph{global} bound, taking a second-order Taylor approximation around the expectation in
 
 \begin{align}
-y | t, \vv{x}, \vv{w} \sim \left\{ \begin{array}{lr} \mathcal{N}_+ (\vv{w}\T\vv{x}, 1) & t = 1 \\
-\mathcal{N}_- (\vv{w}\T\vv{x}, 1) & t = 0
- \end{array} \right.
+\ex{\lse{\thd}}{q} \approx \xi^{-1} \left(\sum_k \ex{\ln \thdk }{q}\right) - 1 + \ln (\xi)
 \end{align}
+This involves using iterative techniques to determine the posterior parameterisation of $\md, \Vd$, the gradients and other updates are given in algorithm \ref{alg:ctm_laplace}. 
 
-Using identities for the expectation of a truncated Gaussian distribution one can obtain the following using a MAP-EM algorithm\cite{Figueiredo2003}\cite{Armagan2011}:
+\newcommand \param { { \vv{\phi} } }
+\newcommand \params { { \vv{\Phi} } }
 
-\begin{description}
-    \item[E-Step:]  \begin{equation*}
-            \ex{y_n}{} = \left\{ \begin{matrix*}[l]
-                \wmap\T\vv{x}_d + \frac{\phi(\wmap\T\vv{x}_d)}{\Phi(\wmap\T\vv{x}_d)} & \text{if } t_d = 1 \\
-                \quad & \quad \\
-                \wmap\T\vv{x}_d - \frac{\phi(\wmap\T\vv{x}_d)}{1 - \Phi(\wmap\T\vv{x}_d)} & \text{if } t_d = 0 
-            \end{matrix*} \right.
-        \end{equation*}
-    \item[M-Step:] $\wmap \leftarrow \invb{X\T X + \Lambda^{-1}}X\ex{\vv{y}}{}$
-\end{description}
-As noted by \cite{Armagan2011} the MAP estimate is identical to the variational estimate, where the normally-distributed variational prior has covariance $\Sigma = \invb{X\T X + \Lambda^{-1}}$ and mean $\vv{\mu} = \Sigma X \ex{\vv{y}}{}$. Equally, using an improper prior (i.e. $\Lambda = 0$), the MLE and MAP estimates are identical.
+\section{Experiments}
+We analyzed two collections of documents. The Associated Press (AP) collection contains 2,246 documents from the Associated Press. We used a vocabulary of 10,473 terms, which gave a total of 436K observed words. The New York Times (NYT) collection contains 9,238 documents from the New York Times. We used a vocabulary of 10,760 terms, which gave a total of 2.3 million observed words. For each corpus we used 80\% of the documents to fit models and reserved 20\% to test them.
+We fitted the models with the variational EM algorithms shown. At each iteration, the algorithm has a set of topic vocabularies $\param_k$ and parameters to the logistic normal $\mu, \Sigma$. In the E-step we perform approximate posterior inference with each document, estimating its topic proportions and topic assignments. In the M-step, we reestimate the topics and logistic normal parameters. 
 
-Making use of the posterior, it's straightforward to show that the predictive distribution is then
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.40\textheight]{../Chap2/plots/figs/fig1-all-3.png}
+  \caption{(a) Approximate per-word lower bound against the number of topics. A good approximation will go up as the number of topics increases, but not necessarily indicate a better predictive performance on the held out data. (b) Per-word held-out log likelihood against the number of topics. Higher numbers are better. Both nonconjugate methods perform better than Bouchard. Bohning inference performs best. Bouchard method was erratic in both collections. (It is not plotted for the AP collection.)}
+  \label{fig:chap2-fig-all-3}
+\end{figure}
 
+We fit models with all three E-steps shown. To initialize nonconjugate inference we set the variational mean parameter $\mu = 0$ for log topic proportions $\theta$ and computed the corresponding updates for the topic assignments $z$. We initialize the topics in variational EM to random draws from a uniform Dirichlet.
+
+With nonconjugate inference in the E-step, variational EM approximately optimizes a bound on the marginal probability of the observed data. We can calculate an approximation of this bound over all documents. We monitor this quantity as we run variational EM.
+
+To test our fitted models, we measured predictive performance on held-out data with predictive distributions derived from the posterior approximations. We follow use the document-completion metric\cite{Asuncion2012} discussed in the previous chapter. We fix fitted topics and logistic normal parameters $M = 
+\{\param_{1:K},\mu,\sigma\}$. We split each held-out document in to two halves $(x_d^{(e)},x_d^{(l)})$ and form the approximate posterior log topic proportions $q(\thd)$ using one of the approximate inference algorithms and the first half of the document $\xdoc$. We use this to form an approximate predictive distribution,
 \begin{align}
-p(t_* = 1| X, \vv{t}, x_*) & = \int_{\vv{w}} p(t_* | \vv{w})\int_{\vv{y}} p(\vv{w}| X, \vv{y})p(\vv{y}|\vv{t}) d\vv{y} d\vv{w} \\
-& = \Phi(y_*) \qquad \qquad \qquad \text{where }y_* = \vv{w}_{MAP}\T\vv{x}_*
+p(\xdoc|\xdoc^{(e)}, \params) 
+\approx 
+\int_\thd \sum_Z p(\xdoc|z,\params)q_{\xdoc^{(e)}}(\thd) d\thd 
+\approx 
+\sum_k \param_k \vv{\pi}_k
 \end{align}
+where $\vv{\pi}_k \propto \exp(\ex{\theta_{dk}}{q}])$. Finally, we evaluate the log probability of the second half of the document using that predictive distribution; this is the held out log likelihood. A better model and inference method will give higher predictive probabilities of the unseen words. Note that this testing framework puts the approximate posterior distributions on the same playing field. The quantities are comparable regardless of how the approximate posterior is formed.
 
-%\subsection*{Gibbs Sampling}
-%Similar updates can be used for MCMC estimation techniques, where we draw $y_n$ and $t_n$ according to the following posteriors:
+Figure \ref{fig:chap2-fig-all-3} shows the per-word approximate bound and the per-word held out likelihood as functions of the number of topics. Figure \ref{fig:chap2-fig-all-3} (a) indicates that the approximate bounds from nonconjugate inference generally go up as the number of topics increases. This is a property of a good approximation because the marginal certainly goes up as the number of parameters increases. In contrast, the Bouchard bound behaves erratically. This is illustrated for the New York Times corpus; on the Associated Press corpus, it does not come close to the approximate bound and is not plotted.
+
+Figure \ref{fig:chap2-fig-all-3} (b) shows that on held out data, the Bouchard approach, tailored for this model, performed worse than both of our algorithms. Our conjecture is that while this method gives a strict lower bound on the marginal, it might be a loose bound and give poor predictive distributions. Our methods use an approximation which, while not a bound, might be closer to the objective and give better predictive distributions. The held out likelihood plots also show that when the number of topics increases the algorithms eventually overfit the data. Finally, note that Bohning variational inference was always better than both other algorithms.
+
+Finally, Figure \ref{fig:chap2-fig-all-2} shows the approximate bound and the held out log likelihood as functions of running-time. From Figure \ref{fig:chap2-fig-all-2}(a), we see that even though variational EM is not formally optimizing this approximate objective, the increase at each iteration suggests that the marginal probability is also increasing. The plot also shows that Bohning inference converges faster than Laplace method inference. Figure \ref{fig:chap2-fig-all-2}  (b) confirms that Bohning inference is both faster and gives better predictive performance.
+
+
+
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.40\textheight]{../Chap2/plots/figs/fig2-all-2.png}
+  \caption{In this figure, we set the number of topics as K = 60. (Others are similar.) (a) The per-word approximate bound during model fitting with variational EM. Though it is an approximation of the variational EM objective, it converges in practice. (b) The per- word held out likelihood during the model fitting with variational EM. Laplace inference performs best in terms of speed and predictive performance.}
+  \label{fig:chap3-fig-all-2}
+\end{figure}
+
+
+\section{Conclusions}
+We have provided an overview of non-conjugate variational inference, with a particular emphasis on local variational approximations. We have demonstrated empirically the efficiency of local softmax bounds, and in particular the Bohning bound, which provides for rapid, guaranteed convergence.
+
+There has of course been substantial interest in deriving inference schemes using sampling techniques. While one could derive a Metropolis-within-Gibbs sampling scheme to overcome the non-conjugacy in the model, that -- like the Laplace approximation -- involves many nested iterations and is simply too slow.
+
+Instead, scalable sampling schemes have been derived by observing that the posterior sampling distribution $p(\thdk|\vv{\theta}_d^{\setminus k}, Z, X)$ can, through data-augmentation, be represented as a scale-mixture of Polya-Gamma distributions, allowing exact Gibb sampling. This, combined with some approximations, can be employed to create an efficient Gibb-sampling routine for inference in the CTM\cite{Chen2013}.
+
+A more natural link-function in the case of sampling-based inference is the probit function. To our knowledge, no implementation of a correlated topic-model using the probit has been publised, likely because the probits lighter tails would make it more sensitive to outliers. Further, while deterministic inference schemes can be trivially obtained for the probit in the binary case\cite{AlbertChib1993}, in the multinomial case the inference schemes become highly complex and require the use of sampling within the variational routine to approximate certain expectations\cite{GiKa2003}.
+
+In the remainder of this thesis we will employ the Bohning bound consistently due to its properties of speed and guaranteed convergence. In the next chapter, we will augment the correlated topic-model to employ covariates to further help assign topics to medium and short texts. 
+
+%\subsection{Inference with the Probit}
+%The probit is the CDF of a standard normal distribution:
 %
 %\begin{align}
-%\vv{w} | \Lambda & \sim \nor{\Sigma X\T \vv{y}}{\Sigma} & \Sigma & = \left(X\T X + \Lambda^{-1}\right)^{-1} \label{eqn:sample-w}
+%\Phi(a) = & \int_{-\infty}^{a} \phi(\epsilon) d\epsilon & \epsilon \sim \nor{0}{1}
 %\end{align}
+%where $\phi(\epsilon) = \frac{1}{\sqrt{2\pi}} e^{-\half \epsilon ^2}$ denotes the PDF of a standard normal. %The following identities are useful when working with the probit:
+%
+%%\begin{align}
+%%    \Phi'(a) = & \phi(a)  & \phi'(a) = & -a \phi(a) \\
+%%    1 - \Phi(a) = & \Phi(-a) & \text{ } & \text{ }
+%%  \label{eqn:probit-identities}
+%%\end{align}
+%When working with the probit, it is useful to know that the PDF and expected value of a variable $a < X < b$ according to a truncated Gaussian distribution in the range $(a,b)$:
 %\begin{align}
-%\begin{matrix}
-%y_n | t_n,x_n,\vv{w}    & \sim & \mathcal{N}_{+} \left(\vv{w}\T\vv{x}_n, 1\right) & [t_n = 1] \\
-%\quad  &  \sim & \mathcal{N}_{-} \left(\vv{w}\T\vv{x}_n, 1\right) & [t_n = 0] \\
-%\end{matrix} \label{eqn:sample-yn}
+%X & \sim \mathcal{N}_{(a,b)}\left(\mu, \sigma \right) & \implies p(X = x) & = \frac{1}{Z} \frac{\phi (\xi)}{\sigma} \\
+% & & p(X \leq x) & = \frac{1}{Z} \left( \Phi(\xi) - \Phi(\alpha)\right)
 %\end{align}
 %
-%Where we sample $y_n$ from a truncated normal distribution.
-
-%\subsection{Bayesian Probit Regression with Gaussian Processes}
-%As with the Logit
-
-
-\subsection*{Extending the Probit to the Multinomial Case}
-In case of the multinomial probit case, as with the multinomial logit, one learns $L$ independent weight vectors $\vv{w}_l$ from which we define the auxiliary variable $\vv{y} \sim \nor{W\vv{x}}{1}$ where $W = \{ \vv{w}_l\T \}_{l=1}^L$. The prediction rule also necessarily changes, becoming:
-
-\begin{align}
-t_{dl} = \left\{ \begin{array}{lr} 1 & \text{if } y_{dl} > y_{dj} \quad \forall j \neq l \\ 0 & \text{otherwise} \end{array} \right.
-\end{align}
-
-In the binary model, the conditional distribution on the scalar $y$ given $t$ involves decomposing the $\mathbb{R}$ space into $\mathbb{R}_-$ and $\mathbb{R}_+$, with corresponding disjoint, truncated Gaussian distributions. In the multinomial model, the conditional distribution of the vector $\vv{y} \in \VReal{L}$ involves decomposing the $\VReal{L}$ space into $L$ cones $C_l = \{ \vv{y} : y_l > y_j \forall l \neq j \}$, each of dimension L, such that $\bigcup_l C_l = \VReal{L}$. The conically truncated Gaussian distribution for a label $l$ is denoted as $y_n \sim \mathcal{N}^{l}\left(W\vv{x}, 1\right)$. 
-
-From \cite{Girolami2007} we see that predictive distribution is:
-\begin{equation}
-\begin{aligned}
-p(t_{dl} = 1 | \vv{x}, \{ \vv{w}_j\T \}_{j=1}^L) & =
-\int \delta (y_{dl} > y_{dk} \forall k \neq l) \prod_j p(y_{dj} | \vv{w}_j\T\vv{x}) d\vv{y} \\
-&= \int_{C_l} \prod_j p(y_{dj} | \vv{w}_j\T\vv{x}) d\vv{y} \\
-&= \ex{\prod_{j \neq l} \Phi(\epsilon + m_{dl} - m_{dj})}{p(\epsilon)}
-\end{aligned}
-\end{equation}
-where $\epsilon \sim \nor{0}{1}$ and $m_{dl} \sim \nor{\vv{w}_l\T\vv{x}_d}{\sigma^2}$. Further, also from \cite{Girolami2007}, we obtain the posterior expectation over $y_{dl}$ for $t_{dl} = 1$
-\begin{align}
-\ex{\vv{w}_l\T\vv{x}_d}{q} + \sum_{k \neq l} \left(\ex{\vv{w}_k\T\vv{x}_d}{q} - \ex{y_{dk}}{q}\right)
-\end{align}
-and for $y_{nk}$ for all $t_{dk} = 0$
-\begin{align}
-\begin{split}
-\ex{\vv{w}_k\T\vv{x}_d}{q}
- - Z_d^{-1}\mathbb{E}_{p(\epsilon)} [ & \phi\left(\ex{\vv{w}_k\T\vv{x}_d}{q} - \ex{\vv{w}_l\T\vv{x}_d}{q} \right) \\
- & \prod_{j \neq l,k}\Phi\left(\epsilon + \ex{\vv{w}_l\T\vv{x}_d}{q} - \ex{\vv{w}_i\T\vv{x}_d}{q} \right) ]
-\end{split}
-\end{align}
-where $Z_d = p(\vv{y}_d \in \mathcal{C}) = \ex{\prod_{j \neq l}\Phi\left(\epsilon + \ex{\vv{w}_l\T\vv{x}_d}{q} - \ex{\vv{w}_i\T\vv{x}_d}{q} \right) }{p(\epsilon)}$. Given these expectations, closed form updates for the weights can be obtained, however the expectation $\ex{y_dk}{q}$ can only be evaluated using quadrature or sampling methods.
-
-
-\section{Other Inference methods}
-\begin{enumerate}
-    \item Sampling, reference the large-scale paper
-    \item Discussion of the probit, reference Mark's paper.
-\end{enumerate}
-
+%where $\xi = \frac{x - \mu}{\sigma}$, $\alpha = \frac{a - \mu}{\sigma}$ and $\beta = \frac{b - \mu}{\sigma}$ and the normalizing constant of the distribution is $Z = \Phi(\beta) - \Phi(\alpha)$. 
+%
+%Further, note that for $b = \infty$, $\Phi(\frac{b-\mu}{\sigma}) = 1$ and for $a = -\infty$, $\Phi(\frac{a-\mu}{\sigma}) = 0$ so that, for example, for a right-truncated normal distribution the normalising constant is $\Phi(\frac{b - \mu}{\sigma})$.
+%
+%For the fully-truncated, right-truncated, and left-truncated distributions, the expected values are defined as
+%
+%\begin{align}
+%X & \sim \mathcal{N}_{(a,b)}\left(\mu, \sigma \right) & \implies \ex{X}{} & = \mu + \sigma \frac{\phi(\alpha) - \phi(\beta)}{Z} \label{eqn:full-trunc-mean} \\ 
+%X & \sim \mathcal{N}_{(a,\infty)}\left(\mu, \sigma \right) & \implies \ex{X}{} & = \mu + \sigma \frac{\phi(\alpha)}{1 - \Phi(\alpha)} \label{eqn:left-trunc-mean} \\
+%X & \sim \mathcal{N}_{(-\infty,b)}\left(\mu, \sigma \right) & \implies \ex{X}{} & = \mu - \sigma\frac{\phi(\beta)}{\Phi(\beta)} \label{eqn:right-trunc-mean}
+%\end{align}
+%
+%
+%The use of the probit is trivially motivated by a slight modification of the original logistic regression example in the introduction.
+%
+%Let $t_d$ be denoted by the following:
+%\begin{equation}
+%    t_d = \left\{ \begin{matrix}
+%        1 & \text{if } y > 0 \\
+%        0 & \text{if } y \leq 0
+%    \end{matrix} \right.
+%\end{equation}
+%
+%% Some presentations alternatively let $t_n \in \{-1, +1\}$ and thus be defined as $t_n = \text{sgn}(y_n)$. However this has no practical effect on the inference.
+%
+%Following \cite{AlbertChib1993}, define an auxiliary variable $y_n$ as
+%\begin{align}
+%y_d & = \vv{w}\T \vv{x}_d + \epsilon_d & \epsilon_d \sim \nor{0}{1}
+%\end{align}
+%which is of course the same as saying $y_d \sim \nor{\vv{w}\T\vv{x}_d}{1}$. With this, the probability that $t_d = 1$ can be written as
+%\begin{equation}
+%\begin{aligned}
+%p(t_d = 1 | \vv{x}_d) & = p (y_d > 0) \\
+%& = p(\vv{w}\T\vv{x}_d + \epsilon_d > 0) \\
+%& = p(\epsilon_d > - \vv{w}\T\vv{x}_d) \\
+%& = p(\epsilon_d \leq \vv{w}\T\vv{x}_d) & \text{\emph{by symmetry of the Gaussian PDF}} \\
+%& = \Phi(y_d) 
+%\end{aligned}
+%\end{equation}
+%
+%A similar result can be obtained by making use of the usual identities for truncated Gaussians.
+%
+%\begin{equation}
+%\begin{aligned}
+%p(t = 1 | \vv{x}, \vv{w}) & = \int p(t = 1 | \vv{y}) p(\vv{y} | \vv{x}, \vv{w}) d\vv{y} \\
+% & = \int \delta(y > 0) p(\vv{y} | \vv{x}, \vv{w}) d\vv{y} & \text{\emph{a right-truncated distribution}} \\
+% & = \Phi(\vv{w}\T\vv{x}) & \text{\emph{its normalising constant}}
+%\end{aligned}
+%\end{equation}
+%
+%Compared to the logit, the probit has lighter tails, and so is more likely to be adversely affected by outliers. Additionally, the likelihood surface, for probit regression at least, is often flat near it's maximum, hindering convergence\cite{Dow2004}.
+%
+%The weights inferred in a probit model are harder to interpret than for the logit. The d-th weight, $w_d$ is the amount by which a Z-score is increased given the d-th covariate. Typically one uses the marginal effects:
+%
+%\begin{equation}
+%\frac{\delta \Phi(\vv{w}\T\vv{x}_d)}{\delta x_{df}} = w_f \phi(\vv{w}\T\vv{x}_d)
+%\end{equation}
+%
+%This metric provides the amount by which probability of the positive class is increased by every unit change in the feature $x_{df}$. Unlike the case of ordinary least squares (where the marginal effects are just $w_f$) here we need a value of $\vv{x}$ in order to evaluate the marginal effects. One approach is to use the empirical mean $\bar{\vv{x}}$: however for 1-of-F encodings of categorical features the mean will not correspond to any real-world datapoint (e.g. a person who is 49\% male and 51\% female). The alternative is the average marginal effects $\frac{w_f}{D}\sum_d\phi(\vv{w}\T\vv{x}_d)$. In practice, both approaches tend to give similar answers.
+%
+%
+%%\fixme{See http://stats.stackexchange.com/questions/42956/how-do-i-interpret-a-probit-model-in-stata}
+%
+%\subsection*{Maximum Likelihood Estimation}
+%With a Bernoulli distribution on $t_d$ our log-likelihood has the form
+%
+%\begin{align}
+%\ln p(\vv{y}; X, \vv{w}) & = \sum_d t_d \ln \Phi(y_d) + (1 - t_d) \ln (1 - \Phi(y_d)) \\
+%& \text{where } y_d = \vv{w}\T\vv{x}_d
+%\end{align}
+%
+%The gradient $\vv{g}_w$ and Hessian $H_w$ of the log-likelihood with respect to $\vv{w}$ are.
+%
+%\begin{align}
+%\vv{g}_w = & \sum_d \left( t_d \frac{\phi(y_d)}{\Phi(y_d)} - (1 - t_d) \frac{\phi(y_d)}{1 - \Phi(y_d)} \right) \vv{x}_d \label{eqn:probit-gradient}\\
+%H_w = & - \sum_d \phi(y_d) \left(
+%    t_n \frac{\phi(y_d) + y_d \Phi(y_d)}{\Phi(y_d)^2} + (1-t_d) \frac{\phi(y_d) + y_d (1-\Phi(y_d))}{(1 - \Phi(y_d))^2}
+%\right) \vv{x}_d \vv{x}_d\T \label{eqn:probit-hessian}
+%\end{align}
+%
+%This is sufficient to perform a Newton-Raphson update
+%\begin{align}
+%\vv{w}^{(\text{new})} \leftarrow \vv{w}^{(old)} - H_w^{-1} \vv{g}_w
+%\end{align}
+%
+%although with some re-arrangement of \eqref{eqn:probit-gradient} and \eqref{eqn:probit-hessian} one can obtain an update in the form of weighted least-squares as with the logit.
+%
+%\begin{align}
+%\vv{w}^{(new)} = \invb{X\T R X}X\T R \vv{z}
+%\end{align}
+%where
+%\begin{align}
+%R & = \diag{\left\{ \phi(y_d) \left(
+%    t_n \frac{\phi(y_d) + y_n \Phi(y_d)}{\Phi(y_d)^2} + (1-t_d) \frac{\phi(y_d) + y_d (1-\Phi(y_d))}{(1 - \Phi(y_d))^2}
+%\right) \right\}_{d=1}^D} \\
+%z & = X \vv{w}^{(old)}  - \inv{R} \text{ vec} \left(\left\{ t_d \frac{\phi(y_d)}{\Phi(y_d)} - (1 - t_d) \frac{\phi(y_d)}{1 - \Phi(y_d)} \right\}_{d=1}^D\right)
+%\end{align}
+%
+%
+%
+%\subsection*{MAP Estimation}
+%Consider once again the case of logistic regression with a zero-mean Gaussian prior on the weights $\vv{w}$.
+%
+%\begin{align}
+%\vv{w} \sim & \nor{\vv{0}}{\Lambda} & y_d | \vv{w} \sim & \nor{\vv{w}\T\vv{x}_d}{1} \\
+%\text{ } & \text{ } & t_d | y_d \sim & \mathcal{B}\left( \Phi(y_d) \right)
+%\end{align}
+%
+%Unlike the logit, estimation here is made easy by the fact that the prior is conjugate to the likelihood of the latent score $y_n$. The distribution of $y_n$ itself is conditional on $t_n$ and is made up of two disjoint, truncated Gaussians:
+%
+%\begin{align}
+%y | t, \vv{x}, \vv{w} \sim \left\{ \begin{array}{lr} \mathcal{N}_+ (\vv{w}\T\vv{x}, 1) & t = 1 \\
+%\mathcal{N}_- (\vv{w}\T\vv{x}, 1) & t = 0
+% \end{array} \right.
+%\end{align}
+%
+%Using identities for the expectation of a truncated Gaussian distribution one can obtain the following using a MAP-EM algorithm\cite{Figueiredo2003}\cite{Armagan2011}:
+%
+%\begin{description}
+%    \item[E-Step:]  \begin{equation*}
+%            \ex{y_n}{} = \left\{ \begin{matrix*}[l]
+%                \wmap\T\vv{x}_d + \frac{\phi(\wmap\T\vv{x}_d)}{\Phi(\wmap\T\vv{x}_d)} & \text{if } t_d = 1 \\
+%                \quad & \quad \\
+%                \wmap\T\vv{x}_d - \frac{\phi(\wmap\T\vv{x}_d)}{1 - \Phi(\wmap\T\vv{x}_d)} & \text{if } t_d = 0 
+%            \end{matrix*} \right.
+%        \end{equation*}
+%    \item[M-Step:] $\wmap \leftarrow \invb{X\T X + \Lambda^{-1}}X\ex{\vv{y}}{}$
+%\end{description}
+%As noted by \cite{Armagan2011} the MAP estimate is identical to the variational estimate, where the normally-distributed variational prior has covariance $\Sigma = \invb{X\T X + \Lambda^{-1}}$ and mean $\vv{\mu} = \Sigma X \ex{\vv{y}}{}$. Equally, using an improper prior (i.e. $\Lambda = 0$), the MLE and MAP estimates are identical.
+%
+%Making use of the posterior, it's straightforward to show that the predictive distribution is then
+%
+%\begin{align}
+%p(t_* = 1| X, \vv{t}, x_*) & = \int_{\vv{w}} p(t_* | \vv{w})\int_{\vv{y}} p(\vv{w}| X, \vv{y})p(\vv{y}|\vv{t}) d\vv{y} d\vv{w} \\
+%& = \Phi(y_*) \qquad \qquad \qquad \text{where }y_* = \vv{w}_{MAP}\T\vv{x}_*
+%\end{align}
+%
+%%\subsection*{Gibbs Sampling}
+%%Similar updates can be used for MCMC estimation techniques, where we draw $y_n$ and $t_n$ according to the following posteriors:
+%%
+%%\begin{align}
+%%\vv{w} | \Lambda & \sim \nor{\Sigma X\T \vv{y}}{\Sigma} & \Sigma & = \left(X\T X + \Lambda^{-1}\right)^{-1} \label{eqn:sample-w}
+%%\end{align}
+%%\begin{align}
+%%\begin{matrix}
+%%y_n | t_n,x_n,\vv{w}    & \sim & \mathcal{N}_{+} \left(\vv{w}\T\vv{x}_n, 1\right) & [t_n = 1] \\
+%%\quad  &  \sim & \mathcal{N}_{-} \left(\vv{w}\T\vv{x}_n, 1\right) & [t_n = 0] \\
+%%\end{matrix} \label{eqn:sample-yn}
+%%\end{align}
+%%
+%%Where we sample $y_n$ from a truncated normal distribution.
+%
+%%\subsection{Bayesian Probit Regression with Gaussian Processes}
+%%As with the Logit
+%
+%
+%\subsection*{Extending the Probit to the Multinomial Case}
+%In case of the multinomial probit case, as with the multinomial logit, one learns $L$ independent weight vectors $\vv{w}_l$ from which we define the auxiliary variable $\vv{y} \sim \nor{W\vv{x}}{1}$ where $W = \{ \vv{w}_l\T \}_{l=1}^L$. The prediction rule also necessarily changes, becoming:
+%
+%\begin{align}
+%t_{dl} = \left\{ \begin{array}{lr} 1 & \text{if } y_{dl} > y_{dj} \quad \forall j \neq l \\ 0 & \text{otherwise} \end{array} \right.
+%\end{align}
+%
+%In the binary model, the conditional distribution on the scalar $y$ given $t$ involves decomposing the $\mathbb{R}$ space into $\mathbb{R}_-$ and $\mathbb{R}_+$, with corresponding disjoint, truncated Gaussian distributions. In the multinomial model, the conditional distribution of the vector $\vv{y} \in \VReal{L}$ involves decomposing the $\VReal{L}$ space into $L$ cones $C_l = \{ \vv{y} : y_l > y_j \forall l \neq j \}$, each of dimension L, such that $\bigcup_l C_l = \VReal{L}$. The conically truncated Gaussian distribution for a label $l$ is denoted as $y_n \sim \mathcal{N}^{l}\left(W\vv{x}, 1\right)$. 
+%
+%From \cite{Girolami2007} we see that predictive distribution is:
+%\begin{equation}
+%\begin{aligned}
+%p(t_{dl} = 1 | \vv{x}, \{ \vv{w}_j\T \}_{j=1}^L) & =
+%\int \delta (y_{dl} > y_{dk} \forall k \neq l) \prod_j p(y_{dj} | \vv{w}_j\T\vv{x}) d\vv{y} \\
+%&= \int_{C_l} \prod_j p(y_{dj} | \vv{w}_j\T\vv{x}) d\vv{y} \\
+%&= \ex{\prod_{j \neq l} \Phi(\epsilon + m_{dl} - m_{dj})}{p(\epsilon)}
+%\end{aligned}
+%\end{equation}
+%where $\epsilon \sim \nor{0}{1}$ and $m_{dl} \sim \nor{\vv{w}_l\T\vv{x}_d}{\sigma^2}$. Further, also from \cite{Girolami2007}, we obtain the posterior expectation over $y_{dl}$ for $t_{dl} = 1$
+%\begin{align}
+%\ex{\vv{w}_l\T\vv{x}_d}{q} + \sum_{k \neq l} \left(\ex{\vv{w}_k\T\vv{x}_d}{q} - \ex{y_{dk}}{q}\right)
+%\end{align}
+%and for $y_{nk}$ for all $t_{dk} = 0$
+%\begin{align}
+%\begin{split}
+%\ex{\vv{w}_k\T\vv{x}_d}{q}
+% - Z_d^{-1}\mathbb{E}_{p(\epsilon)} [ & \phi\left(\ex{\vv{w}_k\T\vv{x}_d}{q} - \ex{\vv{w}_l\T\vv{x}_d}{q} \right) \\
+% & \prod_{j \neq l,k}\Phi\left(\epsilon + \ex{\vv{w}_l\T\vv{x}_d}{q} - \ex{\vv{w}_i\T\vv{x}_d}{q} \right) ]
+%\end{split}
+%\end{align}
+%where $Z_d = p(\vv{y}_d \in \mathcal{C}) = \ex{\prod_{j \neq l}\Phi\left(\epsilon + \ex{\vv{w}_l\T\vv{x}_d}{q} - \ex{\vv{w}_i\T\vv{x}_d}{q} \right) }{p(\epsilon)}$. Given these expectations, closed form updates for the weights can be obtained, however the expectation $\ex{y_dk}{q}$ can only be evaluated using quadrature or sampling methods.
+%
+%
+%\section{Other Inference methods}
+%\begin{enumerate}
+%    \item Sampling, reference the large-scale paper
+%    \item Discussion of the probit, reference Mark's paper.
+%\end{enumerate}
+%
 
 %\chapter{Comparison between the Logit and the Probit}
 %In the following we implement a correlated topic model\cite{Blei2006} using the Bohning-bounded logit and the probit. As the normal distribution has much lighter tails than the logistic distribution (of the order of $\exp(y^2)$ instead of $\exp(y)$), it is much less accommodating of outliers. We would therefore expect slower convergence in the early iterations as we attempt to fit the noise.

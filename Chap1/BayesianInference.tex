@@ -1,5 +1,6 @@
 \input{../header.tex}
 
+
 \newcommand \xdn  { { \vv{x}_{dn} } }
 \newcommand \zd   { { \vv{z}_d } }
 \newcommand \qfam { { \mathcal{Q} } }
@@ -21,7 +22,7 @@
 \chapter{Probabilistic Inference with Text}
 This chapter reviews of probabilisitic inference from a Bayesian perspective. We introduce maximum-likelihood, maximum-a-posteriori, and fully Bayesian Inference. We describing inference schemes for latent variable models, and extend this to inference on large datasets using stochastic gradient descent (SGD), natural gradients, and biased sampling schemes. Finally, we provide a brief overview on Bayesian non-parametrics, and discuss the problem of evaluating model-fit.
 
-Throughout, we use inference on text as a motivating example, and introduce language models, mixture-models of text, and admixture models of text, the last known colloquially as ``topic models". We quantitatively evaluate the effect that choices in models and inference schemes may have, and demonstrate the effect of different choices of evaluation metric.
+Throughout, we use inference on text as a motivating example, and introduce language models, mixture-models of text, and admixture models of text, the last known more commonly as ``topic models". We quantitatively evaluate the effect that choices in models and inference schemes may have, and demonstrate the effect of different choices of evaluation metric.
 \section{Inference Methods}
 
 Probabilistic inference is concerned with two problems: inference, the estimation of parameter values $\param$ from a set of observations $\vv{x} \in \xdat$; and prediction, the evaluation of the probability of unobserved variables $p(\xnew | \xdat) = \int p(\xnew | \param) p(\param | \xdat) d\param$. Various methods have been proposed for this purpose.
@@ -51,7 +52,7 @@ p(\xnew | \xdat)
 =  p(\xnew | \ml{\param})
 \end{align}
 
-The same decomposition used in \eqref{eqn:log-like-iid-decomp} can also be derived from the assumption that the data are \emph{exchangeable}.  A finite sequence of random variables $\xdat = \{\xd\}_{d=1}^{D}$ is exchangeable if its joint distribution is invariant to any permutation of its order. An infinite sequence is exchangeable, if all finite subsequences are themselves exchangeable. The link with IID observations is provided by DeFinetti's theorem (extended to the multinomial case\bfshort{What is the ``multinomial case"} in \cite{Hewitt1955}) which states that the joint distribution of an exchangeable sequence of variables is equivalent to sampling a random parameter $\param$ from some prior distribution, then sampling IID random variables conditional on that random parameter such that $p\left(\xdat\right) = \prod_d p(\xd | \param)$.
+The same decomposition used in \eqref{eqn:log-like-iid-decomp} can also be derived from the assumption that the data are \emph{exchangeable}.  A finite sequence of random variables $\xdat = \{\xd\}_{d=1}^{D}$ is exchangeable if its joint distribution is invariant to any permutation of its order. An infinite sequence is exchangeable, if all finite subsequences are themselves exchangeable. The link with IID observations is provided by DeFinetti's theorem\cite{DeFinetti1975}\cite{Hewitt1955} which states that the joint distribution of an exchangeable sequence of variables is equivalent to sampling a random parameter $\param$ from some prior distribution, then sampling IID random variables conditional on that random parameter such that $p\left(\xdat\right) = \prod_d p(\xd | \param)$.
 
 \emph{Maximum a Posteriori} (MAP) estimation, like maximum likelihood, finds a mode, but of the posterior distribution instead of the likelihood. Given a prior $p(\param)$, the posterior is given by Bayes rule:
 \begin{align}
@@ -147,33 +148,46 @@ p(x) = \frac{1!}{\prod_t x_t!}\prod_t \phi_t^{x_t} = \prod_t \phi_t^{x_t}
 \end{align}
 In all cases in this thesis, when we say a variable has a \emph{categorical distribution}, we mean to say it is a 1-of-T vector with a multinomial distribution for which the number of trials is fixed at one. Depending on context we may refer to it as a 1-of-T vector or as a categorical scalar. 
 
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.22\textheight]{../Chap1/plots/figs/fig5.png}
+  \caption{Fig5}
+  \label{fig:chap1-fig5}
+\end{figure}
+
  
 \subsection*{Example: Language Models}
  \label{sec:chap1:mackay-lang-model}
-An example of conjugate inference is the language-modelling problem. This is the problem of predicting the next word in a sequence of discrete observations from a finite vocabulary (e.g a sentence) given all previous observations. Common use-cases are predictive keyboards, spell-checkers and speech recognition.\bfshort{Cite use-cases}
+An example of conjugate inference is the language-modelling problem. This is the problem of predicting the next word in a sequence of discrete observations from a finite vocabulary (e.g a sentence) given all previous observations. Common use-cases are spell-checkers\cite{Brill2000}, particularly from noisy inputs such as virtual keyboards\cite{Ward2000a} and speech recognition\cite{Katz1987}\cite{Hannun2014}.
 
-As vocabularies are normally quite large (typically of the order of 30,000 terms), raising this to the power of two or three can lead to models that are over-parameterised: in particular maximum likelihood estimates will often collapse to zero in the absence of training data. ``Laplace smoothing", equivalent to MAP inference using a symmetric Dirichlet prior, is a simple remedy, but unsatisfying in that it does not take into account the information available in the lower-order n-grams.
+The simplest approach is a first-order Markov model:
+\begin{align}
+p(x_0, x_1, x_2, \ldots, x_N) = p(x_0)\prod_{n=1}^{N} p(x_n | x_{n-1})
+\end{align}
+which is sometimes known as a bigram model. For a vocabulary of size T, this involves learning $T^2$ parameters. In the presence of infinite data, better models could be generated by creating higher-order Markov models; also known as n-gram models (equivalent to an (n-1) order Markov model).
+
+In the presence of finite data however higher-order Markov models are over-parameterised: in particular maximum likelihood estimates will often collapse to zero in the absence of training data. ``Laplace smoothing", equivalent to MAP inference using a symmetric Dirichlet prior, is a simple remedy, but unsatisfying in that it does not take into account the information available in the lower-order n-grams.
 
 Using conjugate Bayesian inference it is possible to create a first-order (i.e. bigram) language model\cite{MacKay1995} that uses unigram statistics. Given a sequence of observations $x_1, \ldots, x_D$, where each $x_d \in \{1 \ldots T\}$, we can define for each of the $T$ words a distribution over the next possible word $\vv{\phi}_t \in \VReal{T}$.
 
 \begin{align}
-x_i | x_{i - 1} 
-& \sim \cat{\vv{\phi}_{x_{i-1}}}
+\vv{x}_i | \vv{x}_{i - 1} 
+& \sim \muln{\vv{\phi}_{x_{i-1}}}{1}
 & \vv{\phi}_t 
 & \sim \dir{\vv{\beta}}
 \end{align}
 
-As before, used a corpus W to estimate our parameters, the \emph{exact} predictive distribution is
+As before, used a corpus X to estimate our parameters, the \emph{exact} predictive distribution is
 \begin{align}
-p(w_i = t | w_{i-1}, W)
-& = \ex{\phi_{w_{i-1},t}}{}
-  = \frac{n_{w_{i-1},t} + \beta_t}{\sum_v n_{w_{i-1},v} + \beta_v}
+p(\vv{x}_i = t | \vv{x}_{i-1}, X)
+& = \ex{\phi_{x_{i-1},t}}{}
+  = \frac{n_{x_{i-1},t} + \beta_t}{\sum_v n_{x_{i-1},v} + \beta_v}
 \end{align}
-where $n_{w_{i-1},t}$ denotes the number of times value $t$ was observed immediately after the value of $w_{i-1}$. The preceding sequence (in this case a single term) is known as the \emph{context}
+where $n_{x_{i-1},t}$ denotes the number of times value $t$ was observed immediately after the value of $x_{i-1}$. The preceding sequence (in this case a single term) is known as the \emph{context}
 
 Since the prior term $\beta_v$ will occur in all contexts, one can incorporate unigram probabilities in our bigram estimates by learning the prior $\vv{\beta}$. This approach, of sharing information between contexts in an inference task, is sometimes known as \emph{multi-task learning} and will be discussed in detail in Chapter 3.
 
-Marginalising out the parameters $\vv{\phi}_t$ provides the model evidence $p(W|\vv{\beta})$ as in equation \eqref{eqn:polya-is-evidence}. The derivative of this with respect to $\beta_v$ is:
+Marginalising out the parameters $\vv{\phi}_t$ provides the model evidence $p(X|\vv{\beta})$ as in equation \eqref{eqn:polya-is-evidence}. The derivative of this with respect to $\beta_v$ is:
 \begin{align}
 \frac{d \ln p(W|\vv{\beta})}{d\beta_v} =
 \sum_t
@@ -193,10 +207,10 @@ where $n_{v|t}$ is the number of times word $v$ has been seen after word $t$ and
 \end{align}
 
 
-There are in fact a variety of methods of inferring a Dirichlet distribution, which are explored more fully in \cite{Minka2000}. For example, taking the fully Bayesian perspective, one might want to regulate inference over $\vv{\beta}$ by putting priors on it in turn. In this case it's useful to reformulate the Dirichlet as being parameterised by a concentration parameter $\beta$ with a Gamma prior and a base measure $\vv{u}$ on the simplex with a symmetric Dirichlet prior, such that $\vv{\phi}_t  \sim \dir{\beta \cdot \vv{u}}$.
+There are many other methods of inferring a Dirichlet distribution\cite{Minka2000}: to take a fully Bayesian approach, for example, one might regulate inference over $\vv{\beta}$ by putting priors on it in turn. In this case it's useful to reformulate the Dirichlet as being parameterised by a concentration parameter $\beta$ with a Gamma prior and a base measure $\vv{u}$ on the simplex with a symmetric Dirichlet prior, such that $\vv{\phi}_t  \sim \dir{\beta \cdot \vv{u}}$.
 
 
-This Bayesian model builds on the frequentist Jelinek Mercer\cite{JelinekMercer1980} interpolated language model, wherein the probability of an n-gram was a weighted combination of the probabilities of all m-grams for $m \in \{n, (n-1), \ldots, 1\}$. So for a bigram $p(w_i|w_{i-1}) = \lambda p(w_i|w_{i-1}) + (1 - \lambda) p(w_i)$. Jelinek Mercer required different $\lambda$ for each distinct context (sequence of words $w^i_{i-n+1}$), learned through cross-validation. By contrast, the Baysesian perspective leads to a model that neatly balances between the two based on the number of bigram and unigram observations.
+This Bayesian model builds on the frequentist Jelinek Mercer\cite{JelinekMercer1980} interpolated language model, wherein the probability of an n-gram was a weighted combination of the probabilities of all m-grams for $m \in \{n, (n-1), \ldots, 1\}$. So for a bigram $p(w_i|w_{i-1}) = \lambda p(w_i|w_{i-1}) + (1 - \lambda) p(w_i)$. Jelinek Mercer required different $\lambda$ for each distinct context (sequence of words $w^i_{i-n+1}$), learned through cross-validation. By contrast, the Bayesian perspective leads to a model that neatly balances between the two based on the number of bigram and unigram observations.
 
 An alternative to interpolation models are ``back-off" language-models. One ``backs off" to a simpler estimate if no data exists to support a higher order estimate, i.e the n-gram count is zero. Back-off models typically use a form of discounting, removing a portion of counts from frequently occurring n-grams and assigning the resultant spare probability mass to lower-order n-grams. The best performing back-off model is Knesser-Ney \cite{Chen1999} , which defines the probability of a word as 
 \begin{align}
@@ -217,7 +231,7 @@ p_\text{KN}(w_i | w^{i-1}_{i-n+1}) & =
 & + \lambda(w^{i-1}_{i-n+1}) N_{1+}(w^{i-1}_{i-n+1}, *) p_\text{KN}(w_i | w^{i-1}_{i-n+2})
 \end{split}
 \end{align}
-where $N_{1+}(w^{i}_{i-n}, *)$ is the number of unique contexts (i.e. prefixes) in which the n-gram $w^{i}_{i-n}$ has occurred.  This is a unique feature of interpolated Knesser-Ney: given the sentence ``He left San Francisco via San Francisco airport" a higher unigram probability will be assigned to ``San" as it occurs in two contexts (``left" and ``via") than ``Francisco" which only occurs after ``San". Later in this chapter we will introduce a probabilistic alternative to Knesser-Nye when discussing non-parametric Bayesian methods\bfshort{Follow up on this}
+where $N_{1+}(w^{i}_{i-n}, *)$ is the number of unique contexts (i.e. prefixes) in which the n-gram $w^{i}_{i-n}$ has occurred.  This is a unique feature of interpolated Knesser-Ney: given the sentence ``He left San Francisco via San Francisco airport" a higher unigram probability will be assigned to ``San" as it occurs in two contexts (``left" and ``via") than ``Francisco" which only occurs after ``San".
 
 A further discussion of language-modeling -- including other interpolation and backoff models such as Katz-Smoothing, Witten-Bell Smoothing, Good-Turing Estimation and Absolute Discounting -- is provided by \cite{Goodman2001}.
 
@@ -272,26 +286,40 @@ To determine how to maximise $q(\zdat)$ we observe that, for a fixed $\params$, 
 \end{align}
 As the Kullback-Leibler divergence is always positive, reducing the divergence will increase the ELBO. Its maximum, $\ln p(\xdat | \params)$, is attained when $\kl{q(\zdat)}{p(\zdat|\xdat, \params)} = 0$. Therefore the  E-Step maximisation step is to set $q(\zdat) = p(\zdat | \xdat, \param)$.
 
-This is the MAP variant of the Expectation Maximization (EM) algorithm\cite{Dempster1977}. 
-Both E and M steps increase the bound. In the M-Step, we maximise the ELBO with respect to $\params$, increasing both the likelihood and the ELBO. In the E-Step by setting $q(\zdat) = p(\xdat|\zdat, \params)$ the KL divergence goes to zero, decreasing the gap between the ELBO and marginal likelihood. Consequently EM is guaranteed to find a local maximum of the marginal likelihood.\bfshort{Reference for convergence}
+This is the MAP variant of the generalized Expectation Maximization (EM) algorithm. Both E and M steps increase the bound. In the M-Step, we maximise the ELBO with respect to $\params$, increasing both the likelihood and the ELBO. In the E-Step by setting $q(\zdat) = p(\xdat|\zdat, \params)$ the KL divergence goes to zero, decreasing the gap between the ELBO and marginal likelihood. Consequently EM is guaranteed to find a local maximum of the marginal likelihood\cite{Dempster1977}.
 
 \subsection*{Example: A Mixture of Multinomials}
 \label{sec:ch1:mom}
-\bflong{Add Poisson to Multinomial Here}
-As an example, consider the problem of modelling a corpus of documents. Let $\xd \in \mathbb{N}^T$ be the count of how often each word occurred in document $d$, for all $T$ words (known as the bag-of-words model). If we presume each document is about one of K topics, where each topic has a distribution over word-counts $\vv{\phi}_k$, we can associate a latent categorical variable $\vv{z}_d$ with each document indicating which (unobserved) topic generated its words. Denoting document d's word-count as $n_d = \sum_t x_{dt}$, and letting $\params = \{ \vv{\phi}_{k=1}^K \}$, this gives rise to the mixture of multinomials model\cite{Nigam2000}
+As an example, consider the problem of modelling a corpus of documents. Let $\xd \in \mathbb{N}^T$ be the count of how often each word occurred in document $d$, for all $T$ words (known as the bag-of-words model). If we presume each document is on the subject of exactly one of K topics, where each topic has a distribution over word-counts $\vv{\phi}_k$, we can associate a latent categorical variable $\vv{z}_d$ with each document indicating which (unobserved) topic generated its words. Denoting document d's word-count as $n_d = \sum_t x_{dt}$, and letting $\params = \{ \vv{\phi}_{k=1}^K \}$, this gives rise to the mixture of multinomials model\cite{Nigam2000}
 \begin{align}
 \vv{\theta} & \sim \dir{\vv{\alpha}} &
-\zd|\vv{\theta} & \sim \muln{\vv{\theta}}{1} & 
+\zd|\vv{\theta} & \sim \muln{\vv{\theta}}{1} \\
 \xd|\zd, \params & \sim \prod_k \muln{\param_k}{n_d}^{z_{dk}} & 
 \param_k & \sim \dir{\vv{\beta}}
 \end{align}
 Note that in this model the Dirichlet hyper-parameters $\vv{\alpha}$ and $\vv{\beta}$ are coupled: small symmetric values of $\vv{\alpha}$ will encode a preference for fewer topics, and therefore require denser vocabularies -- and so larger values of $\vv{\beta}$ -- to generate the observations. 
 
-For brevity we will not consider hyper-parameter inference. 
+The choice of the multinomial can be motivated by first assuming that the incidence of each individual word in a document is relatively rare, discrete event; and hence well-characterised by a Poisson distribution $x_{dt} \sim \pois{\lambda_t}$. If we then consider the joint distribution of the $T$ words in our vocabulary:
 
-For a mixture of multinomials model, once we add the constraints that $\sum_k \theta_k = 1$ and $\sum_t \phi_{kt} = 1$, the updates can be derived using the method of partial derivatives with Lagrange multipliers:
+\begin{align}
+\begin{split}
+p(\xd|\vv{\lambda}) 
+& = \prod_t e^{-\lambda_t} \oneover{x_{dt} !} \lambda_t^{x_{dt}} \\
+& = e^{-\sum_t \lambda_t} \cdot \left(
+    \frac{n_d !}{n_d !}
+    \cdot
+    \frac{(\sum_t \lambda_t)^{n_d}}{(\sum_t \lambda_t)^{n_d}} 
+    \right)
+    \cdot \frac{1}{\prod_t x_{dt} !}\prod_t \lambda_t^{x_{dt}} \\
+& = \left(e^{-\sum_t \lambda_t} \oneover{n_d !} (\sum_t \lambda_t)^{n_d}\right)
+    \cdot
+    \left(\frac{n_d!}{\prod_t x_{dt} !} \prod_t \left(\frac{\lambda_t}{\sum_t \lambda_t}\right)^{x_{dt}}\right)
+\end{split}
+\end{align}
+which we recognise as the product of a Poisson distribution over document length, and a Multinomial distribution over word-incidence. Thus the mixture of multinomials model assumes that documents are exchangeable; that words within documents are exchangeable; that each document is generated by a \emph{single} topic only; and that the choice of topic has no impact on document length.
 
-\bfshort{This update for $q(z_d)$ is wrong}
+Inference is straightforwardly obtained via the EM algorithm: once we add the constraints that $\sum_k \theta_k = 1$ and $\sum_t \phi_{kt} = 1$, the updates can be derived using the method of partial derivatives with Lagrange multipliers:
+
 
 \begin{align}
 \text{E-Step:} & & q(z_{dk}) 
@@ -318,13 +346,15 @@ p(\xnew | \xdat, \params)  = \sum_k p(\znew = k | \vv{\theta}) p(\xnew, \znew = 
 \end{align}
 where we have approximated the distributions by substituting the MAP estimates for parameter values in our likelihood.
 
+For brevity we exclude hyper-parameter inference.
+
 In practical terms, individual word probabilities will be very small, since in even small corpora (such as the NIPS dataset of academic papers) there are usually in excess of 10,000 distinct words. Consequently there is a risk of underflow and catastrophic cancellation when evaluating the likelihood in equation \eqref{eqn:mom-estep}. This is avoided by using log-probabilities wherever possible, leading to the following re-writing of the E-Step above:
 
 \begin{align}
-\hat{z}_{dk} = \ln \theta_k + \sum_t w_{dt} \ln \phi_{kt} \\
-\ln p(z_{dk} | w_d) = \hat{z}_{dk} - \ln (\sum_j \exp(\hat{z}_{dj})) \label{eqn:mom-lnz-update}
+\hat{z}_{dk} & = \ln \theta_k + \sum_t w_{dt} \ln \phi_{kt}\quad & 
+\ln p(z_{dk} | w_d) & = \hat{z}_{dk} - \ln (\sum_j \exp(\hat{z}_{dj})) \label{eqn:mom-lnz-update}
 \end{align}
-The second term in equation \eqref{eqn:mom-lnz-update} is the log-sum-exp function, which we will discuss in some detail in Chapter 2. In this case, we would like to avoid evaluating the term $\exp(\hat{z}_{dk})$ since that would trigger the underflow problem once more. Fortunately by observing that
+The second term in the second equation in\eqref{eqn:mom-lnz-update} is the log-sum-exp function, which we will discuss in some detail in Chapter 2. In this case, we would like to avoid evaluating the term $\exp(\hat{z}_{dk})$ since that would trigger the underflow problem once more. Fortunately by observing that
 \begin{align}
 \log(a + b) = \log(a \times (1 + \frac{b}{a})) = \log(a) + \log (1 + \frac{b}{a})
 \end{align}
@@ -334,11 +364,11 @@ and therefore that
 \end{align}
 One can derive the recursive solution
 \begin{align}
-\ln(\sum_j \exp(\hat{z}_{dj})) = z_{d*} + \ln(\sum_j \hat{z}_{dj})
+\ln(\sum_j \exp(\hat{z}_{dj})) = \hat{z}_{d*} + \ln(\sum_j \exp(\hat{z}_{dj} - \hat{z}_{d*}))
 \end{align}
 Where $\hat{z}_{d*} = \arg \max_j \hat{z}_{dj}$
 
-A weakness of mixture-models is that \bfshort{Mixture model problems}
+In practice, particularly for large corpora, the assumption of just one topic per document is too restrictive: intuitively we understand that most documents are about a mixture of topics, to different degrees. In particular with a mixture model, for a fixed dataset, as the number of topics grows, the number of documents presumed to be drawn from topic necessarily diminishes, leading to the problem of overfitting.
 
 \begin{figure}
 \centering
@@ -359,18 +389,11 @@ A weakness of mixture-models is that \bfshort{Mixture model problems}
 
 
 \subsection{Variational EM}
-It is not always feasible to evaluate the posterior distribution $p(\zdat|\xdat, \param)$ exactly. In such cases one needs to either approximate the E-Step update to the distribution (e.g. by parameterising it and taking a gradient step\bfshort{Citation}), or approximate the distribution itself.
+It is not always feasible to evaluate the posterior distribution $p(\zdat|\xdat, \param)$ exactly. In such cases one needs to either approximate the E-Step update to the distribution (e.g. by taking a gradient step\cite{Cappe2009}), or approximate the posterior distribution itself.
 
-\bflong{Cite Hinton for the Mean Field, then cite Archambeau and Hoffman2015 for the structured variant}
+We consider the latter approach, where one assumes that a good approximation to the true distribution $q(\zdat)$ exists within a family of distributions $\qfam$. One popular choice is the family of factorised distributions $q(\zdat) = \prod_m q(\zdat_m)$, known as the mean-field assumption\cite{Neal1998}. Note that this factorisation is not derived from the IID principle, as the in prior discussion on EM, rather it is a modelling approximation made by the practitioner; one which may introduce local minima between $q$ and the true posterior and potentially block paths from bad solutions to good ones\cite{WainwrightJordan2008}. To alleviate this some practitioners use a \emph{structured} factorization that doesn't break as many independence assumptions of the approximated model \cite{Hoffman2015}\cite{Opper2009}\cite{SaulJordan1996}.
 
-\bflong{From Structured Stochastic Inference: Breaking dependencies may also introduce additional local minima into the KL divergence between q and the poste- rior; imposing independence assumptions places noncon- vex constraints on the dual of the solution space, which may block the path from a bad solution to a good one (Wainwright and Jordan, 2008). Structured mean-field partially relaxes the mean-field inde- pendence restriction (Saul and Jordan, 1996). 
-
-Wainwright, M. and Jordan, M. (2008). Graphical models, exponential families, and variational inference. Founda- tions and Trends in Machine Learning, 1(1–2):1–305.
-
-Saul, L. and Jordan, M. (1996). Exploiting tractable sub- structures in intractable networks. Neural Information Processing Systems.
-}
-
-We consider the latter approach, where one assumes that a good approximation to the true distribution $q(\zdat)$ exists within a family of distributions $\qfam$. One popular choice is the family of factorised distributions $q(\zdat) = \prod_m q(\zdat_m)$. Note that this factorisation is not derived from the IID principle, as the in prior discussion on EM, rather it is a modelling assumption made by the practitioner. The question then is how to evaluate the variational E-Step
+We will employ the fully-factorized ``mean-field" approach however: the question now becomes how to evaluate the variational E-Step
 
 
 \begin{align}
@@ -398,10 +421,12 @@ As the KL divergence is always non-negative, the bound is maximised when it is s
 \begin{align}
 q(\zdat_n) \propto \exp\left( \exlogjoint{\tinymath{\prod_{m\neq n} q(\zdat_m)}}  \right)
 \end{align}
+This is the basis for the variational expectation-maximization algorithm\cite{Jordan1999a}\cite{Tzikas2008}.
 
-Unlike the case of EM however, setting the KL divergence to zero does not cause the ELBO to become equal to the likelihood for a fixed $\params$. This is because the true posterior $p(\zdat | \xdat, \params)$ may not be in the family of distributions $\qfam$ which we have chosen. Consequently, the variational E-Step is not guaranteed to maximise the bound, and so the algorithm is not guaranteed to converge to a local maximum as with EM. Optimising the bound will still improve the likelihood however, and may therefore find useful parameter values. Fuller descriptions of variational learning are given in \cite{Jordan1999a}\cite{Bishop2006}\cite{Tzikas2008}. 
+Unlike the case of EM however, setting the KL divergence to zero does not cause the ELBO to become equal to the likelihood for a fixed $\params$. This is because the true posterior $p(\zdat | \xdat, \params)$ may not be in the family of distributions $\qfam$ which we have chosen. Consequently, the variational E-Step is not guaranteed to maximise the bound, and so the algorithm is not guaranteed to converge to a local maximum as with EM. Optimising the bound will still improve the likelihood however, and may therefore find useful parameter values.
 
-\bflong{Look at http://alberto.bietti.me/files/dpmixtures.pdf for an example of how variational inference can be expressed as an optimisation problem}
+The choice of posterior distribution can be motivated by observing the functional form of the parameters in the approximate posterior\cite{Bishop2006}; or may be chosen in advance by the practitioner, in which case the variational algorithm can be recast as the problem of minimising the Kullback-Liebler divergence from the practitioner's approximation to the true posterior.
+
 
 \subsubsection*{Example: Latent Dirichlet Allocation - an Admixture of Multinomials}
 \label{sec:chap1:lda}
@@ -410,14 +435,13 @@ An example of variational EM is the latent Dirichlet allocation (LDA) algorithm\
 The inference procedure draws a mixture of topics $\thd$ for a document $d$, then for the each position $n$ in the document, draws a topic $\zdn$ and from it a word $\xdn$
 \begin{align}
 \thd & \sim \dir{\vv{\alpha}} &
-\zdn|\thd & \sim \cat{\thd} & 
-\xdn|\zdn, \param & \sim \prod_k \cat{\param_k}^{\zdnk} & 
+\zdn|\thd & \sim \muln{\thd}{1} \\
+\xdn|\zdn, \param & \sim \prod_k \muln{\param_k}{1}^{\zdnk} & 
 \param_k & \sim \dir{\vv{\beta}}
 \end{align}
 Note that whereas $\vv{\theta}$ represented our corpus-level distribution over topics in the mixture of multinomials, $\thd$ now represents our document-level mixture. The corpus-level information is represented by the hyper-parameter $\vv{\alpha}$. 
 
 Letting $\Theta = \{ \thd \}_{d=1}^D$ our MAP algorithm therefore is to evaluate
-\bfshort{This update for $q(z_d)$ is wrong}
 \begin{align}
 \begin{split}
 \params 
@@ -426,11 +450,11 @@ Letting $\Theta = \{ \thd \}_{d=1}^D$ our MAP algorithm therefore is to evaluate
 \end{split}
 \end{align}
 
-Since it is no longer possible to analytically evaluate the posterior $p(\zdat, \Theta | \xdat)$ we use the variational approximation $p(\zdat, \Theta | \xdat) \approx  q(\zdat)q(\Theta)$. Using this we can derive a lower-bound on the evidence, determine the approximate posteriors and solve for $\params$. Inspection of the ELBO shows the approximation further decomposes as $q(\Theta)q(\zdat) = \prod_d q(\thd)\prod_n q(\zdn)$ from which the following updates arise:
+Since it is no longer possible to analytically evaluate the posterior $p(\zdat, \Theta | \xdat)$ we use the variational approximation $p(\zdat, \Theta | \xdat) \approx  q(\zdat)q(\Theta)$. Using this we can derive a lower-bound on the evidence, determine the approximate posteriors and solve for $\params$. Inspection of the ELBO shows the approximation further decomposes as $q(\Theta)q(\zdat) = \prod_d q(\thd)\prod_n q(\zdn)$. Lastly, using Lagrange multipliers to ensure that the posterior responsibilities sum to one, $\sum_k z_{dnk} = 1$, standard calculus leads to the updates:
 
 \begin{align}
-q(\zdn) & = \cat{\ex{\thd}{q}} \\
-q(\thd) &=  \dir{\sum_d \sum_n \ex{\zdnk}{q} + \vv{\alpha} - 1} \\
+q(\zdnk) & \propto \param_{k,w_{dn}}\exp(\ex{\ln \theta_{dk}}{q}) \\
+q(\thd) &=  \dir{\sum_d \sum_n \ex{\zdn}{q} + \vv{\alpha}} \\
 \phi_{kt} & =
     \frac{
         \sum_d \sum_n \ex{\zdnk}{q}x_{dnt} + \beta_t - 1
@@ -438,17 +462,25 @@ q(\thd) &=  \dir{\sum_d \sum_n \ex{\zdnk}{q} + \vv{\alpha} - 1} \\
         n_k + \sum_v \left( \beta_v - 1 \right)
     } \qquad n_k = \sum_d \sum_n \ex{z_{dnk}}{q}
 \end{align}
+For variables with a Dirichlet distribution $\vv{\theta} \sim \dir{\vv{\alpha}}$, \begin{equation}\ex{\ln \vv{\theta}}{} = \left(\Psi(\alpha_k) - \Psi (\sum_j \alpha_j)\right)_{k=1}^K\end{equation}, where the digamma function $\Psi(\alpha_k) = d/d\alpha_k \Gamma(\alpha_k)$ is the derivative of the Gamma function, a generalistion of the factorial function to real numbers such that $\alpha! = \Gamma(\alpha + 1)$
 
 As with our discussion of the mixture of multinomials, we have omitted any inference of the hyper-parameters. While this is common, with practitioners frequently fixing the hyperparameters at the symmetric values $\alpha = \frac{50}{K}, \beta=0.001$ based on results quoted in \cite{Griffiths2004}, research has shown\cite{Wallach2009a} that the model's predictive accuracy improves when hyper-parameter inference is performed, notably for the hyper-parameter of the topic prior $\vv{\alpha}$. In particular, it was shown that some topics are much more likely a priori than others, and that the most probable topic a priori is often a collection of ``stop-words": semantically meaningless words induced by grammar such as "of", "the", "from" etc.
 
+\label{chap1:lda-prediction}
 Prediction is
-\bflong{Prediction}
+\begin{align}
+p(\xnew|\xdat,\params) = \sum_{\vv{z}^*} \int_{\vv{\theta}^*} p(\xnew|\vv{z}^*,\params)p(\vv{z}^*|\vv{\theta}^*)p(\vv{\theta}^*|\vv{\alpha}) d\vv{\theta^*}
+\end{align}
+As with the mixture of multinomials, one can approximate this by taking point estimates of both $\vv{\theta}^*$ and $\vv{z}^*$, substituting them in for the true random-variables, and thereby eliminate the sum and integration.
 
-\bflong{Extend MAP to hyper-parameters}
+Estimates for the approximate posterior modes of $\vv{\theta}^*$ and $\vv{z}^*$ can be obtained by re-running the variational inference algorithm on the new data only, keeping $\params$ and hyper-parameters fixed. In practice this is a poor approximation\cite{Wallach2009b} but is frequently employed (e.g. in \cite{Asuncion2012}) due to its simplicity. One can improve the accuracy by integrating $\vv{\theta}$ entirely from the likelihood and performing inference in terms of $\vv{z}^*$ and $\params$ only\cite{Mimno2012a}\cite{Hoffman2015}. 
 
+Other approximations involve generating samples of $\vv{z}_{*n}$ and using either the harmonic-mean of the likelihood $p(\xnew | z_{sn},\Phi)$ with these samples\cite{Griffiths2004}\cite{Griffiths2005}\cite{Wallach2006}, or else using a ``left-to-right" particle-sampling regime\cite{Mimno2011}\cite{Mimno2012a} to generate samples of $z_{dn}$ and evalute the likelihood. Empirical tests have shown\cite{Wallach2009b} to be the most accurate.
+
+\subsubsection*{Topic-Vocabulary Distributions}
 An advantage of the Bayesian method is -- since the inputs and outputs of Bayesian inference are probability distributions -- that models can be combined together.
 
-Thus for example, one can replace the use of the Multinomial distribution with more sophisticated ways of representing text for each topic. For example the bigram language model introduced on page \pageref{sec:chap1:mackay-lang-model} has been combined with LDA, in two variations\cite{Wallach2006}: one where the Dirichlet hyper-prior was learned across all topics, and one where it was learned for each individual topic.\bfshort{which was best}.
+Thus for example, one can replace the use of the Multinomial distribution with more sophisticated ways of representing text for each topic. For example the bigram language model introduced on page \pageref{sec:chap1:mackay-lang-model} has been combined with LDA, in two variations\cite{Wallach2006}: one where the Dirichlet hyper-prior was learned across all topics; and one where it was learned for each individual topic, which was the approach that obtained the best posterior likelihood of unseen data.
 
 A deficiency of language models based on text is that they do not adequately capture the power-law distribution of text (see figure \ref{fig:zipfian-words} for examples of text distributions). The Pitman-Yor Process (PYP) extends the Dirichlet process with a discount factor: this in turn allows it to model data with a power-law distribution. Using the Pitman-Yor Process instead of a plain Dirichlet distribution a Bayesian equivalent to the Knesser-Ney language model was derived in\cite{Teh2002} and then combined with the LDA framework in\cite{Lindsey2012}. Since the the PYP can model arbitrarily long sequences, it is necessary to introduce a Bernoulli variable $c_{dn}$ for each word in each document to determine when the sequence of words has ended: a form of change-point detection. 
 
@@ -468,7 +500,9 @@ z_{dn} | c_{dn}, z_{d,n-1}, \thd & \sim \left\{ \begin{array}{lr}
  \end{array}\right.
 \end{align}
 
-with Beta priors for $a_{|\vv{u}|}$ and $\pi_{zw}$, a Gamma prior for  $b_{|\vv{u}|}$ and $\thd \sim \dir{\vv{\alpha}}$.
+with Beta priors for $a_{|\vv{u}|}$ and $\pi_{zw}$, a Gamma prior for  $b_{|\vv{u}|}$ and $\thd \sim \dir{\vv{\alpha}}$. 
+
+Pitman-Yor and Dirichlet processes are discussed in depth in section \ref{sec:chap1:DPs} .
 
 A slightly more primitive version of this model\cite{Wang2007} simply uses different distributions for unigrams and bigrams and a Bernoulli indicator $c_{dn}$ to determine if word $n$ in document $d$ should be sampled according to the bigram distribution of the previous word's topic, or from a unigram distribution for a new topic.
 
@@ -498,7 +532,7 @@ w_{dn} & \sim \muln{\vv{\phi}_{dk}}{1} &
 \vv{\phi}_{dk} & \sim \dir{\alpha \vv{m}_k} &
 \vv{m}_k & \sim \dir{\vv{\beta}}
 \end{align}
-Overfitting is handled by collapsing out the document-level and global vocabularies, giving rise a distribution defined solely in terms of counts and hyper-parameters. The intent is to keep the corpus level topics broad: so that there's one topic for football for example, instead of topics for each individual team. The idea of burstiness was combined with Pitman-Yor Processes for topic distributions in\cite{Buntine2014}. Note that in this case the PYP was used directly as a distribution over words: this was not the PYP language model.
+Overfitting is handled by integrating out the document-level and global vocabularies, as a technique described in the next section, giving rise a distribution defined solely in terms of counts and hyper-parameters. The intent is to keep the corpus level topics broad: so that there's one topic for football for example, instead of topics for each individual team. The idea of burstiness was combined with Pitman-Yor Processes for topic distributions in\cite{Buntine2014}. Note that in this case the PYP was used directly as a distribution over words: this was not the PYP language model.
 
 Logistic-Normal distributions have been used for topics when one wants to permute the vocabularies based either on location \cite{Eisenstein2010} or time\cite{Blei2006a}. In the case of location, partially observed locations were used to infer location-specific permutations of global topics, forming -- with the prior -- a three-level hierarchy. In the case of time, the distribution forms a Kalman filter:
 \begin{align}
@@ -508,7 +542,7 @@ w_{dn} & \sim \muln{\sigma(\vv{\phi}_k^t)}{1} &
 \end{align}
 Earlier approaches to topic variation over time simply fixed topics and varied their prior probability dependent on the observed time\cite{Wang2006}. 
  
-None of these variants models the \emph{length} of documents. However as shown in \fixme{ref}\bfshort{Do ref} a multivariate-poisson distribution over words will capture the idea of topics having certain lengths, sometime explored in\cite{Gopalan2013} in the context of academic paper recommenation.
+Non of these variants models the \emph{length} of documents. If that is important to the problem at hand, the multinomial can be replaced with a multivariate Poisson\cite{Gopalan2013} to capture both the idea of documents have certain lengths, and there existing certain ``budgets" from which the counts of words per topic are drawn.  
 
 Other approaches have been used with less success, the Von-Mises Fisher distribution, unlike the multinomial, penalises missing words, and a topic model based on this was proposed in \cite{Reisinger2010}, but it did not constitute a proper admixture model.
 
@@ -520,7 +554,7 @@ Determining such fused word-pairs, or ``collocations", automatically  involves p
 \subsubsection{Rao-Blackwellisation}
 While it's possible to use variational inference with any approximation to the posterior, the mean-field approximation -- that is to say, the assumption that posteriors are independent -- is the most popular. 
 
-The more this approximation diverges from the true posterior, the worse one can expect the model fit to be: in particular it can introduce local minima\bfshort{The Ref for this is in the intro}. In the case of LDA, there are strong dependencies between the parameters and latent variables.
+The more this approximation diverges from the true posterior, the worse one can expect the model fit to be: in particular it can introduce local minima\cite{WainwrightJordan2008}. In the case of LDA, there are strong dependencies between the parameters and latent variables.
 
 An approach to improve the mean-field method therefore is to eliminate as many parameters as possible by analytically marginalising (``collapsing") them out of the full log-likelihood, and perform inference on the individual word-topic memberships only. In implementations of LDA using non-deterministic inference with Gibbs sampling\cite{Griffiths2004} this has been shown to converge quickly to a better model fit than batch variational inference\cite{Asuncion2012}.
 
@@ -529,14 +563,14 @@ In the case of Gibbs sampling, marginalising out $\thd$ and $\vv{\phi}_k$ follow
 The derivation begins by re-writing the ELBO as
 
 \begin{align}
-\ln p(W) & \geq \ex{\ex{p(\vv{w},\vv{z},\vv{\theta},\vv{\phi}|\vv{\alpha},\vv{\beta})}{q(\vv{\theta},\vv{\phi}|\vv{z})}}{q(\vv{z})}
+\ln p(X) & \geq \ex{\ex{p(\vv{x},\vv{z},\vv{\theta},\vv{\phi}|\vv{\alpha},\vv{\beta})}{q(\vv{\theta},\vv{\phi}|\vv{z})}}{q(\vv{z})}
 +\ent{q(z)q(\vv{\theta},\vv{\phi}|z)}\\
-& = \ex{\ex{p(\vv{w},\vv{z},\vv{\theta},\vv{\phi}|\vv{\alpha},\vv{\beta})}{q(\vv{\theta},\vv{\phi}|z)} + \ent{q(\vv{\theta},\vv{\phi}|\vv{z})}}{q(\vv{z})}
+& = \ex{\ex{p(\vv{x},\vv{z},\vv{\theta},\vv{\phi}|\vv{\alpha},\vv{\beta})}{q(\vv{\theta},\vv{\phi}|z)} + \ent{q(\vv{\theta},\vv{\phi}|\vv{z})}}{q(\vv{z})}
 +\ent{q(z)} 
 \end{align}
 where subscripts have been skipped for brevity. If one sets $q(\vv{\theta},\vv{\phi}|z) = p(\vv{\theta},\vv{\phi}|\vv{w},\vv{z},\vv{\theta},\vv{\alpha},\vv{\beta})$, i.e the true posterior, one obtains a bound which is by definition tighter than that obtained by making the mean-field assumption that $\vv{\theta}$ and $\vv{\phi}$ are independent. 
 \begin{equation}
-\ln p(W) \geq \ex{p(\vv{w},\vv{z}|\vv{\alpha},\vv{\beta})}{q(\vv{z})} + \ent{q(z)}
+\ln p(X) \geq \ex{p(\vv{x},\vv{z}|\vv{\alpha},\vv{\beta})}{q(\vv{z})} + \ent{q(z)}
 \end{equation}
 Taking derivatives of the marginal full-data likelihood and solving at zero gives the following update for $z_{dtk}$, indicating the (batched) probability that the (multiple) instances of word $t$ in document $d$ were generated by topic $k$
 {\small
@@ -624,9 +658,9 @@ from which the similarity to the CVB0 algorithm is particular is noticeable.
 
 The runtime characteristics for these two algorithms is, however very different. For every character of every document, one need only store a single integer for a Gibbs sampler, indicating the sampled topic, whereas for LDA/CVB one needs to store a full distribution over all topics, dramatically increasing memory use.
 
-CVB0 has been shown to outperform CVB1 both in published work\cite{Asuncion2012}\cite{Teh2007} and our own experiments (see section \ref{sec:chap1:experiments}), which is strange is it is ostensibly a \emph{worse} approximation to the true model. Subsequent research\cite{Sato2012} however has shown that it is an exactly the algorithm obtained by minimising the the $\alpha$-divergence between the true posterior and approximation. The $alpha$-divergence is a more general probability divergence, which approaches $\kl{q}{p}$ as $\alpha \rightarrow 0$ and $\kl{p}{q}$ as $\alpha \rightarrow 1$
+CVB0 has been shown to outperform CVB1 both in published work\cite{Asuncion2012}\cite{Teh2007} and our own experiments (see section \ref{sec:chap1:experiments}), which is strange is it is ostensibly a \emph{worse} approximation to the true model. Subsequent research\cite{Sato2012} however has shown that it is exactly the algorithm obtained by minimising the the $\alpha$-divergence between the true posterior and approximation. The $\alpha$-divergence is a more general probability divergence, which approaches $\kl{q}{p}$ as $\alpha \rightarrow 0$ and $\kl{p}{q}$ as $\alpha \rightarrow 1$
 
-LDA/Gibbs has a second advantage to variational methods: sparsity. In a sampling implementation, the estimates for $\thd$ are recovered simply by averaging the per character samples. Since these are ``hard" -- one is exactly one, the rest zero  -- the estimates for $\thd$ tend, as the topic-count increases, to be very sparse in turn. Hybrid inference schemes have been used\cite{Mimno2012a} to exploit this sparsity, using a Gibbs sampler to estimate $\thd$ given a fixed vocabulary parameter $\vv{\phi}_k$, then the using those sparse estimates of $\thd$ in turn to update $\vv{\phi}_k$ in turn.
+LDA/Gibbs has a second advantage to variational methods: sparsity. In a sampling implementation, the estimates for $\thd$ are recovered simply by averaging the per character samples. Since these are ``hard" -- being zeroes and a single one  -- the estimates for $\thd$ tend, as the topic-count increases, to be very sparse in turn. Hybrid inference schemes have been used\cite{Mimno2012a} to exploit this sparsity, using a Gibbs sampler to estimate $\thd$ given a fixed vocabulary parameter $\vv{\phi}_k$, then the using those sparse estimates of $\thd$ in turn to update $\vv{\phi}_k$ in turn.
 
 One can also make a connection between the standard variational implementation of LDA and Gibbs sampling. Recall that by using our variational MAP-EM approach on page \pageref{sec:chap1:lda} the update was
 
@@ -684,7 +718,7 @@ So long as $\sum_t \rho_t = \infty$ and $\sum_t \rho^2_t < \infty$ this algorith
 
 While a step size of $\rho_t = \oneover{t}$ meets these criteria, typically\cite{Gopalan2013}\cite{Hoffman2012}\cite{Hoffman2010} the form $\rho_t = (t + t_0)^{-\kappa}$ is used instead, where $t_0 > 0$ is a delay parameter and $\kappa \in (0.5,1]$ controls how quickly the step-size diminishes. Figure \ref{fig:learning-rates} shows how these affect the learning rate over several iterations.
 
-Alternatively one can adapt the learning rate according to instantaneous evaluations of the model fit. In \cite{Amari1998} the step-size was adjusted based on the probability of the data at each step
+Alternatively one can adapt the learning rate according to instantaneous evaluations of the model fit\cite{Amari1998}:
 \begin{align}
 \rho_{t+1} & \leftarrow  \rho_t \exp\left( \alpha\beta f^t(\varparam)  - \alpha\rho_t \right) & f^t(\varparam) &= -\elbot{t}
 \end{align}
@@ -830,7 +864,7 @@ $q(\zdat, \Theta, \Phi) = \prod_k q(\param_k)\prod_d q(\thd, \vv{z}_d | \param)$
 \label{sec:chap1:DPs}
 Determining the number of components is an issue with mixture and admixture models. A simple approach is to try different counts and evaluate the fit on held-out data. This can be combined with heuristic methods such as canopy-clustering\cite{McCallum2000} to determine an appropriate range of component-counts  in advance.
 
-In the previous material we have used a Dirichlet distribution as a prior on the number of  components.  two-parameter definition of a Dirichlet distribution (used in \cite{MacKay1995}\cite{Wallach2006}\cite{Wallach2009a} among others), where one writes $\vv{\theta} \sim \dir{\alpha \vv{m}}$ where $\vv{m}$ is the ``base-measure" on the simplex, and $\alpha$ is a ``concentration" parameter. This reflects the fact that two Dirichlet distributions may represent the distribution (e.g. $(2, 6, 10, 4)$ and $(0.2, 0.6, 1, 0.4)$) which differ only in ``concentration", i.e. by how much will a single observation affect the posterior. The manner in which the prior ``pseudo-counts" are transformed by the likelihood is sometimes described as ``Polya Urn" model.
+In the previous material we have used a Dirichlet distribution as a prior on the number of  components, and have followed the standard notation where it has a single hyper-parameter: however the two-parameter definition of a Dirichlet distribution (used in \cite{MacKay1995}\cite{Wallach2006}\cite{Wallach2009a} among others), where one writes $\vv{\theta} \sim \dir{\alpha \vv{m}}$ where $\vv{m}$ is the ``base-measure" on the simplex, and $\alpha$ is a ``concentration" parameter is often more amenable to Bayesian influence, and decomposes the two aspects of the hyperparameter. Consider that two Dirichlet distributions may be parameterised in such a way (e.g. $(2, 6, 10, 4)$ and $(0.2, 0.6, 1, 0.4)$) such that the underlying base-measures are identical, only only the ``concentration" param , i.e. by how much will a single observation affect the posterior, varies.
 
 Thus the difference between a very small and very large symmetric hyperprior (where $\vv{m}=\vv{1}$) is only in the scale of the \emph{concentration parameter} $\alpha$, with small concentrations encoding a preference for sparse models
 
@@ -889,9 +923,7 @@ The Dirichlet Process (DP) is a measure over all possible probability measures o
     \right)
 }
 \end{align}
-where $\alpha > 0$ is the concentration parameter and $H$ is the base-measure on the event-space. \fixme{Kolmogorov}. As draws from the DP are discrete, one can write the distribution as
-
-\bflong{Check this}
+where $\alpha > 0$ is the concentration parameter and $H$ is the base-measure on the event-space. As draws from the DP are discrete, one can write the distribution as
 
 \begin{equation}
 G = \sum_{k=1}^{\infty} \theta_k \delta_{\phi^*_k} \label{eqn:ch1:dp-as-weighted-atoms}
@@ -917,8 +949,6 @@ p(z_i = K + 1) & = \frac{\alpha}{i + \alpha - 1}
 The corresponding distinct atom at table k is directly sampled from the base measure $\phi^*_k \sim H$. Note that this exhibits a ``rich-get-richer" property in which the more customers are sat at a table, the greater the probability that a new customer will be sat at that table.
 
 This arrangement of observations -- or ``customers" --  at tables is a partitioning of a potentially infinite stream of exchangeable observations into an infinite sequence of tables, each associated with a distinct atom $\phi^*_k$, which it should be clear is equivalent to a clustering. In the presence of finite data only a finite number of tables employed.
-
-\bflong{Add note about Dirichlet dir stick breaking}
 
 An alternative to the CRP is the stick-breaking process\cite{Sethuraman1994}. Whereas the CRP is concerned with the assignment of observations to partitions, the stick-breaking process, is concerned with the estimation of the size of the partitions, from largest to smallest: this is the problem of estimating $\theta_k$ in \eqref{eqn:ch1:dp-as-weighted-atoms}. This proceeds by recursively using draws from a Beta distribution to assign to proportion of the remaining probability mass to each distinct atom. Given a dirichlet process $\DP{\alpha, H}$ one makes draws $\vv{\theta} \sim \DP{\alpha, H}$ by
 
@@ -1021,28 +1051,58 @@ G_d|\gamma, G_0 & \sim \DP{\gamma, G_0} \\
 This model can be representing using a hierarchical stick-breaking construction, illustrated in figure \ref{fig:inf-plates}.
 \begin{align}
 \theta_{0k} & = u_{0k} \prod_{j=1}^{k-1}(1-u_j) &
-u_{0k} & \sim \betadist{1}{\alpha} \qquad\qquad
+u_{0k} & \sim \betadist{1}{\alpha_0} \qquad\qquad
 \phi^*_k \sim H \\
 \theta_{dk} &= u_{dk} \prod_{j=1}^{k-1}(1 - u_{dj}) &
 u_{dk}|\vv{u}_{0} & \sim \betadist{\gamma u_{0k}}{\gamma ( 1 - \sum_{j=1}^{k} u_{0j} )} \\
 \zdn | \thd & \sim \muln {\thd}{1} &
 \xdn | \zdn, \Phi^* &\sim \muln{\phi^*_{z_{dn}}}{1}
 \end{align}
-however inference is much simplified by taking an alternative stick-breaking decomposition\cite{Wang2011a}
+where $\theta_{ok}$ is the corpus-level mixture and is not strictly required for either inference or prediction. Unfortunately, in this formulation, there is a tight coupling between the corpus stick-breaking weights $\vv{u}_0$ and the document weights $\vv{u}_d$ which preclude closed form updates.
+
+Inference is much simplified however by taking the following alternative stick-breaking decomposition\cite{Wang2011a}. First we sample the corpus-level topics exactly as before:
 \begin{align}
-\theta_{dk} = u_{dk} \prod_{j=1}^{k-1}(1-u_{dj})
-u_{dk} & \sim \betadist{1, \alpha} & 
-\phi^*_{dk} & \sim G_0 \\
-G_d &= \sum_{k=1}^\infty \theta_{dk}\phi^*_{dk}
+\theta_{0k} & = u_{0k} \prod_{i=1}^{k-1}(1-u_i) &
+u_{0k} & \sim \betadist{1}{\alpha_0} \qquad\qquad
+\phi^*_k \sim H 
 \end{align}
-In this setup each document-level atom $\phi^*_{dk}$ maps to a distinct corpus-level atom $\phi^*_{k}$ drawn from $G_0$.
+and denote $G_0 = \sum_{k=1}^{\infty} \theta_{0k}\delta_{\phi^*}$. Next we employ simple straight-forward stick-breaking construction for the document-level topics without an explicit coupling with the corpus level sticks.
+\begin{align}
+\theta_{dj} & = u_{dj} \prod_{i=1}^{j-1}(1-u_i) &
+u_{dj} & \sim \betadist{1}{\alpha} \qquad\qquad
+\vv{\omega}^*_{dj} \sim G_0
+\end{align}
+and denote $G_d = \sum_{j=1}^{\infty} \theta_{dj}\delta_{\vv{\omega}^*_{dj}}$. Since draws from a Dirichlet process are discrete, there will always be exit a $\vv{\phi}_k^*$ from the corpus level-distribution which is identical to the document-level atom $\vv{\omega}_{dj}^*$. This ensures topic-parameters are shared between documents\footnote{In fact there may be multiple $\vv{\omega}_{dj}^*$ that are the same as a single corpus-level atom $\vv{\omega}_{dj}^*$: this is similar to the Chinese restaurant process in which multiple ``tables" (i.e. partitions) may have the same atom associated with them.}.
 
-\bflong{Add inference scheme}
+Observing this, we can dispense with the document-level atoms altogether, and instead introduce a mapping variable $c_{djk}$ which identifies the corpus level atom $\vv{\phi}_k^*$ corresponding to the j-th document-level atom $\vv{\omega}_{dj}^*$, i.e. $\vv{\omega}_{dj}^* = \vv{\phi}_{c_{dj}}^*$. Documents are thus generated by sampling $\vv{c}_{dj}$ and then using it to draw each of the $n$ words as follows:
+\begin{align}
+\vv{c}_{dj} & \sim \muln{\vv{u}_0}{1} &
+\vv{z}_{dn} & \sim \muln{\thd}{1} &
+\vv{w}_{dn} & \sim \muln{\vv{\phi}_{c_{d,z_{dn}}}}{1}
+\end{align}
+This is equivalent to drawing $\vv{\omega}_{dn} \sim G_d$ and using it to generate the observed word $w_{dn}$: however by exploiting the fact that $\vv{\omega}_{dn} = \vv{\phi}_{c_{d,z_{dn}}}$, closed form variational inference becomes possible using the standard mean-field factorization of the posterior $q(\vv{u}_0, U, C,Z,\Phi)$ and truncated counts over the per-document and per-corpus atoms, $T_J$ and $T_K$ respectively. The resulting updates are:
+\begin{align}
+q(c_{dj} = k) & \propto \exp\left(\sum_n \ex{z_{dnj}}{q} \ex{\ln p(\wdn|\vv{\phi}^*_k)}{q} + \ex{\ln p(\theta_{0k})}{q}  \right) \\
+q(z_{dn} = j) & \propto \exp\left(\sum_k \ex{c_{djk}}{q} \ex{\ln p(\wdn|\vv{\phi}^*_k)}{q} + \ex{\ln p(\theta_{dk})}{q} \right) \\
+q(u_{0} = k) & = 
+    \betadist{
+        1 + \sum_n \sum_{j=1}^{T_J}\ex{c_{djk}}{q}
+    }{
+       \alpha_0 + \sum_n \sum_{i=k+1}^{T_K} \sum_{j=1}^{T_J}  \ex{c_{dji}}{q}
+    } \\
+q(u_{d} = j) & = \betadist{1 + \sum_n \ex{z_{dnj}}{q}}{\alpha + \sum_{i=j+1}^{T_J} \ex{z_{dni}}{q}} \\
+q(\vv{\phi}^*_k) & = \dir{ 
+    \vv{\beta} + \sum_d \sum_j^{T_J} \ex{c_{djk}}{q} \left(
+        \sum_n \ex{z_{dnj}}{q} \wdn
+    \right)
+}
+\end{align}
+where $\vv{\beta}$ is the hyper-parameter of the base distribution $H = \dir{\vv{\beta}}$
 
-Markov-Chain Monte Carlo (MCMC) methods have also been employed for the Dirchlet Processes of course, typically ``collapsing" out $G$ and using the Chinese Restaurant Process to sample assignments for each observations\cite{MacEachern1994}\cite{Escobar1995}\cite{Neal2000}, though truncated stick-breaking methods have also been employed\cite{Ishwaran2001}. Empirical comparisons of infinite mixture inference schemes model using Gibbs sampling via the Chinese Restaurant Process; Gibbs sampling using truncated stick-breaking process; and the variational inference scheme given in equations \eqref{eqn:ch1:inf-mom-var-algor-first}-\eqref{eqn:ch1:inf-mom-var-algor-first-last} have shown that variational methods converge much fastest, but sampling using truncated stick-breaking produces models which best explain held-out observations\cite{Blei2006b}
 
+Markov-Chain Monte Carlo (MCMC) methods have also been employed for the Dirchlet Processes of course, typically ``collapsing" out $G$ and using the Chinese Restaurant Process to sample assignments for each observations\cite{MacEachern1994}\cite{Escobar1995}\cite{Neal2000}, though truncated stick-breaking methods have also been employed in conjunction with sampling\cite{Ishwaran2001}. Empirical comparisons of infinite mixture inference schemes model using Gibbs sampling via the Chinese Restaurant Process; Gibbs sampling using truncated stick-breaking process; and the variational inference scheme given in equations \eqref{eqn:ch1:inf-mom-var-algor-first}-\eqref{eqn:ch1:inf-mom-var-algor-first-last} have shown that variational methods converge much fastest, but sampling using truncated stick-breaking produces models which best explain held-out observations\cite{Blei2006b}
 
-The HDP, being the non-parametric version of LDA, has like LDA seen a similar degree of interest in inference schemes, which include non-parametric variants of the collapsed CVB/CVB0 algorithsm\cite{Sato2012a}, and and online variational algorithms using natural gradients\cite{Wang2011a}. A Gibbs sampler for the HDP can be derived by collapsing out $G_d$ and $G_0$ which leads to the Chinese Restaurant Franchise sampler\cite{Teh2006}.
+The HDP, being the non-parametric version of LDA, has like LDA seen a similar degree of interest in inference schemes, which include non-parametric variants of the collapsed CVB/CVB0 algorithsm\cite{Sato2012a}, and and online variational algorithms using natural gradients\cite{Wang2011a}. A Gibbs sampler for the HDP can be derived by collapsing out $G_d$ and $G_0$ which leads to the Chinese Restaurant Franchise process\cite{Teh2006}.
 
 \subsubsection{Pitman-Yor Process}
 \begin{figure}
@@ -1065,7 +1125,6 @@ G & \sim \PYP{d, \alpha, H} \\
 \phi_n | \phi_1, \ldots, \phi_{n-1} & \sim 
     \frac{\sum_{j=1}^{i-1} \delta_{\phi_j} - d + (\alpha + dK) H}{i + d + \alpha - 1} \label{eqn:ch1:pyp-marginal}
 \end{align}
-\bflong{This is wrong!}
 From this perspective it can be shown that the DP is just a special case of the PYP where the discount parameter $d=0$. If $\alpha = 0$ and $d=\half$ the resulting process is equivalent to an Inverse-G. Equation \eqref{eqn:ch1:pyp-marginal} also indicates that the Chinese Restaurant Process can be constructed by incorporating the discount parameter in the probabilities.
 \begin{align}
 p(z_i = k) & = \frac{n^i_k - d}{i + \alpha - 1} &
@@ -1081,26 +1140,11 @@ The stick-breaking construction follows similarly to the DP. Given a Pitman-Yor 
 u_k & \sim \betadist{1-d}{\alpha + kd} &
 \phi^*_k \sim H
 \end{align}
-It can be seen that the stick-breaking process representation of the DP is a special case of this more general stick-breaking process where both parameter of the Beta distribution can vary. This general process is known as the Griffiths-Engen-McCloskey (GEM) distribution distribution\cite{Pitman2002}\bfshort{Everyone cites this paper for this name, but I'm not sure they're doing it right}.
+It can be seen that the stick-breaking process representation of the DP is a special case of this more general stick-breaking process where both parameter of the Beta distribution can vary. This general process is known as the Griffiths-Engen-McCloskey (GEM) distribution distribution\cite{Pitman2002}.
 
 Pitman-Yor processes have been used both as priors over infinite mixtures and admixtures: notably the HDP was extended to use both Pitman-Yor processes for topic-distributions and for for word-distributions\cite{Buntine2014}, where they captured the power-law distribution of words, and admitted a potentially infinite vocabulary.
 
-\subsubsection*{Example: Pitman-Yor Language Model}
-On page \pageref{sec:chap1:mackay-lang-model} we discussed the hierarchical Dirichlet language-model. As should be clear now, the Dirichlet distribution is not an ideal fit for words as it does not exhibit a power-law. However by using Pitman-Yor Processes one can capture this aspect of 
-
-The PYP language model\cite{Teh2002}
-
-\bflong{Just do a summary, point to the paper for inference, add note it uses CRP but to consider SeqMem or alternative}
-
-
-\bflong{Move ref to LDA with PYP-Lang-Model here.}
-
-\bflong{Simplify the discussion of language models and IKN}.
-
-
-
-
- 
+Pitman-Yor processes have additionally been used to create a hierarchical language model which has been shown to be a Bayesian analogue to modified Knesser-Ney\cite{Teh2002}, and is one of the best performing Bayesian language models, which applications beyond text to general compression\cite{Wood2011}. 
 
 
 %Dirichlet processes, like Dirichlet distributions assume that components are near-independent\footnote{The requirement that samples like on the simplex means they cannot be considered \emph{fully} independent}. The Discrete Infinite Logistic Normal (DILN) distribution\cite{Paisley2012}\cite{Paisley2012b} incorporates a HDP into CTM in order to capture correlations amongst a potentially infinite number of components. The derivation proceeds in several stages. 
@@ -1149,86 +1193,33 @@ The PYP language model\cite{Teh2002}
 \section{Evaluating Model Fit}
 \label{sec:chap1:eval}
 
-A number of methods have been proposed to evaluate admixture models. By far the most popular is perplexity, which is defined as the geometric mean of the reciprocals of token likelihoods. Assuming exchangeability of words, the perplexity for a model $\model$ is defined as
+The most popular method for evaluating mixture-models, admixture models, and language models of text is perplexity, which is defined as the geometric mean of the reciprocals of token likelihoods. Assuming exchangeability of words, the perplexity for a model $\model$ is defined as
 
 \begin{align}
 \perplexity{\model} = \sqrt[n_{d}]{\prod_d \prod_n \frac{1}{p(w_{dn}|\model)}} = \exp \left( \frac{-\sum_d \sum_n \ln p(w_{dn}|\model)}{n_{d\cdot\cdot}} \right) \label{eqn:perp_def}
 \end{align}
 
-As explained n \cite{Goodman2001} one can consider that a simple model that assigned uniform probability to 100 words would have a perplexity score of 100. The actual distribution, being non-uniform would be significantly \emph{lower}. Perplexity can also be linked to information theory: the log of a perplexity score gives the entropy of the word likelihoods, and as the entropy (base 2) specifies the average number of bits required to encode each word according to Shannon's source-coding theorem, lower perplexity values indicate better compression schemes.
+A simple model that assigned uniform probability to 100 words would have a perplexity score of 100\cite{Goodman2001}. The actual distribution, being non-uniform would be significantly \emph{lower}. 
+
+Perplexity can also be linked to information theory: the log of a perplexity score gives the entropy of the word likelihoods, and hence the average number of ``nats" required to encode each word. From Shannon's source-coding theorem therefore, lower perplexity values indicate better compression schemes.
 
 Taking this further, perplexity can be shown to be a special case of the cross-entropy function $\text{H}[p,q]$ where $p(w_{dv})$ is the empirical distribution of the word, $q(w_{dv})$ is the distribution we've inferred (confusingly denoted $p(w_{dn})$ in \eqref{eqn:perp_def}), and we use $e$ as the base and the natural log in the exponent. 
 
-To evaluate perplexity, one needs to determine the probability of a query (i.e. test) set $\WQuery$ given the training set $\WTrain$. Consider an LDA model in which the document-level topic distributions $\thd$ have been marginalised out, leaving a Polya distribution over the latent per-token topic-assignments $\zdn$, parameterised by a prior $\vv{\alpha}$.
+To evaluate perplexity, one needs to be able to evaluate the predictive log-likelihood, which for topic models is non-trivial, as described on page \pageref{chap1:lda-prediction}. Since a part of the prediction involves fitting an exact topic-distribution to the data, which potentially allows overfitting in the presence of many topics, the \emph{document-completion} metric is preferred\cite{Virtanen2012a}\cite{Asuncion2012}\cite{RosenZvi2004} instead. Each document in the test-set is partitioned into two halves\footnote{Given that words are assumed exchangeable within documents, and that long documents may exhibit structure affecting which topics can be inferred where, one can, and indeed should, permute the word order before splitting each document}: an estimation fragment, $\vv{x}_d^{(e)}$, from which a topic distribution is inferred; and an evaluation document, $\vv{x}_d^{(l)}$, whose likelihood given the inferred topic distribution is calculated. This thus provides a measure of the model's predictive power.
 
-\begin{align}
-p(\WQuery|\WTrain) = \int p(\WQuery|\Phi, \vv{\alpha})p(\Phi,\vv{\alpha} | \WTrain) d\Phi d\vv{\alpha}
-\end{align}
+Models with good (i.e. low) perplexity scores are not necessarily more interpretable than those without. In cases where human testers have been asked to identify deliberately-inserted errors in lists of words per topic, and lists of documents per topic, testers struggled to identify the errors in models which have good perplexity scores\cite{Chang2009}. In light of this, similar manual word and document ``intrusion" tests have been used to evaluate models\cite{Li2006}\cite{Wang2007}\cite{Lindsey2012}.
 
-where due to the assumed exchangeability of documents $p(\WQuery|\Phi, \vv{\alpha}) = \prod_ p(\vv{w}_d^{q}|\Phi, \vv{\alpha})$. Leaving aside the first term in the integrand, one can approximate this integral either by substituting in point estimates for $\Phi$ and $\vv{\alpha}$ or sampling from the posterior - the latter being particularly easy in cases where the model parameters have been fit using Gibbs sampling.
-
-The issue that remains however is how to evaluate $p(\vv{w}_d|\Phi, \vv{\alpha})$, which is dependant on the latent variables $\zdnk$. There are a number of ways in which this can be evaluated, of which two have been used frequently in the literature.
-
-The harmonic mean method has been used in\cite{Griffiths2004}\cite{Griffiths2005}\cite{Wallach2006}, all of which performed inference using collapsed Gibbs samplers. The approach is defined as
-\begin{align}
-\oneover{p(w)} = \sum_z \frac{p(z|w)}{p(w|z)} \approx \oneover{S} \sum_s \oneover{p(w|\samp{z})}
-=  \text{HM}\left[ \left\{ p(\vv{w}|\samp{\vv{z}}, \Phi \right\}_{s=1}^{S}  \right]
-\end{align}
-where HM is the Harmonic Mean and the approximation comes from implementing an importance sampler using the target $p(z|w)$ as the proposal distribution. Implementing this we can see that 
-
-The sampling distribution over $\zdnk$ is given by
-
-\begin{align}
-p(z_{dn} = k | \vv{w}_d, \vv{z}_d^{\setminus n}, \Phi, \vv{\alpha}) \propto \phi_{k,{w_{dn}}}\frac{n_{dk\cdot} + \alpha_k}{n_{d\cdot\cdot} + \sum_j \alpha_j}
-\end{align}
-
-The second approach is the left-to-right method, which has been used in \cite{Mimno2011} and \cite{Mimno2012a}. By factorising the likelihood as
-
-\begin{align}
-p(\vv{w}|\Phi, \vv{\alpha}) & = \prod_n p(w_n | \vv{w}_{<n}, \Phi, \vv{\alpha}) \\
-& = \prod_n \sum_{\vv{z}_{<n}} p(w_n, \vv{z}_{<n}| \vv{w}_{<n}, \Phi, \vv{\alpha})
-\end{align}
-it is possible to approximate the likelihood using a variant a sequential Monte-Carlo, where each particle $p$ iteratively draws samples of $z^{(p)}_{dn'}$ for $n' \in 1 \ldots n_{d\cdot\cdot}$, and uses these samples to evaluate the overall probability of the likelihood. The full algorithm is given in \cite{Wallach2009}.
-
-When the harmonic mean, left-to-right and several other methods including importance sampling and annealed importance sampling where compared in \cite{Wallach2009} it was found that the harmonic mean method tended to ``wildly overestimate" the true likelihood, while the left-to-right method gave the most accurate estimate.
-
-A method of evaluating perplexity which tests the model's predictive power is ``document-completion" which has been used in \cite{Virtanen2012a}\cite{Asuncion2012}\cite{RosenZvi2004} and measure's the model's predictive power. Each document in the test-set is partitioned into two halves\footnote{Given that words are assumed exchangeable within documents, and that long documents may exhibit structure affecting which topics can be inferred where, one can, and indeed should, permute the word order before splitting each document}: an estimation fragment, $\vv{w}_d^{(e)}$, from which a topic distribution is inferred; and an evaluation document, $\vv{w}_d^{(l)}$, whose likelihood given the inferred topic distribution is calculated. Formally writing this as
-\begin{align}
-p(\vv{w}_d^{(l)}|\vv{w}_d^{(e)}, \Phi, \vv{\alpha}) = \frac{p(\vv{w}_d^{(l)},\vv{w}_d^{(e)} |\Phi, \vv{\alpha})}{p(\vv{w}_d^{(e)}|, \Phi, \vv{\alpha})}
-\end{align}
-
-it should be clear that the methods used above can be used to infer both $p(\vv{w}_d^{(e)}|, \Phi, \vv{\alpha})$ and $p(\vv{w}_d^{(l)},\vv{w}_d^{(e)} | \Phi, \vv{\alpha}) = p(\vv{w}_d | \Phi, \vv{\alpha})$. However the most  popular method used in this case is topic-estimation which involves sampling $\vv{z}_d^{(e,s)} \sim p(\vv{z}_n^{(e)} | \vv{w}^{(e)}, \Phi, \vv{\alpha})$ and then evaluating $\vv{\theta}_d^{(e)}$ as
-
-\begin{align}
-\theta^{(e,s)}_{dk} = p(k | \vv{z}^{(e,s)}, \vv{\alpha}) = \frac{n^{(e,s)}_{dk\cdot} + \alpha_k}{n^{(e)}_{d\cdot\cdot} + \sum_j \alpha_j}
-\end{align}
-
-from which one can then evaluate the probability of the evaluation document:
-
-\begin{align}
-p(\vv{w}_d^{(l)}|\vv{w}_d^{(e)}, \Phi, \vv{\alpha}) \approx
-\oneover{S} \sum_s \prod_n \sum_k \phi_{k,w^{(l)}_{dn}}\theta_{dk}^{(e,s)}
-\end{align}
-
-In practice, particularly with variational approaches, a single point estimate of $\vv{\theta}_d^{(e)}$ is often used instead\cite{Asuncion2012}, though when evaluating document completion \cite{Wallach2009} found that the topic-estimation method, even when implemented via sampling, compared ``poorly" with left-to-right sampling. 
-
-Thus measures of perplexity are highly dependant on how the held-out likelihood is evaluated, which is rarely described well in the literature. Furthermore, many implementors use hard-coded symmetric priors for baseline topic models, even though the performance of topic models is highly sensitive to the configuration of hyper-parameters\cite{Asuncion2012}\cite{Wallach2006}. Consequently is is difficult to compare different measures of perplexity across different models in different publications.
-
-It does not always follow that models with good (i.e. low) perplexity scores are always interpretable. In\cite{Chang2009} human testers were asked to inspect the topic vocabularies generated by different topic models (LDA, CTM and PLSA). In a ``word-intrusion" test they were asked which word, in a list of words belonging to a single topic, was the wrong word from another topic added by the experimenters. In a ``document-intrustion" they were similarly asked to identify the intruded document in a list of document excerpts belonging to a single topic. The CTM model, despite achieving the best perplexity score, faired worst in both of these tasks. 
-
-%In   \cite{Azzopardi2003} it was shown that when using language-models to aid information retrieval, language models with the best perplexity scores did not always lead to the best precision scores. 
-
-In light of this, some more recent publications such as \cite{Li2006}\cite{Wang2007}\cite{Lindsey2012} have used similar intrusion tests via Mechanical Turk to test the performance of their models.
-
-There are metrics which don't rely on the likelihood. The ``topical coherence" metric, introduced in \cite{Mimno2011} and additionally used in \cite{Mimno2012a} addresses the word-intrusion problem. Assume that if a set of words all belong to a single topic, one would them concentrated in documents belonging to that topic, rather than distributed uniformly across all documents and all topics. Therefore letting $D(t)$ be the number of documents where word $t$ occurs at least once, and $D(t,v)$ be the number of documents containing at least one occurrence each of both $t$ and $v$, the coherence metric is defined as
+The ``topical coherence" metric\cite{Mimno2011}\cite{Mimno2012a} addresses the word-intrusion problem mathematically. If a words all belong to a single topic, one should expect to seem them concentrated in documents belonging to that topic, rather than distributed uniformly across all documents. Therefore letting $D(t)$ be the number of documents where word $t$ occurs at least once, and $D(t,v)$ be the number of documents containing at least one occurrence each of both $t$ and $v$, the coherence metric is defined as
 \begin{align}
 C(k; V^{(m)}) = \sum_{t \in V^{(m)}_k} \sum_{v \in V^{(m)}_k,  v \neq t} \ln \frac{D(t, v) + 1}{D(v)}
 \end{align}
 where $V^{(m)}_k$ is the set of the $m$ most probable words in topic $k$, and the addition of $1$ to the numerator is to avoid taking the log of zero. 
 
+Both manual word-intrustion tests and the topical coherence metric have the advantage that they are not-probabilistic, and so can be applied to a much broader range of models.
+
 %\fixme{Read this some more. Also pointwise mutual info}
 
-The \emph{empirical likelihood} of \cite{Li2006} tests the generative ability of a model. For each test document, this involves using the model to generate, say, 1,000 synthetic documents, deriving an empirical (in this case multinomial) distribution from each document, and then evaluating the average of the probabilities of the test document according to each of these empirical distributions. This has additionally been used in \cite{Doyle2009}\cite{Mimno2008}. In \cite{Wallach2009} it was shown that this method is an approximation to $p(\vv{w}_d|\Phi, \vv{\alpha}) = \int p(\vv{w}_d, \thd | \Phi)p(\thd|\vv{\alpha})d\thd$ using importance sampling with true posterior employed as a proposal distribution. Were the synthetic documents infinitely long, the two methods would be identical. This analogy points to a potential deficiency of this method however, which is that one would expect the variance of an estimate derived from importance sampling to be very high when sampling from high-dimensional distributions: consequently for very high topic-counts (cases with over 200-topic are common) this may not be a reliable estimator.
+The \emph{empirical likelihood} \cite{Li2006}\cite{Doyle2009}\cite{Mimno2008} tests the generative ability of a model. For each test document, one uses the model to generate a number of synthetic documents, derive an empirical distribution those observations, and then use that to evaluate the likelihood of the test document. This has additionally been used in . In \cite{Wallach2009} it was shown that this method is an approximation to $p(\vv{x}_d|\Phi, \vv{\alpha}) = \int p(\vv{x}_d, \thd | \Phi)p(\thd|\vv{\alpha})d\thd$ using importance sampling with true posterior employed as a proposal distribution. Were the synthetic documents infinitely long, the two methods would be identical. This analogy points to a potential deficiency of this method however, which is that one would expect the variance of an estimate derived from importance sampling to be very high when sampling from high-dimensional distributions: consequently for very high topic-counts (cases with over 200-topic are common) this may not be a reliable estimator.
 
 \subsection*{Evaluation Against Labelled Data}
 With labelled data, specified with a 1-of-$L$ labelling $\vv{t}_d$, one may choose to evaluate the model by comparing it to the inferred topics, $\thd \in \VReal{K}$, where $K$ need not necessarily equal $L$. Many metrics exist for this purpose, of which the most well known is the F1-Score, $F_1 = 2 \frac{p \cdot r}{p + r}$, which is the harmonic mean of precision, $p=\frac{TP}{TP+FP}$ and recall, $r=\frac{TP}{TP+FN}$, and $TP, FP, TN, FN$ refer to the true and false positives and negatives respectively.
@@ -1247,7 +1238,7 @@ For a single label $l$ one can take the max across topics $F_1^{(l)} = \max_{k \
 
 \begin{figure}
   \centering
-    \includegraphics[width=0.9\textwidth]{../Chap3a/plots/20news-2013-03-25.pdf}
+    \includegraphics[width=1.1\textwidth]{../Chap3a/plots/20news-2013-03-25.pdf}
   \caption{Results using different accuracy metrics for a mixture of multinomials and LDA on a subset of the 20-news dataset. Trendlines and shading are from a LOESS fit to the points. A variation of the soft F1 measure described in the text is shown where we average over label-specific F1 scores instead of taking the maximum. Held-out likelihood was evaluating using the document-completion metric with inferred topics.}
   \label{fig:eval-metrics-shootout}
 \end{figure}
@@ -1316,18 +1307,150 @@ Plots of all these metrics, for different topic counts, are given in figure \ref
 
 \section{Experiments}
 \label{sec:chap1:experiments}
-This is a section
+Given the variety of models of text, and the variety of means of performing inference in each model, it is interesting to compare how model-implementations compare on these two axes.
+
+Seven different text data sets are used to evaluate the performance of these algorithms: Cranfield-subset (CRAN), Kos (KOS), Medline-subset (MED), NIPS (NIPS), 20 News- groups (NEWS), NYT-subset (NYT), and Patent (PAT). Several of these data sets are available online at the UCI ML Repository. The characteristics of these data sets are summarized in \ref{chap1:tbl:datasets}
+
+\begin{table}
+\centering
+\begin{tabular}{| l | c | c | c | c |}
+\hline \\
+Name & $D$ & $W$ & $N_{train}$ & $D_{Test}$ \\
+\hline
+CRAN & 979 & 3,763 & 81,773 & 210 \\
+KOS & 3,000 & 6,906 & 410,595 & 215 \\
+MED & 9,300 & 5,995 & 886,306 & 169 \\
+NIPS & 1,500 & 12,419 & 1,932,365 & 92 \\
+NEWS & 19,500 & 27,059 & 2,057,207 & 249 \\
+NYT & 6,800 & 16,253 & 3,768,969 & 139 \\
+PAT & 6,500 & 19,447 & 14,328,094 & 106 \\
+\hline
+\end{tabular}
+\caption{Statistics for the test datasets: document count $D$, vocabulary siz $W$, number of total words in the training-set $N_{train}$, and number of documents in the test-set $D_{Test}$}
+\label{chap1:tbl:datasets}
+\end{table}
+
+Each data set is separated into a training set and a test set. We learn the model on the training set, and then we mea- sure the performance of the algorithms on the test set. We also have a separate validation set of the same size as the test set that can be used to tune the hyperparameters. To evaluate accuracy, we use perplexity, a widely-used met- ric in the topic modeling community. While perplexity is a somewhat indirect measure of predictive performance, it is nonetheless a useful characterization of the predictive quality of a language model and has been shown to be well- correlated with other measures of performance such word- error rate in speech recognition . We also report precision/recall statistics
+
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.22\textheight]{../Chap1/plots/figs/fig2.png}
+  \caption{Fig2}
+  \label{fig:chap1-fig2}
+\end{figure}
+
+We describe how perplexity is computed. For each of our algorithms, we perform runs lasting 500 iterations and we obtain the mode of the vocabulary distribution $\hat{\param}_k$ at the end of each of those runs. To obtain the topic distribution for the query document $\thd$ we use the document-completion metric, were we learn the topic assignments on the
+first half of each document in the test set while holding $\hat{\param}_k$ 
+fixed. For this fold-in procedure, we use the same learning algorithm that we used for training. Perplexity is evaluated on the second half of each document in the test set, given $\hat{\param}_k$  and $\thd$. For LDA with collapsed Gibbs sample (``CGS"), one can average over multiple samples (where S is the number of samples to average over):
+\begin{equation}
+\ln p(\mathcal{X}*|\params) = \sum_{d} \sum_{t} x_{dt} ln \oneover{S}\sum_s \sum_k \theta_{dk}^s \param_{kt}^s
+\end{equation}
+
+
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.22\textheight]{../Chap1/plots/figs/fig3.png}
+  \caption{Perplexities achieved with hyperparameter learning through Minka’s update, on various data sets, K=40}
+  \label{fig:chap1-fig3}
+\end{figure}
+
+
+In our experiments we don’t perform averaging over sam- ples for CGS (other than in Figure \ref{fig:chap1-fig7} where we explicitly investigate averaging), both for computational reasons and to provide a fair comparison to the other algorithms. Us- ing a single sample from CGS is consistent with its use as an efficient stochastic “mode-finder” to find a set of interpretable topics for a document set.
+
+For each experiment, we perform three different runs using different initializations, and report the average of these perplexities. Usually these perplexities are similar to each other across different initializations (e.g. ± 10 or less)
+
+
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.22\textheight]{../Chap1/plots/figs/fig4.png}
+  \caption{Perplexity as a function of number of topics, on NIPS, with Minka’s update enabled}
+  \label{fig:chap1-fig4}
+\end{figure}
+
+
+In our first set of experiments, we investigate the effects of learning the hyperparameters during training using Minka’s fixed point updates. We compare CGS, VB, CVB, and CVB0 in this set of experiments and leave out MAP since Minka’s update does not apply to MAP. For each run, we initialize the hyperparameters to $\alpha = 0.5, \beta = 0.5$ and turn on Minka’s updates after 15 iterations to prevent numerical instabilities. Every other iteration, we compute perplexity on the validation set to allow us to perform early-stopping if necessary. Figure 2 shows the test perplexity as a function of iteration for each algorithm on the MED data set. These perplexity results suggest that CVB and CVB0 out- perform VB when Minka’s updates are used. The reason is because the learned hyperparameters for VB are too small and do not correct for the effective −0.5 offset found in the VB update equations. Also, CGS converges more slowly than the deterministic algorithms.
+
+In Figure \ref{fig:chap1-fig3}, we show the final perplexities achieved with hyperparameter learning (through Minka’s update), on each data set. VB performs worse on several of the data sets compared to the other algorithms. We also found that CVB0 usually learns the highest level of smoothing, followed by CVB, while Minka’s updates for VB learn small values for $\alpha$, $\beta$.
+
+
+
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.22\textheight]{../Chap1/plots/figs/fig2.png}
+  \caption{Convergence plot showing perplexities on MED, K=40; hyperparameters learned through Minka’s update.}
+  \label{fig:chap1-fig5}
+\end{figure}
+
+In our experiments thus far, we fixed the number at topics at K = 40. In Figure \ref{fig:chap1-fig4}, we vary the number of topics from 10 to 160. In this experiment, CGS/CVB/CVB0 perform similarly, while VB learns less accurate solutions. Interestingly, the CVB0 perplexity at K = 160 is higher than the perplexity at K = 80. This is due to the fact that a high value for $\beta$ was learned for CVB0. When we set $\beta = 0.13$ (to the K = 80 level), the CVB0 perplexity is 1464, matching CGS. These results suggest that learning hyperparameters during training (using Minka’s updates) does not necessarily lead to the optimal solution in terms of test perplexity.
+
+In the next set of experiments, we use a grid of hyperpa- rameters for each of $\alpha$ and $\beta$, [0.01, 0.1, 0.25, 0.5, 0.75, 1], and we run the algorithms for each combination of hyperparameters. We include MAP in this set of experiments, and we shift the grid to the right by 1 for MAP (since hyper- parameters less than 1 cause MAP to have negative probabilities). We perform grid search on the validation set, and we find the best hyperparameter settings (according to validation set perplexity) and use the corresponding estimates for prediction.
+
+
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.35\textheight]{../Chap1/plots/figs/fig5.png}
+  \caption{Perplexities achieved through grid search, K=40}
+  \label{fig:chap1-fig5}
+\end{figure}
+
+
+Figure \ref{fig:chap1-fig6} shows the test perplexity of each method as a function of $\beta$. It is visually apparent that VB and MAP perform better when their hyperparameter values are offset by 0.5 and 1, respectively, relative to the other methods. While this picture is not as clear-cut for every data set (since the approximate VB update holds only when n > 1), we have consistently observed that the minimum perplexities achieved by VB are at hyperparameter values that are higher than the ones used by the other algorithms
+
+In the previous experiments, we used one sample for CGS to compute perplexity. With enough samples, CGS should be the most accurate algorithm. In Figure \ref{fig:chap1-fig7}, we show the effects of averaging over 10 different samples for CGS, taken over 10 different runs, and find that CGS gains substantially from averaging samples. It is also possible for other methods like CVB0 to average over their local posterior “modes” but we found the resulting gain is not as great.
+
+
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.29\textheight]{../Chap1/plots/figs/fig6.png}
+  \caption{TOP: KOS, K=40. BOTTOM: MED, K=40. Perplexity as a function of $\beta$. We fixed $\alpha$ to 0.5 (1.5 for MAP). Relative to the other curves, VB and MAP curves are in effect shifted right by approximately 0.5 and 1}
+  \label{fig:chap1-fig6}
+\end{figure}
+
+
+We also tested whether the algorithms would perform sim- ilarly in cases where the training set size is very small or the number of topics is very high. We ran VB and CVB with grid search on half of CRAN and achieved virtually the same perplexities. We also ran VB and CVB on CRAN with K = 100, and only found a 16-point perplexity gap.
+
+To summarize our perplexity results, we juxtapose three different ways of setting hyperparameters in Figure \ref{fig:chap1-fig8}, for NIPS, K = 40. The first way is to have the same arbitrary values used across all algorithms (e.g. $\alpha = 0.1, \beta = 0.1$). The second way is to learn the hyperparameters through Minka’s update. The third way way is to find the hyperparameters by grid search. For the third way, we also show the VB perplexity achieved by the alternative estimates.
+
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.22\textheight]{../Chap1/plots/figs/fig7.png}
+  \caption{The effect of averaging over 10 samples/modes on KOS, K=40}
+  \label{fig:chap1-fig7}
+\end{figure}
+
+We also calculated precision/recall statistics on the NEWS data set. Since each document in NEWS is associated with one of twenty newsgroups, one can label each document by its corresponding newsgroup. It is possible to use the topic model for classification and to compute precision/recall statistics. In Figure \ref{fig:chap1-fig9}, we show the mean area under the ROC curve (AUC) achieved by CGS, VB, CVB, and CVB0 with hyperparameter learning through Minka’s update. We also performed grid search over $\alpha, \beta$ and found that each method was able to achieve similar statistics. For instance, on NEWS, K = 10, each algorithm achieved the same area under the ROC curve (0.90) and mean average precision (0.14). These results are consistent with the perplexity results in the previous section.
+
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.22\textheight]{../Chap1/plots/figs/fig8.png}
+  \caption{When $\alpha = 0.1, \beta = 0.1$, VB performs substantially worse than other methods. When using Minka’s updates, the differences are less prominent. When grid search is performed, differences diminish even more, especially with the alternative estimates}
+  \label{fig:chap1-fig8}
+\end{figure}
+
+While the algorithms can give similarly accurate solutions, some of these algorithms are more efficient than others. VB contains digamma functions which are computationally ex- pensive, while CVB requires the maintenance of variance counts. Meanwhile, the stochastic nature of CGS causes it to converge more slowly than the deterministic algorithms.
+
+In practice, we advocate using CVB0 since 1) it is faster than VB/CVB given that there are no calls to digamma or variance counts to maintain; 2) it converges more quickly than CGS since it is deterministic; 3) it does not have MAP’s −1 offset issue. Furthermore, our empirical results suggest that CVB0 learns models that are as good or better (predictively) than those learned by the other algorithms.
+
+\begin{figure}
+  \centering
+    \hspace*{-1.5cm}\includegraphics[height=0.22\textheight]{../Chap1/plots/figs/fig9.png}
+  \caption{Mean AUC achieved on NEWS, K=40, with Minka’s update}
+  \label{fig:chap1-fig9}
+\end{figure}
+
+These algorithms can be parallelized over multiple proces-sors as well. The updates in MAP estimation can be per- formed in parallel without affecting the fixed point since MAP is an EM algorithm. Since the other algorithms are very closely related to MAP there is confidence that performing parallel updates over tokens for the other algorithms would lead to good results as well
+
+While non-collapsed algorithms such as MAP and VB can be readily parallelized, the collapsed algorithms are sequential, and thus there has not been a theoretical basis for parallelizing CVB or CGS (although good empirical results have been achieved for approximate parallel CGS\cite{Newman2009} . We expect that a version of CVB0 that parallelizes over tokens would converge to the same quality of solution as sequential CVB0, since CVB0 is essentially MAP but without the −1 offset
 
 \section{Conclusions}
 In this chapter we have introduced the fundamentals of Bayesian inference. We have described the major probabilisitic models used with text: including language-models, mixture-models, and admixture models. In the particular case of admixture models of text, or ``topic models", we have given a cursory overview of the literature. We have demonstrated how admixture models outperform simple mixture models, and how the training scheme affects model fit. 
 
+There is a wealth of information which for reasons of brevity we have not discussed. In the machine learning-literature, it is common to represent text not as vectors of word-counts, but of vectors of word-frequencies, which have been adjusted using words' inverse document-frequencies (to down-weight common stop-words). Standard machine-learning approaches such as K-Means clustering work quite well on this data. In the sense that LDA can be thought of as a matrix factorization approach, in that $W \approx \Theta \Phi$, it has been anticipated by the latent-semantic indexing\cite{Deerwester1990} (or analysis) method, which uses a singular-value decomposition of the TF-IDF matrix. A weakness of this method is that topic ``strengths" may be negative, which difficult to interpret. 
 
-There is a wealth of information which for reasons of brevity we have not discussed. In the machine learning-literature, it is common to represent text not as vectors of word-counts, but of vectors of word-frequencies, which have been adjusted using words' inverse document-frequencies (to down-weight common stop-words). Standard machine-learning approaches such as K-Means clustering work quite well on this data. In the sense that LDA can be thought of as a matrix factorization approach, in that $W \approx \Theta \Phi$, it has been anticipated by the latent-semantic indexing (or analysis) method, which uses a singular-value decomposition of the TF-IDF matrix. A weakness of this method is that topic ``strengths" may be negative, which difficult to interpret. 
+Prior to the publication of LDA, several other methods had been attempted to represent documents as a mixture, of which probabilistic latent-semantic indexing \cite{Hofmann1999a} was the most successful. Unfortunately, like LSI, pLSI used a document indicator variable to associate topic with documents, and so could not generalise to unseen documents and needed a complex inference process to avoid overfitting. It has been shown\cite{GiKa2003} that LDA is in fact just a proper Bayesian inference scheme for the pLSI.
 
-Prior to the publication of LDA, several other methods had been attempted to represent documents as a mixture, of which probabilistic latent-semantic indexing \cite{Hofmann1999a} was the most successful. Unfortunately, like LSI, pLSI used a document indicator variable to associate topic with documents, and so could not generalise to unseen documents. It has been shown\cite{GiKa2003} that LDA is in fact just a proper Bayesian inference scheme for the pLSI. 
+The matrix factorisation view of LDA, is also reminiscent of principal components analysis, and in fact a model for principal components analysis generalised to multinomial observations\cite{Buntine2002} published a year before the original LDA paper is equivalent to the LDA model: though both were anticipated two years earlier in turn by an ad-hoc model of chromosome data\cite{Pritchard2000}.
 
-The matrix factorisation view of LDA, is also reminiscent of principal components analysis, and in fact a model for principal components analysis generalised to multinomial observations\cite{Buntine2002} published a year before the original LDA paper has been shown to be equivalent to the LDA model: though both were anticipated by an ad-hoc model of chromosome data published in 2000\cite{Pritchard2000}
-
-In chapter two we will discuss further extensions to topic models, using correlation between topics and in chapter three and four we will dicuss how additional observations can be incorporated into topic-models. In chapter five we will use the correlated topic-model framework to consider the problem of predicting inter-document links in a network of academic papers.
+In chapter two we will discuss further extensions to topic models, using correlation between topics and in chapter three and four we will discuss how additional observations can be incorporated into topic-models. In chapter five we will use the correlated topic-model framework to consider the problem of predicting inter-document links in a network of academic papers.
 
 \input{../footer.tex}
