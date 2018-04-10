@@ -117,9 +117,21 @@
 \newcommand \cxi { { c_{\xi} } }
 
 \chapter{Jointly-Low Rank Admixture Models}
-In the previous chapter, we investigated a correlated admixture model which employed low-rank projections of features in order to derive parsimonious model representations. A weakness of that model is that we increase the number of topics for a fixed dataset, there is a risk that the model becomes overparameterised once more: in particular the correlation matrix over topics may become singular.
+In the previous chapter, we investigated a correlated admixture model which employed low-rank projections of features in order to derive parsimonious model representations. A weakness of that model is that as we increase the number of topics for a fixed dataset, there is a risk that the model becomes overparameterised once more: in particular the covariance matrix over topics may become singular.
 
-In this chapter we provide an inference algorithm which enabled both low-rank feature \emph{and} topic covariance matrices. Standard application of the mechanics of variational inference would lead to an algorithm whose computational complexity was $O(P^3Q^3)$ where $P << F$ and $Q << K$ are the dimensions of our low-rank projections of the $F\times F$ covariance matrix over features and $K \times K$ covariance matrix over topics. We derive a novel algorithm instead whose computational complexity of $O(P^3 + Q^3)$, making inference in this model feasible.
+In this chapter we provide an inference algorithm which enables both low-rank feature \emph{and} topic covariance matrices. Standard application of the mechanics of variational inference would lead to an algorithm whose computational complexity was $O(P^3Q^3)$ where $P << F$ and $Q << K$ are the dimensions of our low-rank projections of the $F\times F$ covariance matrix over features and $K \times K$ covariance matrix over topics. We derive a novel algorithm instead whose computational complexity of $O(P^3 + Q^3)$, making inference in this model feasible.
+
+\section{Introduction}
+In the previous chapter we decomposed our covariance over topic-feature combinations into a Kronecker product of feature and topic covariance matrices; and then imposed a particular structure on our covariance over features, which enabled us to ensure we did not create singular covariances.
+
+In this chapter we now extend that model, and learn low-rank approximations of \emph{both} covariances.
+
+There has been some previous work in this area. Bilinear PCA has been the obvious case, in which maximum likelihood estimates\cite{Zhao2012} were estimated for models of the form $X = UYZ$ where both $X$ and $Y$ are both assumed to have matrix-variate distributions. However being maximum likelihood models, these have failed to be incorporated into Bayesian models.
+
+Additionally, there has been no progress in addressing the computational complexity inherent in such estimation problems.
+
+
+
 
 \section{The Jointly Low-Rank Model}
 
